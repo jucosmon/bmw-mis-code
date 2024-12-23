@@ -29,11 +29,39 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // Authenticate the user
         $request->authenticate();
 
+        // Regenerate the session to prevent session fixation attacks
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirect based on user role
+        return $this->redirectUserBasedOnRole();
+    }
+
+    /**
+     * Redirect the user based on their role after login.
+     */
+    protected function redirectUserBasedOnRole(): RedirectResponse
+    {
+        $user = Auth::user(); // Get the authenticated user
+
+
+        // Redirect based on user role
+        switch ($user->user_role) {
+            case 'bpemo_admin':
+                return redirect()->route('bpemo.admin.dashboard');
+            case 'bpemo_staff':
+                return redirect()->route('bpemo.staff.dashboard');
+            case 'lgu_responder':
+                return redirect()->route('lgu.responder.dashboard');
+            case 'barangay_official':
+                return redirect()->route('barangay.official.dashboard');
+            case 'public_user':
+                return redirect()->route('public.user.dashboard');
+            default:
+                return redirect()->route('unauthorized'); // Fallback if role is not matched
+        }
     }
 
     /**
@@ -47,6 +75,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/login');
     }
 }

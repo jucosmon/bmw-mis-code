@@ -64,6 +64,8 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
+        Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
+
 
         // 'users' => [
         //     'driver' => 'database',
