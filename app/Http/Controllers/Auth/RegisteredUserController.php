@@ -38,7 +38,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'contact_number' => 'string|min:11|max:15',
             'birthdate' => 'required|date',
-            'sex' => 'required|in:male,female,unknown',
+            'sex' => 'required|in:male,female,other',
         ]);
 
         // Create the user with all fields

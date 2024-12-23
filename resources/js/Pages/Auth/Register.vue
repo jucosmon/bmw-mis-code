@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const form = useForm({
     first_name: '',
@@ -17,6 +18,9 @@ const form = useForm({
     sex:'',
 
 });
+
+// State for the "Show Password" checkbox
+const showPassword = ref(false);
 
 const submit = () => {
     form.post(route('register'), {
@@ -93,25 +97,14 @@ const submit = () => {
         <div class="mt-4">
             <InputLabel for="password" value="Password" />
 
-            <div class="relative">
-                <TextInput
-                    id="password"
-                    :type="showPassword ? 'text' : 'password'"
-                    class="mt-1 block w-full pr-10"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
-                <button
-                    type="button"
-                    @click="showPassword = !showPassword"
-                    class="absolute inset-y-0 right-0 flex items-center pr-3"
-                >
-                    <span v-if="showPassword">👁️</span>
-                    <span v-else>🙈</span>
-                </button>
-            </div>
-
+            <TextInput
+                id="password"
+                :type="showPassword ? 'text' : 'password'"
+                class="mt-1 block w-full"
+                v-model="form.password"
+                required
+                autocomplete="new-password"
+            />
 
             <InputError class="mt-2" :message="form.errors.password" />
         </div>
@@ -124,7 +117,7 @@ const submit = () => {
 
             <TextInput
                 id="password_confirmation"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 class="mt-1 block w-full"
                 v-model="form.password_confirmation"
                 required
@@ -136,6 +129,16 @@ const submit = () => {
                 :message="form.errors.password_confirmation"
             />
         </div>
+        <div class="mt-4 flex items-center mb-3">
+            <input
+                type="checkbox"
+                class="mr-2"
+                id="show-password"
+                v-model="showPassword"
+            />
+            <InputLabel for="show-password" value="Show Password" class="text-gray-700 text-sm" />
+        </div>
+
         <div>
             <InputLabel for="contact_number" value="Contact Number" />
 
@@ -176,7 +179,7 @@ const submit = () => {
                 <option value="" disabled>Select your sex</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
-                <option value="unknown">Prefer Not to Say</option>
+                <option value="other">Prefer Not to Say</option>
             </select>
 
             <InputError class="mt-2" :message="form.errors.sex" />
