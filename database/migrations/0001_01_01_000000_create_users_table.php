@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('first_name', 50);
             $table->string('last_name', 50);
-            $table->char('middle_initial')->nullable();
             $table->string('email', 150)->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
@@ -24,7 +23,7 @@ return new class extends Migration
             $table->enum('sex', ['male', 'female', 'other'])->nullable();
             $table->string('position', 100)->nullable();
             $table->boolean('is_active')->default(true);
-            $table->enum('user_role', ['public_user', 'barangay_official', 'lgu_responder', 'bpemo_staff', 'bpemo_admin']);
+            $table->enum('user_role', ['public_user', 'barangay_official', 'lgu_responder', 'bpemo_staff', 'bpemo_admin'])->default('public_user');
             $table->unsignedInteger('municipality_id')->nullable();
             $table->unsignedInteger('barangay_id')->nullable();
             $table->rememberToken();
