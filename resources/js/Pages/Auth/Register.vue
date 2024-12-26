@@ -23,6 +23,13 @@ const form = useForm({
 const showPassword = ref(false);
 
 const submit = () => {
+    // Check if contact number is at least 11 characters
+    if (form.contact_number.length < 11) {
+        // Optionally, set an error message or handle it as needed
+        alert("Contact number must be at least 11 digits long.");
+        return; // Prevent form submission
+    }
+
     form.post(route('register'), {
         onSuccess: () => {
             formErrors.value = null; // Clear errors on successful submission
@@ -33,6 +40,17 @@ const submit = () => {
         onFinish: () => form.reset('password', 'password_confirmation'), // Reset the entire form
     });
 
+};
+
+const allowOnlyNumbers = (event) => {
+    // Allow only numbers (0-9), Backspace, Tab, and Arrow keys
+    const key = event.key;
+    const isNumber = /^[0-9]$/.test(key);
+    const isControlKey = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(key);
+
+    if (!isNumber && !isControlKey) {
+        event.preventDefault(); // Prevent the default action if the key is not a number or control key
+    }
 };
 </script>
 
@@ -149,6 +167,7 @@ const submit = () => {
                 v-model="form.contact_number"
                 required
                 autocomplete="contact_number"
+                @keydown="allowOnlyNumbers"
             />
 
             <InputError class="mt-2" :message="form.errors.contact_number" />
