@@ -1,6 +1,7 @@
 <script setup>
 import DropdownLink from '@/Components/DropdownLink.vue';
-import { reactive } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed, reactive } from 'vue'; // Get the authenticated user
 
 const state = reactive({
   sidebarOpen: false, // Sidebar toggle
@@ -10,6 +11,11 @@ const state = reactive({
 const toggleDropdown = (dropdownName) => {
   state.activeDropdown = state.activeDropdown === dropdownName ? null : dropdownName;
 };
+
+const page = usePage()
+
+const user = computed(() => page.props.auth.user)
+console.log(user);
 </script>
 
 <template>
@@ -19,12 +25,12 @@ const toggleDropdown = (dropdownName) => {
     <div class="flex flex-col flex-shrink-0 w-full text-indigo-700 bg-white md:w-64 dark:text-indigo-200 dark:bg-indigo-900">
       <!-- Header -->
       <div class="flex flex-row items-center justify-between flex-shrink-0 px-8 py-4">
-        <a
+        <Link
           href="#"
           class="text-lg font-semibold tracking-widest text-indigo-900 uppercase rounded-lg dark:text-white focus:outline-none focus:shadow-outline"
         >
           BMW-MIS
-        </a>
+        </Link>
         <button
           class="rounded-lg md:hidden focus:outline-none focus:shadow-outline"
           @click="state.sidebarOpen = !state.sidebarOpen"
@@ -51,17 +57,21 @@ const toggleDropdown = (dropdownName) => {
         :class="{ 'block': state.sidebarOpen, 'hidden': !state.sidebarOpen }"
         class="flex-grow px-4 pb-4 md:block md:pb-0 md:overflow-y-auto"
       >
-        <!-- Dashboard -->
-        <a class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-indigo-800 dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Dashboard</a>
+        <!-- Dashboard conditions by user type-->
+        <Link v-if="user.user_role==='bpemo_admin'" :href="route('bpemo.admin.dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
+        <Link v-if="user.user_role==='bpemo_staff'" :href="route('bpemo.staff.dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
+        <Link v-if="user.user_role==='lgu_responder'" :href="route('lgu.responder.dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
+        <Link v-if="user.user_role==='barangay_official'" :href="route('barangay.official.dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
+        <Link v-if="user.user_role==='public_user'" :href="route('public.user.dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
 
         <!-- Manage Stranded Incident -->
-        <a class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Manage Stranded Incident</a>
+        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Manage Stranded Incident</Link>
 
         <!-- Explore Marine Wildlife Species -->
-        <a class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Explore Marine Wildlife Species</a>
+        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Explore Marine Wildlife Species</Link>
 
         <!-- Manage Species Record Dropdown -->
-        <div class="relative">
+        <div v-if="user.user_role==='bpemo_admin'" class="relative">
           <button
             @click="toggleDropdown('manageSpeciesRecord')"
             class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
@@ -85,29 +95,29 @@ const toggleDropdown = (dropdownName) => {
             v-if="state.activeDropdown === 'manageSpeciesRecord'"
             class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
           >
-            <a
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Marine Turtles
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Marine Mammals
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Shark and Rays
-            </a>
+            </Link>
           </div>
         </div>
 
         <!-- Manage Guidelines Dropdown -->
-        <div class="relative">
+        <div v-if="user.user_role==='bpemo_admin'" class="relative">
           <button
             @click="toggleDropdown('manageGuidelines')"
             class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
@@ -131,32 +141,41 @@ const toggleDropdown = (dropdownName) => {
             v-if="state.activeDropdown === 'manageGuidelines'"
             class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
           >
-            <a
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               LGU Responder
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Barangay Official
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Public User
-            </a>
+            </Link>
           </div>
         </div>
 
+        <!--  Guidelines for LGU responder, barangay official and public user -->
+        <Link
+        v-if="user.user_role==='lgu_responder' || user.user_role==='barangay_official' || user.user_role==='public_user'"
+        class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+        href="#">
+        Guidelines
+        </Link>
+
+
         <!-- Manage Sightings -->
-        <a class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Manage Sightings</a>
+        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Manage Sightings</Link>
 
         <!-- Generate Report Dropdown -->
-        <div class="relative">
+        <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff'" class="relative">
           <button
             @click="toggleDropdown('generateReport')"
             class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
@@ -180,42 +199,42 @@ const toggleDropdown = (dropdownName) => {
             v-if="state.activeDropdown === 'generateReport'"
             class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
           >
-            <a
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
             Marine Wildlife Cluster Map
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Marine Wildlife Summary Report
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Marine Turtle Categorized Report
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Marine Mammal Categorized Report
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Shark and Rays Categorized Report
-            </a>
-            <a
+            </Link>
+            <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               Download Marine Wildlife Data
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -251,10 +270,18 @@ const toggleDropdown = (dropdownName) => {
               Profile
             </DropdownLink>
             <DropdownLink
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+            v-if="user.user_role === 'bpemo_admin'"
+            class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               href="#"
             >
               All Accounts
+            </DropdownLink>
+            <DropdownLink
+            v-if="user.user_role === 'lgu_responder'"
+            class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              href="#"
+            >
+              Barangay Official Accounts
             </DropdownLink>
             <DropdownLink
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
@@ -302,6 +329,7 @@ const toggleDropdown = (dropdownName) => {
             </div>
         </header>
     <main>
+        <p class="text-center">Welcome {{ user.first_name  }} {{ user.last_name }}</p>
         <slot />
     </main>
     </div>
