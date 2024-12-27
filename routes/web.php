@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BarangayOfficialDashboardController;
+use App\Http\Controllers\BpemoAdmin\ManageAccountsController;
 use App\Http\Controllers\BpemoAdminDashboardController;
 use App\Http\Controllers\BpemoStaffDashboardController;
 use App\Http\Controllers\LguResponderDashboardController;
@@ -34,9 +35,18 @@ Route::get('/dashboard', function () {
 
 // Role-specific dashboards
 Route::middleware(['auth'])->group(function () {
-    Route::middleware('role:bpemo_admin')->group(function () {
-        Route::get('/bpemo-admin/dashboard', [BpemoAdminDashboardController::class, 'index'])
-            ->name('bpemo.admin.dashboard');
+    //bpemo admin
+    Route::prefix('bpemo-admin')->group(function(){
+        Route::middleware('role:bpemo_admin')->group(function () {
+            //admin dashboard
+            Route::get('/dashboard', [BpemoAdminDashboardController::class, 'index'])
+                ->name('bpemo.admin.dashboard');
+            //admin manage account use case
+            Route::prefix('manage-accounts')->group(function (){
+                Route::get('/{type}', [ManageAccountsController::class, 'index'])
+                ->name('bpemo.admin.manage.account.index');
+            });
+        });
     });
 
     Route::middleware('role:bpemo_staff')->group(function () {

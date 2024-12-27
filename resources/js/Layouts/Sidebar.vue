@@ -12,9 +12,9 @@ const toggleDropdown = (dropdownName) => {
   state.activeDropdown = state.activeDropdown === dropdownName ? null : dropdownName;
 };
 
-const page = usePage()
+const page = usePage();
 
-const user = computed(() => page.props.auth.user)
+const user = computed(() => page.props.auth.user);
 console.log(user);
 </script>
 
@@ -64,13 +64,13 @@ console.log(user);
         <Link v-if="user.user_role==='barangay_official'" :href="route('barangay.official.dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
         <Link v-if="user.user_role==='public_user'" :href="route('public.user.dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
 
-        <!-- Manage Stranded Incident -->
+        <!-- Manage Stranded Incident for all type of users but different capabilities within the page -->
         <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Manage Stranded Incident</Link>
 
-        <!-- Explore Marine Wildlife Species -->
+        <!-- Explore Marine Wildlife Species for all type of users -->
         <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Explore Marine Wildlife Species</Link>
 
-        <!-- Manage Species Record Dropdown -->
+        <!-- Manage Species Record Dropdown for BPEMO admin only -->
         <div v-if="user.user_role==='bpemo_admin'" class="relative">
           <button
             @click="toggleDropdown('manageSpeciesRecord')"
@@ -116,7 +116,7 @@ console.log(user);
           </div>
         </div>
 
-        <!-- Manage Guidelines Dropdown -->
+        <!-- Manage Guidelines Dropdown for BPEMO admin only -->
         <div v-if="user.user_role==='bpemo_admin'" class="relative">
           <button
             @click="toggleDropdown('manageGuidelines')"
@@ -162,7 +162,7 @@ console.log(user);
           </div>
         </div>
 
-        <!--  Guidelines for LGU responder, barangay official and public user -->
+        <!--  View guidelines for LGU responder, barangay official and public user -->
         <Link
         v-if="user.user_role==='lgu_responder' || user.user_role==='barangay_official' || user.user_role==='public_user'"
         class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
@@ -194,7 +194,7 @@ console.log(user);
               />
             </svg>
           </button>
-
+          <!-- For both BPEMO administrator and admin only -->
           <div
             v-if="state.activeDropdown === 'generateReport'"
             class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
@@ -263,19 +263,52 @@ console.log(user);
             v-if="state.activeDropdown === 'manageAccount'"
             class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
           >
+            <!-- Manage Profile for all user roles -->
             <DropdownLink
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('profile.edit')"
             >
               Profile
             </DropdownLink>
+
+            <!-- Manage All Accounts in the system for Administrator accounts -->
             <DropdownLink
             v-if="user.user_role === 'bpemo_admin'"
             class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-              href="#"
+            :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_admin'})"
             >
-              All Accounts
+              BPEMO Administrator Accounts
             </DropdownLink>
+            <DropdownLink
+            v-if="user.user_role === 'bpemo_admin'"
+            class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_staff'})"
+            >
+              BPEMO Staff Accounts
+            </DropdownLink>
+            <DropdownLink
+            v-if="user.user_role === 'bpemo_admin'"
+            class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'lgu_responder'})"
+            >
+              LGU Responder Accounts
+            </DropdownLink>
+            <DropdownLink
+            v-if="user.user_role === 'bpemo_admin'"
+            class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'barangay_official'})"
+            >
+              Barangay Official Accounts
+            </DropdownLink>
+            <DropdownLink
+            v-if="user.user_role === 'bpemo_admin'"
+            class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'public_user'})"
+            >
+              Public User Accounts
+            </DropdownLink>
+
+            <!-- Manage Barangay Offical Accounts for LGU Responder user-->
             <DropdownLink
             v-if="user.user_role === 'lgu_responder'"
             class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
@@ -283,8 +316,9 @@ console.log(user);
             >
               Barangay Official Accounts
             </DropdownLink>
+            <!-- Log out functionality for all users (built in laravel inertia)-->
             <DropdownLink
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+            class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('logout')"
               method="post" as="button"
             >
@@ -297,7 +331,7 @@ console.log(user);
     </div>
 
     <!-- Page Content -->
-    <div>
+    <div class="flex-grow overflow-y-auto">
         <header>
             <!--
             <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -329,7 +363,6 @@ console.log(user);
             </div>
         </header>
     <main>
-        <p class="text-center">Welcome {{ user.first_name  }} {{ user.last_name }}</p>
         <slot />
     </main>
     </div>
