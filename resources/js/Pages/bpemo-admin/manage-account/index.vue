@@ -86,6 +86,7 @@ const createUser = () => {
                             <th class="px-4 py-2 text-left border border-gray-300">ID</th>
                             <th class="px-4 py-2 text-left border border-gray-300">Name</th>
                             <th class="px-4 py-2 text-left border border-gray-300">Email</th>
+                            <th v-if="type !== 'public_user'" class="px-4 py-2 text-left border border-gray-300">Position</th>
                             <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
                         </tr>
                     </thead>
@@ -94,6 +95,7 @@ const createUser = () => {
                             <td class="px-4 py-2 border border-gray-300">{{ user.id }}</td>
                             <td class="px-4 py-2 border border-gray-300">{{ user.first_name }} {{ user.last_name }}</td>
                             <td class="px-4 py-2 border border-gray-300">{{ user.email }}</td>
+                            <td v-if="type !== 'public_user'" class="px-4 py-2 border border-gray-300">{{ user.position }}</td>
                             <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
                                 <button class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900">
                                     View

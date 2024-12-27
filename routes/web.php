@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayOfficialDashboardController;
 use App\Http\Controllers\BpemoAdmin\ManageAccountsController;
 use App\Http\Controllers\BpemoAdminDashboardController;
 use App\Http\Controllers\BpemoStaffDashboardController;
 use App\Http\Controllers\LguResponderDashboardController;
+use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicUserDashboardController;
 use Illuminate\Foundation\Application;
@@ -74,6 +76,10 @@ Route::middleware(['auth'])->group(function () {
             ->name('public.user.dashboard');
     });
 });
+
+//barangay and municipality sample fetching of data
+Route::get('/municipalities', [MunicipalityController::class, 'index']);
+Route::get('/barangays', [BarangayController::class, 'index']);
 
 // Unauthorized route for role mismatch
 Route::get('/unauthorized', function () {

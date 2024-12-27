@@ -56,9 +56,9 @@ class ManageAccountsController extends Controller
             'contact_number' => 'nullable|string|min:11|max:15',
             'birthdate' => 'required|date',
             'sex' => 'required|in:male,female,other',
-            'position' => 'nullable|string|max:255',
-            'municipality_id' => 'nullable|integer|exists:municipalities,id',
-            'barangay_id' => 'nullable|integer|exists:barangays,id',
+            'position' => 'required|string|max:100',
+            'municipality_id' => 'required|integer|exists:municipalities,id',
+            'barangay_id' => 'required|integer|exists:barangays,id',
         ]);
 
         // Create the user with all fields

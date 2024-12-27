@@ -5,7 +5,20 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+
+const municipalities = ref([]);
+const barangays = ref([]);
+
+onMounted(async () => {
+    const response = await fetch('/municipalities');
+    municipalities.value = await response.json();
+});
+
+const fetchBarangays = async (municipalityId) => {
+    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
+    barangays.value = await response.json();
+};
 
 const props = defineProps({
     type: String,
@@ -253,22 +266,59 @@ const allowOnlyNumbers = (event) => {
                     <InputError class="mt-2" :message="form.errors.position" />
                 </div>
 
-                    <div class="mt-4 flex items-center justify-end">
-                        <Link
-                            :href="route('bpemo.admin.manage.account.create.page', {type: props.type})"
-                            class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                        >
-                            Cancel?
-                        </Link>
+                <div>
+                    <InputLabel for="municipality_id" value="Municipality" />
 
-                        <PrimaryButton
-                            class="ms-4"
-                            :class="{ 'opacity-25': form.processing }"
-                            :disabled="form.processing"
-                        >
-                            Create
-                        </PrimaryButton>
-                    </div>
+                    <select
+                        id="municipality_id"
+                        class="mt-1 block w-full"
+                        v-model="form.municipality_id"
+                        @change="fetchBarangays(form.municipality_id)"
+                        required
+                    >
+                        <option value="" disabled>Select a municipality</option>
+                        <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                            {{ municipality.name }}
+                        </option>
+                    </select>
+
+                    <InputError class="mt-2" :message="form.errors.municipality_id" />
+                </div>
+
+                <div>
+                    <InputLabel for="barangay_id" value="Barangay" />
+
+                    <select
+                        id="barangay_id"
+                        class="mt-1 block w-full"
+                        v-model="form.barangay_id"
+                        required
+                    >
+                        <option value="" disabled>Select a barangay</option>
+                        <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
+                            {{ barangay.name }}
+                        </option>
+                    </select>
+
+                    <InputError class="mt-2" :message="form.errors.barangay_id" />
+                </div>
+
+                <div class="mt-4 flex items-center justify-end">
+                    <Link
+                        :href="route('bpemo.admin.manage.account.create.page', {type: props.type})"
+                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    >
+                        Cancel?
+                    </Link>
+
+                    <PrimaryButton
+                        class="ms-4"
+                        :class="{ 'opacity-25': form.processing }"
+                        :disabled="form.processing"
+                    >
+                        Create
+                    </PrimaryButton>
+                </div>
                 </form>
             </div>
         </div>
