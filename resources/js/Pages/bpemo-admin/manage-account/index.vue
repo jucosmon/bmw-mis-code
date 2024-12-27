@@ -1,5 +1,6 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
+import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/inertia-vue3';
 import { Head } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -29,7 +30,8 @@ const userRole = computed(() => {
 
 const title = computed(() => `Manage Accounts (${userRole.value})`);
 
-const PER_PAGE = 10; // Number of items per page
+//pagination of 123 next
+const PER_PAGE = 5; // Number of items per page
 
 const currentPage = ref(parseInt(page.props.pagination?.current_page, 10) || 1);
 
@@ -46,6 +48,12 @@ const hasMorePages = computed(() => {
 const totalPages = computed(() => {
   return Math.ceil(props.users.length / PER_PAGE);
 });
+
+//button routes
+const createUser = () => {
+    Inertia.get(route('bpemo.admin.manage.account.create.page', { type: props.type }));
+}
+
 </script>
 
 <template>
@@ -61,8 +69,9 @@ const totalPages = computed(() => {
         <div class="container mx-auto px-7 py-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-center">{{ userRole }}s List</h2>
-                <button
+                <button v-if="type !== 'public_user'"
                     type="button"
+                    @click="createUser"
                     class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                     Create

@@ -45,6 +45,11 @@ Route::middleware(['auth'])->group(function () {
             Route::prefix('manage-accounts')->group(function (){
                 Route::get('/{type}', [ManageAccountsController::class, 'index'])
                 ->name('bpemo.admin.manage.account.index');
+                Route::get('/create-page/{type}', [ManageAccountsController::class, 'createPage'])
+                    ->name('bpemo.admin.manage.account.create.page');
+
+                Route::post('/create/{type}', [ManageAccountsController::class, 'create'])
+                    ->name('bpemo.admin.manage.account.create');
             });
         });
     });
