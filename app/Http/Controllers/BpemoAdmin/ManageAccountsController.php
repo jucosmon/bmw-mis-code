@@ -33,6 +33,21 @@ class ManageAccountsController extends Controller
         ]);
     }
 
+    public function view($user_id)
+    {
+        // Fetch the user by ID
+        $user = User::find($user_id);
+
+        // Check if user exists
+        if (!$user) {
+            return redirect()->route('bpemo.admin.manage.account.index')->with('error', 'User  not found.');
+        }
+
+        // Return the view with user data
+        return Inertia::render('bpemo-admin/manage-account/View', ['user' => $user ]);
+    }
+
+
     public function createPage($type){
         $validRoles = ['bpemo_admin', 'bpemo_staff', 'lgu_responder', 'barangay_official'];
 

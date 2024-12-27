@@ -52,6 +52,8 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::post('/create/{type}', [ManageAccountsController::class, 'create'])
                     ->name('bpemo.admin.manage.account.create');
+                Route::get('/view/{user_id}', [ManageAccountsController::class, 'view'])->name('bpemo.admin.manage.account.view');
+
             });
         });
     });

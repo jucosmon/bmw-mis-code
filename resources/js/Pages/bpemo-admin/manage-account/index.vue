@@ -53,7 +53,9 @@ const totalPages = computed(() => {
 const createUser = () => {
     Inertia.get(route('bpemo.admin.manage.account.create.page', { type: props.type }));
 }
-
+const viewUser = (user_id)=> {
+    Inertia.visit(route('bpemo.admin.manage.account.view', {user_id: user_id}));
+}
 </script>
 
 <template>
@@ -97,7 +99,10 @@ const createUser = () => {
                             <td class="px-4 py-2 border border-gray-300">{{ user.email }}</td>
                             <td v-if="type !== 'public_user'" class="px-4 py-2 border border-gray-300">{{ user.position }}</td>
                             <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
-                                <button class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900">
+                                <button
+                                class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900"
+                                @click="viewUser (user.id)"
+                                >
                                     View
                                 </button>
                             </td>
