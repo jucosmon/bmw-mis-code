@@ -1,6 +1,7 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Link } from '@inertiajs/vue3';
+import { Inertia } from '@inertiajs/inertia';
+import { Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 
@@ -58,9 +59,19 @@ onMounted(async () => {
         console.error('Error fetching data:', error);
     }
 });
+
+const updateUser = (user_id)=> {
+    Inertia.visit(route('bpemo.admin.manage.account.update.page', {
+        user_id: user_id,
+        type: props.user.user_role
+        })
+    );
+}
+
 </script>
 
 <template>
+    <Head title="View User Account"/>
     <Sidebar>
         <template #header>
             <div>
@@ -145,6 +156,8 @@ onMounted(async () => {
                     </button>
                     <button
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg transition"
+                        @click="updateUser (props.user.id)"
+
                     >
                         Update Account
                     </button>

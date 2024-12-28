@@ -9,25 +9,33 @@ import { computed, onMounted, ref } from 'vue';
 
 const municipalities = ref([]);
 const barangays = ref([]);
+const props = defineProps({
+    user:  {
+        type: Object,
+        required: true
+    }
+});
 
 onMounted(async () => {
     const response = await fetch('/municipalities');
     municipalities.value = await response.json();
+
+    // Fetch barangays for the user's municipality
+    if (props.user.municipality_id) {
+        await fetchBarangays(); // This will populate the barangays
+    }
 });
 
 // Fetch barangays based on selected municipality
-const fetchBarangays = async (municipalityId) => {
+const fetchBarangays = async (municipalityId = props.user.municipality_id) => {
+    if (!municipalityId) return; // Prevent unnecessary fetch
     const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
     barangays.value = await response.json();
 };
 
-const props = defineProps({
-    type: String,
-    user: Object, // Assuming user data is passed as a prop
-});
 
 const userRole = computed(() => {
-  switch (props.type) {
+  switch (props.user.user_role) {
     case 'bpemo_admin':
       return 'BPEMO Administrator';
     case 'bpemo_staff':
@@ -49,32 +57,33 @@ const form = useForm({
     last_name: props.user.last_name || '',
     email: props.user.email || '',
     contact_number: props.user.contact_number || '',
-    password: '',
-    password_confirmation: '',
     birthdate: props.user.birthdate || '',
     sex: props.user.sex || '',
     position: props.user.position || '',
+    is_active: typeof props.user.is_active === 'boolean' ? props.user.is_active : false,
     municipality_id: props.user.municipality_id || '',
     barangay_id: props.user.barangay_id || ''
 });
 
-const showPassword = ref(false);
-
+const formErrors = ref(null);
 const submit = () => {
     if (form.contact_number.length < 11) {
         alert("Contact number must be at least 11 digits long.");
         return; // Prevent form submission
     }
 
-    form.put(route('bpemo.admin.manage.account.update', { id: props.user.id, type: props.type }), {
+    form.put(route('bpemo.admin.manage.account.update', {
+        user_id: props.user.id,
+        type: props.user.user_role
+    }), {
         onSuccess: () => {
-            formErrors.value = null; // Clear errors on successful submission
+            formErrors.value = null;
         },
         onError: (errors) => {
-            formErrors.value = errors; // Set errors on failed submission
+            formErrors.value = errors;
         },
-        onFinish: () => form.reset('password', 'password_confirmation'), // Reset password fields after submission
     });
+
 };
 
 const allowOnlyNumbers = (event) => {
@@ -95,7 +104,7 @@ const allowOnlyNumbers = (event) => {
         <template #header>
             <div>
                 <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-                    <Link :href="route('bpemo.admin.manage.account.index', {type: props.type})" class="flex items-center">
+                    <Link :href="route('bpemo.admin.manage.account.view', {user_id: props.user.id})" class="flex items-center">
                         Back
                     </Link>
                 </button>
@@ -156,65 +165,47 @@ const allowOnlyNumbers = (event) => {
                             </select>
                             <InputError class="mt-2" :message="form.errors.sex" />
                         </div>
-                    </div>
 
-                    <!-- Position and Location -->
-                    <div class="space-y-6">
                         <div>
                             <InputLabel for="position" value="User's Position" />
                             <TextInput id="position" type="text" v-model="form.position" required class="w-full" />
                             <InputError class="mt-2" :message="form.errors.position" />
                         </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div>
-                                <InputLabel for="municipality_id" value="Municipality" />
-                                <select id="municipality_id" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="" disabled>Select a municipality</option>
-                                    <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
-                                        {{ municipality.name }}
-                                    </option>
-                                </select>
-                                <InputError class="mt-2" :message="form.errors.municipality_id" />
-                            </div>
-
-                            <div>
-                                <InputLabel for="barangay_id" value="Barangay" />
-                                <select id="barangay_id" v-model="form.barangay_id" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="" disabled>Select a barangay</option>
-                                    <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
-                                        {{ barangay.name }}
-                                    </option>
-                                </select>
-                                <InputError class="mt-2" :message="form.errors.barangay_id" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Password Fields -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                            <InputLabel for="password" value="Password" />
-                            <TextInput id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.password" />
+                            <InputLabel for="is_active" :value="is_active ? 'Active' : 'Inactive'" />
+                            <select id="is_active" v-model="form.is_active" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled>Select user's is_active</option>
+                                <option :value="true">Active</option>
+                                <option :value="false">Inactive</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.is_active" />
+                        </div>
+                        <div>
+                            <InputLabel for="municipality_id" value="Municipality" />
+                            <select id="municipality_id" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled>Select a municipality</option>
+                                <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                                    {{ municipality.name }}
+                                </option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.municipality_id" />
                         </div>
 
                         <div>
-                            <InputLabel for="password_confirmation" value="Confirm Password" />
-                            <TextInput id="password_confirmation" :type="showPassword ? 'text' : 'password'" v-model="form.password_confirmation" class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.password_confirmation" />
+                            <InputLabel for="barangay_id" value="Barangay" />
+                            <select id="barangay_id" v-model="form.barangay_id" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled>Select a barangay</option>
+                                <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
+                                    {{ barangay.name }}
+                                </option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.barangay_id" />
                         </div>
-                    </div>
-
-                    <!-- Show Password Checkbox -->
-                    <div class="flex items-center mt-4">
-                        <input id="show-password" type="checkbox" v-model="showPassword" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                        <label for="show-password" class="ml-2 text-sm text-gray-600">Show Password</label>
                     </div>
 
                     <!-- Submit and Cancel Buttons -->
                     <div class="flex items-center justify-between mt-6">
-                        <Link :href="route('bpemo.admin.manage.account.index', {type: props.type})" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
+                        <Link :href="route('bpemo.admin.manage.account.view', {user_id: props.user.id})" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
                         <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900">
                             Update Account
                         </PrimaryButton>

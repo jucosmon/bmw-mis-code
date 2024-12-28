@@ -100,34 +100,41 @@ class ManageAccountsController extends Controller
     }
 
     //function to navigate to the upate page
-    public function updatePage($user_id, $type){
+    public function updatePage($type, $user_id){
         $validRoles = ['public_user', 'bpemo_staff', 'lgu_responder', 'barangay_official'];
 
         if (!in_array($type, $validRoles)) {
             abort(404, 'Invalid user role');
         }
 
+        // Fetch the user by ID
+        $user = User::find($user_id);
+
         return Inertia::render('bpemo-admin/manage-account/Update',[
-            'type' =>$type,
-            'user_id' => $user_id,
+            'user' => $user,
         ]);
     }
 
     //update logic
-    public function update(Request $request, $id)
+    public function update(Request $request, $type, $user_id)
     {
+        $validRoles = ['public_user', 'bpemo_staff', 'lgu_responder', 'barangay_official'];
+
+        if (!in_array($type, $validRoles)) {
+            abort(404, 'Invalid user role');
+        }
         // Validate the incoming request data
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,' . $user_id,
             'contact_number' => 'required|string|min:11',
             'birthdate' => 'required|date',
             'sex' => 'required|in:male,female,other',
             'position' => 'required|string|max:255',
             'municipality_id' => 'required|exists:municipalities,id',
             'barangay_id' => 'required|exists:barangays,id',
-            'password' => 'nullable|string|min:8|confirmed',  // Only required if updating password
+            'is_active' => 'required|boolean'
         ]);
 
         // If validation fails, return with error messages
@@ -136,7 +143,7 @@ class ManageAccountsController extends Controller
         }
 
         // Find the user by ID
-        $user = User::findOrFail($id);
+        $user = User::findOrFail($user_id);
 
         // Check and update only the fields that have changed
         if ($request->has('first_name') && $user->first_name !== $request->first_name) {
@@ -175,18 +182,20 @@ class ManageAccountsController extends Controller
             $user->barangay_id = $request->barangay_id;
         }
 
-        // If the password is provided and it has changed, hash and update it
-        if ($request->has('password') && !empty($request->password) && !Hash::check($request->password, $user->password)) {
-            $user->password = Hash::make($request->password);
+        if ($request->has('is_active') && $user->is_active !== $request->is_active) {
+            $user->is_active = $request->is_active;
         }
 
         // Save the updated user data only if there are changes
         if ($user->isDirty()) {
             $user->save();
+        }else{
+            return redirect()->back()->withErrors('No changes')->withInput();
+
         }
 
         // Redirect back with success message
-        return redirect()->route('bpemo.admin.manage.account.index', ['type' => $request->type])
+        return redirect()->route('bpemo.admin.manage.account.view', ['user_id' => $user->id])
                         ->with('success', 'User account updated successfully.');
     }
 

@@ -47,12 +47,20 @@ Route::middleware(['auth'])->group(function () {
             Route::prefix('manage-accounts')->group(function (){
                 Route::get('/{type}', [ManageAccountsController::class, 'index'])
                 ->name('bpemo.admin.manage.account.index');
+                //creating user
                 Route::get('/create-page/{type}', [ManageAccountsController::class, 'createPage'])
                     ->name('bpemo.admin.manage.account.create.page');
-
                 Route::post('/create/{type}', [ManageAccountsController::class, 'create'])
                     ->name('bpemo.admin.manage.account.create');
-                Route::get('/view/{user_id}', [ManageAccountsController::class, 'view'])->name('bpemo.admin.manage.account.view');
+                //viewing user info
+                Route::get('/view/{user_id}', [ManageAccountsController::class, 'view'])
+                    ->name('bpemo.admin.manage.account.view');
+                //updating user info
+                Route::get('/update-page/{type}/{user_id}', [ManageAccountsController::class, 'updatePage'])
+                    ->name('bpemo.admin.manage.account.update.page');
+                Route::put('/update/{type}/{user_id}', [ManageAccountsController::class, 'update'])
+                    ->name('bpemo.admin.manage.account.update');
+                //disabling user account
 
             });
         });
