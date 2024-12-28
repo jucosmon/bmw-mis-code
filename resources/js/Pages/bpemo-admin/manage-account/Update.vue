@@ -15,6 +15,7 @@ onMounted(async () => {
     municipalities.value = await response.json();
 });
 
+// Fetch barangays based on selected municipality
 const fetchBarangays = async (municipalityId) => {
     const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
     barangays.value = await response.json();
@@ -22,6 +23,7 @@ const fetchBarangays = async (municipalityId) => {
 
 const props = defineProps({
     type: String,
+    user: Object, // Assuming user data is passed as a prop
 });
 
 const userRole = computed(() => {
@@ -41,45 +43,41 @@ const userRole = computed(() => {
   }
 });
 
+// Initialize form with existing user data for updating
 const form = useForm({
-    first_name: '',
-    last_name: '',
-    email: '',
-    contact_number:'',
+    first_name: props.user.first_name || '',
+    last_name: props.user.last_name || '',
+    email: props.user.email || '',
+    contact_number: props.user.contact_number || '',
     password: '',
     password_confirmation: '',
-    birthdate: '',
-    sex:'',
-    position:'',
-    municipality_id: '',
-    barangay_id: ''
+    birthdate: props.user.birthdate || '',
+    sex: props.user.sex || '',
+    position: props.user.position || '',
+    municipality_id: props.user.municipality_id || '',
+    barangay_id: props.user.barangay_id || ''
 });
 
-// State for the "Show Password" checkbox
 const showPassword = ref(false);
 
 const submit = () => {
-    // Check if contact number is at least 11 characters
     if (form.contact_number.length < 11) {
-        // Optionally, set an error message or handle it as needed
         alert("Contact number must be at least 11 digits long.");
         return; // Prevent form submission
     }
 
-    form.post(route('bpemo.admin.manage.account.create',{type: props.type}), {
+    form.put(route('bpemo.admin.manage.account.update', { id: props.user.id, type: props.type }), {
         onSuccess: () => {
             formErrors.value = null; // Clear errors on successful submission
         },
         onError: (errors) => {
             formErrors.value = errors; // Set errors on failed submission
         },
-        onFinish: () => form.reset('password', 'password_confirmation'), // Reset the entire form
+        onFinish: () => form.reset('password', 'password_confirmation'), // Reset password fields after submission
     });
-
 };
 
 const allowOnlyNumbers = (event) => {
-    // Allow only numbers (0-9), Backspace, Tab, and Arrow keys
     const key = event.key;
     const isNumber = /^[0-9]$/.test(key);
     const isControlKey = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(key);
@@ -91,7 +89,7 @@ const allowOnlyNumbers = (event) => {
 </script>
 
 <template>
-    <Head title="Create Account" />
+    <Head title="Update Account" />
 
     <Sidebar>
         <template #header>
@@ -105,7 +103,7 @@ const allowOnlyNumbers = (event) => {
         </template>
 
         <div class="container mx-auto px-4 py-8">
-            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Create an Account ({{ userRole }})</h2>
+            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Account ({{ userRole }})</h2>
 
             <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
                 <form @submit.prevent="submit" class="space-y-6">
@@ -197,13 +195,13 @@ const allowOnlyNumbers = (event) => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <InputLabel for="password" value="Password" />
-                            <TextInput id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" required class="w-full" />
+                            <TextInput id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" class="w-full" />
                             <InputError class="mt-2" :message="form.errors.password" />
                         </div>
 
                         <div>
                             <InputLabel for="password_confirmation" value="Confirm Password" />
-                            <TextInput id="password_confirmation" :type="showPassword ? 'text' : 'password'" v-model="form.password_confirmation" required class="w-full" />
+                            <TextInput id="password_confirmation" :type="showPassword ? 'text' : 'password'" v-model="form.password_confirmation" class="w-full" />
                             <InputError class="mt-2" :message="form.errors.password_confirmation" />
                         </div>
                     </div>
@@ -218,7 +216,7 @@ const allowOnlyNumbers = (event) => {
                     <div class="flex items-center justify-between mt-6">
                         <Link :href="route('bpemo.admin.manage.account.index', {type: props.type})" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
                         <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900">
-                            Create Account
+                            Update Account
                         </PrimaryButton>
                     </div>
                 </form>
@@ -226,5 +224,3 @@ const allowOnlyNumbers = (event) => {
         </div>
     </Sidebar>
 </template>
-
-
