@@ -1,7 +1,10 @@
 <script setup>
+import DangerButton from '@/Components/DangerButton.vue';
+import Modal from '@/Components/Modal.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 
@@ -68,6 +71,35 @@ const updateUser = (user_id)=> {
     );
 }
 
+//disable user modal
+
+const showConfirmDisableUserModal = ref(false);
+
+const confirmDisableUser = () => {
+    showConfirmDisableUserModal.value = true;
+}
+const closeModal = () => {
+    showConfirmDisableUserModal.value = false;
+}
+
+// Initialize the form
+const form = useForm({
+    is_active: true, // or any other default values you need
+});
+
+const disableUser = (user_id)=> {
+    form.put(route('bpemo.admin.manage.account.disable', {
+        user_id: props.user.id,
+        type: props.user.user_role
+    }), {
+        onSuccess: () => closeModal(),
+        onError: (errors) => {
+            alert(errors);
+            closeModal();
+
+        },
+    });
+}
 </script>
 
 <template>
@@ -148,9 +180,26 @@ const updateUser = (user_id)=> {
                 <div v-if="props.user.user_role!=='bpemo_admin'" class="flex justify-end space-x-4 mt-8">
                     <button
                         class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 hover:scale-105 hover:shadow-lg transition"
+                        @click="confirmDisableUser"
+                        v-if="props.user.is_active===true"
                     >
                         Disable Account
                     </button>
+                    <Modal
+                        :show="showConfirmDisableUserModal"
+                        @close="closeModal"
+                        v-if="props.user.is_active===true"
+                    >
+                        <div class="p-6">
+                            <h2 class="text-lg font-semibold text-slate-800">Are you sure you want to disable this account?</h2>
+                            <div class="mt-6 space-x-4 flex justify-end">
+                                <SecondaryButton @click="$event => closeModal()">Cancel</SecondaryButton>
+                                <DangerButton @click="$event => disableUser (props.user.id)">Disable</DangerButton>
+                            </div>
+                        </div>
+
+                    </Modal>
+
                     <button
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg transition"
                         @click="updateUser (props.user.id)"

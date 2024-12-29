@@ -199,4 +199,26 @@ class ManageAccountsController extends Controller
                         ->with('success', 'User account updated successfully.');
     }
 
+    public function disable($type, $user_id)
+    {
+        $validRoles = ['public_user', 'bpemo_staff', 'lgu_responder', 'barangay_official'];
+
+        // Check if the user role is valid
+        if (!in_array($type, $validRoles)) {
+            abort(404, 'Invalid user role');
+        }
+
+        // Find the user by ID
+        $user = User::findOrFail($user_id);
+
+        // Mark the user as inactive
+        $user->is_active = false; // Use boolean false instead of string 'false'
+
+        // Save the changes to the user
+        $user->save();
+
+        // Redirect back with success message
+        return redirect()->route('bpemo.admin.manage.account.view', ['user_id' => $user->id])
+                         ->with('success', 'You have successfully disabled the account!');
+    }
 }

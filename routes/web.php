@@ -64,6 +64,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::put('/update/{type}/{user_id}', [ManageAccountsController::class, 'update'])
                     ->name('bpemo.admin.manage.account.update');
                 //disabling user account
+                Route::put('/disable/{type}/{user_id}', [ManageAccountsController::class, 'disable'])
+                    ->name('bpemo.admin.manage.account.disable');
 
             });
         });
