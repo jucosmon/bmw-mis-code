@@ -85,19 +85,22 @@ const closeModal = () => {
 // Initialize the form
 const form = useForm({
     is_active: true, // or any other default values you need
+    password: '',
 });
 
-const disableUser = (user_id)=> {
+const disableUser = ()=> {
     form.put(route('bpemo.admin.manage.account.disable', {
         user_id: props.user.id,
         type: props.user.user_role
     }), {
-        onSuccess: () => closeModal(),
-        onError: (errors) => {
-            alert(errors);
+        onSuccess: () => {
             closeModal();
-
+            form.reset('password'); // Reset password field after success
         },
+        onError: (errors) => {
+            console.error(errors); // Log errors for debugging
+        },
+
     });
 }
 </script>
@@ -185,20 +188,36 @@ const disableUser = (user_id)=> {
                     >
                         Disable Account
                     </button>
-                    <Modal
-                        :show="showConfirmDisableUserModal"
-                        @close="closeModal"
-                        v-if="props.user.is_active===true"
-                    >
+                    <Modal :show="showConfirmDisableUserModal" @close="closeModal" v-if="props.user.is_active===true">
                         <div class="p-6">
-                            <h2 class="text-lg font-semibold text-slate-800">Are you sure you want to disable this account?</h2>
+                            <h2 class="text-lg font-semibold text-slate-800">
+                                Are you sure you want to disable this account?
+                            </h2>
+
+                            <!-- Password Input -->
+                            <div class="mt-4">
+                                <label for="admin-password" class="text-sm text-gray-500 mt-2">
+                                    Please confirm by entering your password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="admin-password"
+                                    v-model="form.password"
+                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    placeholder="Enter your password"
+                                />
+                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                                    {{ form.errors.password }}
+                                </p>
+                            </div>
+                            <!-- Actions -->
                             <div class="mt-6 space-x-4 flex justify-end">
-                                <SecondaryButton @click="$event => closeModal()">Cancel</SecondaryButton>
-                                <DangerButton @click="$event => disableUser (props.user.id)">Disable</DangerButton>
+                                <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
+                                <DangerButton @click="disableUser()">Confirm</DangerButton>
                             </div>
                         </div>
-
                     </Modal>
+
 
                     <button
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg transition"

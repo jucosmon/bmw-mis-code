@@ -5,7 +5,7 @@ namespace App\Http\Controllers\BpemoAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Container\Attributes\Auth;
+use Illuminate\Support\Facades\Auth; // Ensure this is at the top of your file
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -199,7 +199,7 @@ class ManageAccountsController extends Controller
                         ->with('success', 'User account updated successfully.');
     }
 
-    public function disable($type, $user_id)
+    public function disable(Request $request, $type, $user_id)
     {
         $validRoles = ['public_user', 'bpemo_staff', 'lgu_responder', 'barangay_official'];
 
@@ -208,17 +208,34 @@ class ManageAccountsController extends Controller
             abort(404, 'Invalid user role');
         }
 
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
         // Find the user by ID
         $user = User::findOrFail($user_id);
 
+        // Ensure the authenticated user is not disabling their own account
+        if ($user->id === $currentUser->id) {
+            return back()->withErrors(['error' => 'You cannot disable your own account.']);
+        }
+
         // Mark the user as inactive
-        $user->is_active = false; // Use boolean false instead of string 'false'
+        $user->is_active = false;
 
         // Save the changes to the user
         $user->save();
 
         // Redirect back with success message
         return redirect()->route('bpemo.admin.manage.account.view', ['user_id' => $user->id])
-                         ->with('success', 'You have successfully disabled the account!');
+                        ->with('success', 'You have successfully disabled the account!');
     }
+
 }
