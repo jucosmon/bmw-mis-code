@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayOfficialDashboardController;
 use App\Http\Controllers\BpemoAdmin\ManageAccountsController;
@@ -37,6 +38,8 @@ Route::get('/dashboard', function () {
 
 // Role-specific dashboards
 Route::middleware(['auth'])->group(function () {
+    Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
+
     //bpemo admin
     Route::prefix('bpemo-admin')->group(function(){
         Route::middleware('role:bpemo_admin')->group(function () {

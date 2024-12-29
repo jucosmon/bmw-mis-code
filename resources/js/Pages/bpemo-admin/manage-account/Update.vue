@@ -71,8 +71,14 @@ const submit = () => {
         alert("Contact number must be at least 11 digits long.");
         return; // Prevent form submission
     }
+    // Check for changes in the form data compared to props.user
+    const hasChanges = Object.keys(form.data()).some((key) => {
+        return form.data()[key] !== props.user[key];
+    });
 
-    form.put(route('bpemo.admin.manage.account.update', {
+    // Alert based on whether changes were detected
+    if (hasChanges) {
+        form.put(route('bpemo.admin.manage.account.update', {
         user_id: props.user.id,
         type: props.user.user_role
     }), {
@@ -83,7 +89,9 @@ const submit = () => {
             formErrors.value = errors;
         },
     });
-
+    } else {
+        alert('No changes detected in the form.');
+    }
 };
 
 const allowOnlyNumbers = (event) => {
@@ -172,7 +180,7 @@ const allowOnlyNumbers = (event) => {
                             <InputError class="mt-2" :message="form.errors.position" />
                         </div>
                         <div>
-                            <InputLabel for="is_active" :value="is_active ? 'Active' : 'Inactive'" />
+                            <InputLabel for="is_active" :value="props.user.is_active ? 'Active' : 'Inactive'" />
                             <select id="is_active" v-model="form.is_active" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="" disabled>Select user's is_active</option>
                                 <option :value="true">Active</option>

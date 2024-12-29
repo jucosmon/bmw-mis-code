@@ -83,9 +83,6 @@ const updateUser = (user_id)=> {
             </div>
         </template>
         <div class="container mx-auto px-6 pb-6 relative max-w-5xl">
-            <!-- Background Waves -->
-            <div class="absolute inset-0 bg-[url('/images/waves.svg')] bg-cover opacity-10 pointer-events-none"></div>
-
             <!-- Header -->
             <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-lg shadow-lg relative z-10 mb-8">
                 <h1 class="text-3xl font-bold">User Account Information</h1>
