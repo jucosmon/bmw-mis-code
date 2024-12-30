@@ -189,7 +189,7 @@ const form = useForm({
                         @click="updateUser()"
 
                     >
-                        Edit Profile
+                        Update Profile
                     </button>
                 </div>
             </div>
