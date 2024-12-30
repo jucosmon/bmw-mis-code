@@ -266,7 +266,7 @@ console.log(user);
             <!-- Manage Profile for all user roles -->
             <DropdownLink
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-              :href="route('profile.edit')"
+              :href="route('profile.view')"
             >
               Profile
             </DropdownLink>

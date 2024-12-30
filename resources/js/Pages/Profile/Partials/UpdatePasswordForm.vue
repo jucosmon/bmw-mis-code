@@ -6,6 +6,18 @@ import TextInput from '@/Components/TextInput.vue';
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
+// Props
+const props = defineProps({
+    onCancel: {
+        type: Function,
+        default: () => {}, // Default no-op function
+    },
+    onSuccess: {
+        type: Function,
+        required: true, // Parent must provide this function
+    },
+});
+
 const passwordInput = ref(null);
 const currentPasswordInput = ref(null);
 
@@ -18,7 +30,10 @@ const form = useForm({
 const updatePassword = () => {
     form.put(route('password.update'), {
         preserveScroll: true,
-        onSuccess: () => form.reset(),
+        onSuccess: () => {
+            form.reset();  // Reset the form first
+            props.onSuccess(); // Call the onSuccess function passed from the parent
+        },
         onError: () => {
             if (form.errors.password) {
                 form.reset('password', 'password_confirmation');
@@ -100,7 +115,14 @@ const updatePassword = () => {
                 />
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center justify-between gap-4">
+                <button
+                    type="button"
+                    class="text-sm text-gray-500 hover:text-gray-700 underline"
+                    @click="onCancel"
+                >
+                    Cancel
+                </button>
                 <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
 
                 <Transition

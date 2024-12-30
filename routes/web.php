@@ -41,6 +41,7 @@ Route::get('/dashboard', function () {
 // Role-specific capabilities
 Route::middleware(['auth'])->group(function () {
     Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
+    Route::get('/profile/view', [ProfileController::class, 'view'])->name('profile.view');
 
     //bpemo admin
     Route::prefix('bpemo-admin')->group(function(){
