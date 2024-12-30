@@ -3,7 +3,8 @@
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayOfficialDashboardController;
-use App\Http\Controllers\BpemoAdmin\ManageAccountsController;
+use App\Http\Controllers\ManageAccount\BpemoAdminManageAccountsController;
+use App\Http\Controllers\ManageAccount\LguResponderManageAccountController;
 use App\Http\Controllers\BpemoAdminDashboardController;
 use App\Http\Controllers\BpemoStaffDashboardController;
 use App\Http\Controllers\LguResponderDashboardController;
@@ -14,6 +15,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// default from inertia
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -23,72 +25,107 @@ Route::get('/', function () {
     ]);
 });
 
-
-// Profile routes (common for all authenticated users)
+// Profile routes (common for all authenticated users) default from inertia
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+//sample dashboard default from inertia
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
-// Role-specific dashboards
+// Role-specific capabilities
 Route::middleware(['auth'])->group(function () {
     Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
 
     //bpemo admin
     Route::prefix('bpemo-admin')->group(function(){
         Route::middleware('role:bpemo_admin')->group(function () {
-            //admin dashboard
+            // dashboard
             Route::get('/dashboard', [BpemoAdminDashboardController::class, 'index'])
                 ->name('bpemo.admin.dashboard');
-            //admin manage account use case
-            Route::prefix('manage-accounts')->group(function (){
-                Route::get('/{type}', [ManageAccountsController::class, 'index'])
+            // manage account use case
+            Route::prefix('manage-account')->group(function (){
+                Route::get('/{type}', [BpemoAdminManageAccountsController::class, 'index'])
                 ->name('bpemo.admin.manage.account.index');
-                //creating user
-                Route::get('/create-page/{type}', [ManageAccountsController::class, 'createPage'])
+                //creating another user
+                Route::get('/create-page/{type}', [BpemoAdminManageAccountsController::class, 'createPage'])
                     ->name('bpemo.admin.manage.account.create.page');
-                Route::post('/create/{type}', [ManageAccountsController::class, 'create'])
+                Route::post('/create/{type}', [BpemoAdminManageAccountsController::class, 'create'])
                     ->name('bpemo.admin.manage.account.create');
-                //viewing user info
-                Route::get('/view/{user_id}', [ManageAccountsController::class, 'view'])
+                //viewing another user
+                Route::get('/view/{user_id}', [BpemoAdminManageAccountsController::class, 'view'])
                     ->name('bpemo.admin.manage.account.view');
-                //updating user info
-                Route::get('/update-page/{type}/{user_id}', [ManageAccountsController::class, 'updatePage'])
+                //updating another user
+                Route::get('/update-page/{type}/{user_id}', [BpemoAdminManageAccountsController::class, 'updatePage'])
                     ->name('bpemo.admin.manage.account.update.page');
-                Route::put('/update/{type}/{user_id}', [ManageAccountsController::class, 'update'])
+                Route::put('/update/{type}/{user_id}', [BpemoAdminManageAccountsController::class, 'update'])
                     ->name('bpemo.admin.manage.account.update');
-                //disabling user account
-                Route::put('/disable/{type}/{user_id}', [ManageAccountsController::class, 'disable'])
+                //disabling another user
+                Route::put('/disable/{type}/{user_id}', [BpemoAdminManageAccountsController::class, 'disable'])
                     ->name('bpemo.admin.manage.account.disable');
+            });
+        });
+    });
+    //bpemo staff user
+    Route::prefix('bpemo-staff')->group(function(){
+        Route::middleware('role:bpemo_staff')->group(function () {
+            //dashboard
+            Route::get('/dashboard', [BpemoStaffDashboardController::class, 'index'])
+                ->name('bpemo.staff.dashboard');
+        });
+    });
 
+    //lgu responder user
+    Route::prefix('lgu-responder')->group(function(){
+        Route::middleware('role:lgu_responder')->group(function () {
+            //dashboard
+            Route::get('/dashboard', [LguResponderDashboardController::class, 'index'])
+                ->name('lgu.responder.dashboard');
+             // manage account use case
+             Route::prefix('manage-account')->group(function (){
+                Route::get('/barangay-official', [LguResponderManageAccountController::class, 'index'])
+                ->name('lgu.responder.manage.account.index');
+                //creating another user
+                Route::get('/create-page/barangay-official', [LguResponderManageAccountController::class, 'createPage'])
+                    ->name('lgu.responder.manage.account.create.page');
+                Route::post('/create/barangay-official', [LguResponderManageAccountController::class, 'create'])
+                    ->name('lgu.responder.manage.account.create');
+                //viewing another user
+                Route::get('/view/{user_id}', [LguResponderManageAccountController::class, 'view'])
+                    ->name('lgu.responder.manage.account.view');
+                //updating another user
+                Route::get('/update-page/barangay-official/{user_id}', [LguResponderManageAccountController::class, 'updatePage'])
+                    ->name('lgu.responder.manage.account.update.page');
+                Route::put('/update/barangay-official/{user_id}', [LguResponderManageAccountController::class, 'update'])
+                    ->name('lgu.responder.manage.account.update');
+                //disabling another user
+                Route::put('/disable/barangay-official/{user_id}', [LguResponderManageAccountController::class, 'disable'])
+                    ->name('lgu.responder.manage.account.disable');
             });
         });
     });
 
-    Route::middleware('role:bpemo_staff')->group(function () {
-        Route::get('/bpemo-staff/dashboard', [BpemoStaffDashboardController::class, 'index'])
-            ->name('bpemo.staff.dashboard');
+    //barangay official user
+    Route::prefix('barangay-official')->group(function(){
+        Route::middleware('role:barangay_official')->group(function () {
+            //dashboard
+            Route::get('/dashboard', [BarangayOfficialDashboardController::class, 'index'])
+                ->name('barangay.official.dashboard');
+        });
     });
 
-    Route::middleware('role:lgu_responder')->group(function () {
-        Route::get('/lgu-responder/dashboard', [LguResponderDashboardController::class, 'index'])
-            ->name('lgu.responder.dashboard');
-    });
-
-    Route::middleware('role:barangay_official')->group(function () {
-        Route::get('/barangay-official/dashboard', [BarangayOfficialDashboardController::class, 'index'])
-            ->name('barangay.official.dashboard');
-    });
-
-    Route::middleware('role:public_user')->group(function () {
-        Route::get('/public-user/dashboard', [PublicUserDashboardController::class, 'index'])
-            ->name('public.user.dashboard');
+    // public user
+    Route::prefix('public-user')->group(function(){
+        Route::middleware('role:public_user')->group(function () {
+            //dashboard
+            Route::get('/dashboard', [PublicUserDashboardController::class, 'index'])
+                ->name('public.user.dashboard');
+        });
     });
 });
 

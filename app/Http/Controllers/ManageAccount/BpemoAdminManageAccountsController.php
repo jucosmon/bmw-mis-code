@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\BpemoAdmin;
+namespace App\Http\Controllers\ManageAccount;
 
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Auth; // Ensure this is at the top of your file
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +14,7 @@ use Inertia\Inertia;
 use Illuminate\Validation\Rules;
 
 
-class ManageAccountsController extends Controller
+class BpemoAdminManageAccountsController extends Controller
 {
     //
     public function index($type){

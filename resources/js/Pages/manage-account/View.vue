@@ -4,7 +4,7 @@ import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 
@@ -15,20 +15,61 @@ const props = defineProps({
     },
 });
 
+const page = usePage();
+
+// Defined routes based on the current user's role
+const backRoute = computed(() => {
+    if (page.props.auth?.user?.user_role === 'lgu_responder') {
+        return route('lgu.responder.manage.account.index');
+    } else {
+        return route('bpemo.admin.manage.account.index', { type: props.user.user_role });
+    }
+});
+
+const updateRoute = computed(() => {
+    if (page.props.auth?.user?.user_role === 'lgu_responder') {
+        return route('lgu.responder.manage.account.update.page', {
+            user_id: props.user.id,
+            });
+    } else {
+        return route('bpemo.admin.manage.account.update.page', {
+            user_id: props.user.id,
+            type: props.user.user_role
+            });
+    }
+});
+
+const disableRoute = computed(()=>{
+    if (page.props.auth?.user?.user_role === 'lgu_responder') {
+        return route('lgu.responder.manage.account.disable', {
+            user_id: props.user.id,
+            });
+    } else {
+        return route('bpemo.admin.manage.account.disable', {
+            user_id: props.user.id,
+            type: props.user.user_role
+        });
+    }
+})
+
 const userRole = computed(() => {
-    switch (props.user.user_role) {
-        case 'bpemo_admin':
-            return 'BPEMO Administrator';
-        case 'bpemo_staff':
-            return 'BPEMO Staff';
-        case 'lgu_responder':
-            return 'LGU Responder';
-        case 'barangay_official':
-            return 'Barangay Official';
-        case 'public_user':
-            return 'Public User';
-        default:
-            return 'Unknown User';
+    if(page.props.auth.user.user_role ==='lgu_responder'){
+        return 'Barangay Official';
+    } else {
+        switch (props.user.user_role) {
+            case 'bpemo_admin':
+                return 'BPEMO Administrator';
+            case 'bpemo_staff':
+                return 'BPEMO Staff';
+            case 'lgu_responder':
+                return 'LGU Responder';
+            case 'barangay_official':
+                return 'Barangay Official';
+            case 'public_user':
+                return 'Public User';
+            default:
+                return 'Unknown User';
+        }
     }
 });
 
@@ -63,12 +104,8 @@ onMounted(async () => {
     }
 });
 
-const updateUser = (user_id)=> {
-    Inertia.visit(route('bpemo.admin.manage.account.update.page', {
-        user_id: user_id,
-        type: props.user.user_role
-        })
-    );
+const updateUser = ()=> {
+    Inertia.visit(updateRoute.value);
 }
 
 //disable user modal
@@ -89,10 +126,7 @@ const form = useForm({
 });
 
 const disableUser = ()=> {
-    form.put(route('bpemo.admin.manage.account.disable', {
-        user_id: props.user.id,
-        type: props.user.user_role
-    }), {
+    form.put(disableRoute.value, {
         onSuccess: () => {
             closeModal();
             form.reset('password'); // Reset password field after success
@@ -111,7 +145,7 @@ const disableUser = ()=> {
         <template #header>
             <div>
                 <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-                    <Link :href="route('bpemo.admin.manage.account.index', {type: props.user.user_role})" class="flex items-center">
+                    <Link :href="backRoute" class="flex items-center">
                         Back
                     </Link>
                 </button>
@@ -221,7 +255,7 @@ const disableUser = ()=> {
 
                     <button
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg transition"
-                        @click="updateUser (props.user.id)"
+                        @click="updateUser()"
 
                     >
                         Update Account

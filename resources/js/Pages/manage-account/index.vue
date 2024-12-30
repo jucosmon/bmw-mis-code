@@ -1,8 +1,7 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { usePage } from '@inertiajs/inertia-vue3';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -12,22 +11,25 @@ const props = defineProps({
 });
 
 const userRole = computed(() => {
-  switch (props.type) {
-    case 'bpemo_admin':
-      return 'BPEMO Administrator';
-    case 'bpemo_staff':
-      return 'BPEMO Staff';
-    case 'lgu_responder':
-      return 'LGU Responder';
-    case 'barangay_official':
-      return 'Barangay Official';
-    case 'public_user':
-      return 'Public User';
-    default:
-      return 'Unknown User';
-  }
+    if(page.props.auth?.user?.user_role ==='lgu_responder'){
+        return 'Barangay Official';
+    } else {
+        switch (props.type) {
+            case 'bpemo_admin':
+                return 'BPEMO Administrator';
+            case 'bpemo_staff':
+                return 'BPEMO Staff';
+            case 'lgu_responder':
+                return 'LGU Responder';
+            case 'barangay_official':
+                return 'Barangay Official';
+            case 'public_user':
+                return 'Public User';
+            default:
+                return 'Unknown User';
+        }
+    }
 });
-
 const title = computed(() => `Manage Accounts (${userRole.value})`);
 
 //pagination of 123 next
@@ -51,10 +53,18 @@ const totalPages = computed(() => {
 
 //button routes
 const createUser = () => {
-    Inertia.get(route('bpemo.admin.manage.account.create.page', { type: props.type }));
+    if(page.props.auth?.user?.user_role==='lgu_responder'){
+        Inertia.get(route('lgu.responder.manage.account.create.page'));
+    }else {
+        Inertia.get(route('bpemo.admin.manage.account.create.page', { type: props.type }));
+    }
 }
 const viewUser = (user_id)=> {
-    Inertia.visit(route('bpemo.admin.manage.account.view', {user_id: user_id}));
+    if(page.props.auth?.user?.user_role==='lgu_responder'){
+        Inertia.visit(route('lgu.responder.manage.account.view', {user_id: user_id}));
+    }else{
+        Inertia.visit(route('bpemo.admin.manage.account.view', {user_id: user_id}));
+    }
 }
 </script>
 
