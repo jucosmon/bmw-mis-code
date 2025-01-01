@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
@@ -36,6 +37,8 @@ class UserSeeder extends Seeder
             'sex' => 'female',
             'municipality_id' => null,
             'barangay_id' => null,
+            'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
+
         ]);
 
         User::create([
@@ -50,6 +53,8 @@ class UserSeeder extends Seeder
             'sex' => 'female',
             'municipality_id' => null,
             'barangay_id' => null,
+            'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
+
         ]);
 
         // Creating 2 BPEMO Staff users
@@ -65,6 +70,8 @@ class UserSeeder extends Seeder
             'sex' => 'male',
             'municipality_id' => null,
             'barangay_id' => null,
+            'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
+
         ]);
 
         User::create([
@@ -79,6 +86,8 @@ class UserSeeder extends Seeder
             'sex' => 'female',
             'municipality_id' => null,
             'barangay_id' => null,
+            'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
+
         ]);
 
         User::create([
@@ -93,6 +102,8 @@ class UserSeeder extends Seeder
             'sex' => 'male',
             'municipality_id' => null,
             'barangay_id' => null,
+            'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
+
         ]);
 
         // Creating 5 LGU Responders with different municipality IDs
@@ -109,6 +120,8 @@ class UserSeeder extends Seeder
                 'sex' => $i % 2 == 0 ? 'male' : 'female',
                 'municipality_id' => $municipalities[$i],
                 'barangay_id' => null,
+                'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
+
             ]);
 
             // Creating 5 Barangay Officials for each LGU Responder
@@ -125,6 +138,7 @@ class UserSeeder extends Seeder
                     'sex' => $barangay_id % 2 == 0 ? 'male' : 'female',
                     'municipality_id' => $municipalities[$i],
                     'barangay_id' => $barangay_id,
+                    'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
                 ]);
             }
         }
@@ -140,6 +154,8 @@ class UserSeeder extends Seeder
                 'contact_number' => '0912345678' . rand(1000, 9999),
                 'birthdate'=> '2000/07/01',
                 'sex' => $i % 2 == 0 ? 'female' : 'male', // Alternate between Male and Female
+                'email_verified_at' => Carbon::now(), // Automatically verified for testing purposes only
+
             ]);
         }
 
