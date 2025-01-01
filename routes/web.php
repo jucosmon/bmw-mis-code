@@ -12,6 +12,7 @@ use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicUserDashboardController;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -37,9 +38,8 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-
 // Role-specific capabilities
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
     Route::get('/profile/view', [ProfileController::class, 'view'])->name('profile.view');
 
