@@ -94,6 +94,7 @@ class BpemoAdminManageAccountsController extends Controller
 
         // Fire the Registered event
         event(new Registered(user: $user));
+        $user->sendEmailVerificationNotification();
 
         // Redirect to the manage account index with the user type
         return redirect()->route('bpemo.admin.manage.account.index', ['type' => $type]);
