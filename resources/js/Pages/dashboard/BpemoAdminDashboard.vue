@@ -26,7 +26,7 @@ const user = computed(() => page.props.auth.user);
                     class="overflow-hidden bg-white shadow-sm sm:rounded-lg"
                 >
                     <div class="p-6 text-gray-900">
-                        <p class="text-center">Welcome {{ user.first_name  }} {{ user.last_name }}, you've successfully logged</p>
+                        <p class="text-center">Welcome {{ user.first_name  }} {{ user.last_name }}, you've successfully logged in</p>
                     </div>
                 </div>
             </div>

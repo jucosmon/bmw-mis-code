@@ -7,6 +7,7 @@ use App\Http\Controllers\ManageAccount\BpemoAdminManageAccountsController;
 use App\Http\Controllers\ManageAccount\LguResponderManageAccountController;
 use App\Http\Controllers\BpemoAdminDashboardController;
 use App\Http\Controllers\BpemoStaffDashboardController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LguResponderDashboardController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ProfileController;
@@ -33,23 +34,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-//sample dashboard default from inertia
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 // Role-specific capabilities
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
     Route::get('/profile/view', [ProfileController::class, 'view'])->name('profile.view');
-
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     //bpemo admin
     Route::prefix('bpemo-admin')->group(function(){
         Route::middleware('role:bpemo_admin')->group(function () {
-            // dashboard
-            Route::get('/dashboard', [BpemoAdminDashboardController::class, 'index'])
-                ->name('bpemo.admin.dashboard');
-            // manage account use case
             Route::prefix('manage-account')->group(function (){
                 Route::get('/{type}', [BpemoAdminManageAccountsController::class, 'index'])
                 ->name('bpemo.admin.manage.account.index');
@@ -75,18 +67,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //bpemo staff user
     Route::prefix('bpemo-staff')->group(function(){
         Route::middleware('role:bpemo_staff')->group(function () {
-            //dashboard
-            Route::get('/dashboard', [BpemoStaffDashboardController::class, 'index'])
-                ->name('bpemo.staff.dashboard');
+
         });
     });
 
     //lgu responder user
     Route::prefix('lgu-responder')->group(function(){
         Route::middleware('role:lgu_responder')->group(function () {
-            //dashboard
-            Route::get('/dashboard', [LguResponderDashboardController::class, 'index'])
-                ->name('lgu.responder.dashboard');
+
              // manage account use case
              Route::prefix('manage-account')->group(function (){
                 Route::get('/barangay-official', [LguResponderManageAccountController::class, 'index'])
@@ -114,18 +102,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //barangay official user
     Route::prefix('barangay-official')->group(function(){
         Route::middleware('role:barangay_official')->group(function () {
-            //dashboard
-            Route::get('/dashboard', [BarangayOfficialDashboardController::class, 'index'])
-                ->name('barangay.official.dashboard');
+
         });
     });
 
     // public user
     Route::prefix('public-user')->group(function(){
         Route::middleware('role:public_user')->group(function () {
-            //dashboard
-            Route::get('/dashboard', [PublicUserDashboardController::class, 'index'])
-                ->name('public.user.dashboard');
+
         });
     });
 });
