@@ -79,7 +79,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 //updating another user
                 Route::get('/update-page/{id}', [SpeciesController::class, 'updatePage'])
                     ->name('bpemo.admin.manage.species.update.page');
-                Route::put('/update/{id}', [SpeciesController::class, 'update'])
+                Route::post('/update/{id}', [SpeciesController::class, 'update'])
                     ->name('bpemo.admin.manage.species.update');
                 //disabling another user
                 Route::patch('/{category}/archive/{id}', [SpeciesController::class, 'archive'])

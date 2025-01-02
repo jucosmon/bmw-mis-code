@@ -7,6 +7,7 @@ use App\Models\Species;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SpeciesController extends Controller
@@ -101,40 +102,85 @@ class SpeciesController extends Controller
     public function updatePage($id)
     {
         $species = Species::findOrFail($id);
+
+        // Load media files and include public URLs
+        $species->load('mediaFiles');
+        $species->mediaFiles = $species->mediaFiles->map(function ($file) {
+        $file->url = asset('storage/' . $file->path);
+            return $file;
+        });
         return Inertia::render('manage-species/Update', ['species' => $species]);
     }
+        public function update(Request $request, $id)
+        {
+            // Validate incoming data
+            $validated = $request->validate([
+                'name' => 'required|string|max:100',
+                'scientific_name' => 'nullable|string|max:100',
+                'common_name' => 'nullable|string|max:100',
+                'local_name' => 'nullable|string|max:100',
+                'category' => 'required|in:marine_mammals,marine_turtles,sharks_rays',
+                'description' => 'required|string',
+                'conservation_status' => 'required|in:CR,NT,EN,DD,VU,NA,LC',
+                'max_size' => 'nullable|numeric',
+                'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
+                'is_dangerous' => 'nullable|boolean',
+                'is_active' => 'nullable|boolean',
+                'mediaFiles' => 'nullable|array',
+                'mediaFiles.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+                'deletedImages' => 'nullable|array', // Ensure this matches the Vue component
+            ]);
 
-    public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'scientific_name' => 'nullable|string|max:100',
-            'common_name' => 'nullable|string|max:100',
-            'local_name' => 'nullable|string|max:100',
-            'category' => 'required|in:marine_mammals,marine_turtles,sharks_rays',
-            'description' => 'required|string',
-            'conservation_status' => 'required|in:CR,NT,EN,DD,VU,NA,LC',
-            'max_size' => 'nullable|numeric',
-            'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
-            'is_dangerous' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-        ]);
+            // Find species to update
+            $species = Species::findOrFail($id);
+            $species->update($validated);
 
-        $species = Species::findOrFail($id);
-        $species->update($validated);
+            // Handle media file deletion
+            if ($request->has('deletedImages')) {
+                $deletedMediaIds = $request->input('deletedImages'); // Get the IDs of images to delete
+                foreach ($deletedMediaIds as $deletedMediaId) {
+                    $media = MediaFile::find($deletedMediaId);
+                    if ($media) {
+                        // Delete the file from storage
+                        Storage::disk('public')->delete($media->path);
+                        // Delete the media record from the database
+                        $media->delete();
+                    }
+                }
+            }
 
-        return redirect()->route('bpemo.admin.manage.species.view', $id)->with('success', 'Species updated successfully.');
-    }
+            // Handle new media files upload
+            if ($request->hasFile('mediaFiles')) {
+                foreach ($request->file('mediaFiles') as $file) {
+                    if ($file->isValid()) {
+                        $path = $file->store('species', 'public');
+                        $species->mediaFiles()->create([
+                            'path' => $path,
+                            'name' => $file->getClientOriginalName(),
+                            'file_for' => 'species',
+                            'type' => $file->getClientMimeType(),
+                            'species_id' => $species->id,
+                        ]);
+                    }
+                }
+            }
 
-    public function archive(Request $request, $category, $id)
-    {
-        // Validate the request, ensuring the password is provided
-        $request->validate([
-            'password' => 'required|string',
-        ]);
+            // Redirect to the updated species view with a success message
+            return redirect()->route('bpemo.admin.manage.species.view', $id)
+                            ->with('success', 'Species updated successfully.');
+        }
 
-        // Check if the provided password matches the authenticated user's password
-        $currentUser = Auth::user();
+
+
+        public function archive(Request $request, $category, $id)
+        {
+            // Validate the request, ensuring the password is provided
+            $request->validate([
+                'password' => 'required|string',
+            ]);
+
+            // Check if the provided password matches the authenticated user's password
+            $currentUser = Auth::user();
         if (!Hash::check($request->password, $currentUser->password)) {
             return back()->withErrors(['password' => 'The provided password is incorrect.']);
         }

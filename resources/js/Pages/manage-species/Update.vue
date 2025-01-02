@@ -7,7 +7,8 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-const previewImages = ref([]); // Store preview images
+const deletedImages = ref([]);
+const previewNewImages = ref([]);
 
 const props = defineProps({
     species:  {
@@ -15,6 +16,7 @@ const props = defineProps({
         required: true
     }
 });
+const existingImages = ref(props.species.mediaFiles ? props.species.mediaFiles : []);
 
 
 const speciesCategory = computed(() => {
@@ -47,49 +49,85 @@ const form = useForm({
     local_name: props.species.local_name || '',
     category: props.species.category || '',
     description: props.species.description || '',
-    conservation_status: props.species.conservation_status || '',
+    conservation_status: props.species.conservation_status || null,
     max_size: props.species.max_size || '',
     shape: props.species.shape || '',
-    is_dangerous: typeof props.species.is_dangerous === 'boolean' ? props.species.is_active : false,
+    is_dangerous: typeof props.species.is_dangerous === 'boolean' ? props.species.is_dangerous : false,
     is_active: typeof props.species.is_active === 'boolean' ? props.species.is_active : false,
-
+    mediaFiles: [], // This will hold the new files to upload
+    deletedImages: [], // Initialize as an empty array
 });
 
 const formErrors = ref(null);
-const submit = () => {
 
-    const hasChanges = Object.keys(form.data()).some((key) => {
-        return form.data()[key] !== props.species[key];
+const hasChanges = computed(() => {
+    const currentData = form.data();
+
+    // Check if basic fields are different
+    const dataChanged = Object.keys(currentData).some((key) => {
+        // Handle boolean fields carefully
+        if (key === 'is_dangerous' || key === 'is_active') {
+            return currentData[key] !== !!props.species[key]; // Coerce species[key] to boolean
+        }
+
+        // Ignore mediaFiles and deletedImages here as they're checked separately
+        if (key === 'mediaFiles' || key === 'deletedImages') {
+            return false;
+        }
+
+        return currentData[key] !== props.species[key];
     });
 
-    if (hasChanges) {
-        form.put(updateRoute.value, {
-        onSuccess: () => {
-            formErrors.value = null;
-        },
-        onError: (errors) => {
-            formErrors.value = errors;
-        },
-    });
-    } else {
-        alert('No changes detected in the form.');
-    }
-};
+    // Check if media files were added
+    const mediaFilesChanged = form.mediaFiles.length > 0;
 
-const handleFileChange = (event) => {
+    // Check if existing images were deleted
+    const deletedImagesChanged = deletedImages.value.length > 0;
+
+    // Return true if any condition indicates changes
+    return dataChanged || mediaFilesChanged || deletedImagesChanged;
+});
+
+
+const handleNewFileChange = (event) => {
     const files = event.target.files;
-    form.mediaFiles = Array.from(files); // Store the selected files in form.mediaFiles
+    // Append new files to the mediaFiles array without resetting the form
+    form.mediaFiles.push(...Array.from(files));
 
     // Generate previews for each selected image
-    previewImages.value = Array.from(files).map(file => {
+    previewNewImages.value = Array.from(files).map(file => {
         return URL.createObjectURL(file);
     });
 };
 
 // Remove selected preview image
-const removeImage = (index) => {
-    previewImages.value.splice(index, 1);
+const removeNewImage = (index) => {
+    previewNewImages.value.splice(index, 1);
     form.mediaFiles.splice(index, 1);
+};
+
+
+const removeExistingImage = (index) => {
+    const imageToDelete = existingImages.value[index];
+    deletedImages.value.push(imageToDelete.id); // Assuming each image has an `id`
+    existingImages.value.splice(index, 1);
+};
+const submit = () => {
+    if (hasChanges.value) {
+        form.deletedImages = deletedImages.value;
+
+        // Submit the form via Inertia
+        form.post(updateRoute.value, {
+            onSuccess: () => {
+                formErrors.value = null;
+            },
+            onError: (errors) => {
+                formErrors.value = errors;
+            },
+        });
+    } else {
+        alert('No changes detected in the form.');
+    }
 };
 
 </script>
@@ -162,7 +200,6 @@ const removeImage = (index) => {
                                 <option value="marine_turtles">Marine Turtles</option>
                                 <option value="marine_mammals">Marine Mammals</option>
                                 <option value="sharks_rays">Sharks and Rays</option>
-
                             </select>
                             <InputError class="mt-2" :message="form.errors.category" />
                         </div>
@@ -191,7 +228,6 @@ const removeImage = (index) => {
                                 <option value="dolphin-like">Dolphin-like Shape</option>
                                 <option value="dugong-like">Dugong-like Shape</option>
                                 <option value="whale-like">Whale-like Shape</option>
-                                <option value="shark-like">Shark-like Shape</option>
                                 <option value="ray-like">Ray-like Shape</option>
                             </select>
                             <InputError class="mt-2" :message="form.errors.shape" />
@@ -201,7 +237,7 @@ const removeImage = (index) => {
                             <TextInput
                                 id="max_size"
                                 type="number"
-                                step="0.1"
+                                step="0.01"
                                 v-model="form.max_size"
                                 autocomplete="max_size"
                                 class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
@@ -228,15 +264,34 @@ const removeImage = (index) => {
                             </select>
                             <InputError class="mt-2" :message="form.errors.is_active" />
                         </div>
+                         <!-- Existing Image Previews -->
+                         <div class="mt-4 sm:col-span-2 col-span-1">
+                            <InputLabel value="Existing Images" />
+                            <div>
+                                <div v-if="existingImages.length===0" class="flex flex-wrap gap-2">No existing images</div>
+                                <div v-if="existingImages.length" class="flex flex-wrap gap-2">
+                                <div v-for="(image, index) in existingImages" :key="index" class="relative">
+                                    <img :src="image.url" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
+                                    <button
+                                        @click.prevent="removeExistingImage(index)"
+                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Image Upload Field -->
                         <div class="sm:col-span-2 col-span-1">
-                            <InputLabel for="mediaFiles" value="Images" />
+                            <InputLabel for="mediaFiles" value="Upload New Images" />
                             <input
                                 id="mediaFiles"
                                 type="file"
                                 accept="image/*"
                                 multiple
-                                @change="handleFileChange"
+                                @change="handleNewFileChange"
                                 class="file-input w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             />
                             <InputError class="mt-2" :message="form.errors.mediaFiles" />
@@ -245,11 +300,11 @@ const removeImage = (index) => {
                         <!-- Image Previews -->
                         <div class="mt-4 sm:col-span-2 col-span-1">
                             <div>
-                                <div v-if="previewImages.length" class="flex flex-wrap gap-2">
-                                    <div v-for="(image, index) in previewImages" :key="index" class="relative">
+                                <div v-if="previewNewImages.length" class="flex flex-wrap gap-2">
+                                    <div v-for="(image, index) in previewNewImages" :key="index" class="relative">
                                         <img :src="image" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
                                         <button
-                                            @click="removeImage(index)"
+                                            @click="removeNewImage(index)"
                                             class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                                         >
                                             &times;
@@ -258,6 +313,7 @@ const removeImage = (index) => {
                                 </div>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- Submit and Cancel Buttons -->
@@ -272,3 +328,33 @@ const removeImage = (index) => {
         </div>
     </Sidebar>
 </template>
+<style scoped>
+/* Hide the file name (text) but keep the button */
+.file-input {
+  position: relative;
+  overflow: hidden;
+  width: 100%; /* Adjust as needed */
+  height: 40px; /* Adjust height as needed */
+  color: white;
+
+
+}
+
+/* Hide the file name text after file is selected */
+.file-input::-webkit-file-upload-button {
+  visibility: hidden; /* Hides the file name */
+}
+
+/* Optional: custom styling for the file input button */
+.file-input::before {
+  content: "Choose Files"; /* Text for the button */
+  display: inline-block;
+  background-color: indigo; /* Change to your preferred color */
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+</style>
