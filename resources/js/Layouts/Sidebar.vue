@@ -72,7 +72,7 @@ console.log(user);
             @click="toggleDropdown('manageSpeciesRecord')"
             class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
           >
-            <span>Manage Species Record</span>
+            <span>Manage Species</span>
             <svg
               fill="currentColor"
               viewBox="0 0 20 20"
@@ -93,21 +93,21 @@ console.log(user);
           >
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-              href="#"
+              :href="route('bpemo.admin.manage.species.index', {category: 'marine_turtles'})"
             >
               Marine Turtles
             </Link>
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-              href="#"
+              :href="route('bpemo.admin.manage.species.index', {category: 'marine_mammals'})"
             >
               Marine Mammals
             </Link>
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-              href="#"
+              :href="route('bpemo.admin.manage.species.index', {category: 'sharks_rays'})"
             >
-              Shark and Rays
+              Sharks and Rays
             </Link>
           </div>
         </div>

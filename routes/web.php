@@ -12,6 +12,7 @@ use App\Http\Controllers\LguResponderDashboardController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicUserDashboardController;
+use App\Http\Controllers\SpeciesController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -46,21 +47,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::get('/{type}', [BpemoAdminManageAccountsController::class, 'index'])
                 ->name('bpemo.admin.manage.account.index');
                 //creating another user
-                Route::get('/create-page/{type}', [BpemoAdminManageAccountsController::class, 'createPage'])
+                Route::get('/{type}/create-page', [BpemoAdminManageAccountsController::class, 'createPage'])
                     ->name('bpemo.admin.manage.account.create.page');
-                Route::post('/create/{type}', [BpemoAdminManageAccountsController::class, 'create'])
+                Route::post('/{type}/create', [BpemoAdminManageAccountsController::class, 'create'])
                     ->name('bpemo.admin.manage.account.create');
                 //viewing another user
                 Route::get('/view/{user_id}', [BpemoAdminManageAccountsController::class, 'view'])
                     ->name('bpemo.admin.manage.account.view');
                 //updating another user
-                Route::get('/update-page/{type}/{user_id}', [BpemoAdminManageAccountsController::class, 'updatePage'])
+                Route::get('/{type}/update-page/{user_id}', [BpemoAdminManageAccountsController::class, 'updatePage'])
                     ->name('bpemo.admin.manage.account.update.page');
-                Route::put('/update/{type}/{user_id}', [BpemoAdminManageAccountsController::class, 'update'])
+                Route::put('/{type}/update/{user_id}', [BpemoAdminManageAccountsController::class, 'update'])
                     ->name('bpemo.admin.manage.account.update');
                 //disabling another user
-                Route::put('/disable/{type}/{user_id}', [BpemoAdminManageAccountsController::class, 'disable'])
+                Route::put('/{type}/disable/{user_id}', [BpemoAdminManageAccountsController::class, 'disable'])
                     ->name('bpemo.admin.manage.account.disable');
+            });
+
+            // manage species (CRUD Functionality)
+            Route::prefix('manage-species')->group(function (){
+                Route::get('/{category}', [SpeciesController::class, 'index'])
+                ->name('bpemo.admin.manage.species.index');
+                //creating another user
+                Route::get('/{category}/create-page', [SpeciesController::class, 'createPage'])
+                    ->name('bpemo.admin.manage.species.create.page');
+                Route::post('{category}/create', [SpeciesController::class, 'create'])
+                    ->name('bpemo.admin.manage.species.create');
+                //viewing another user
+                Route::get('/view/{id}', [SpeciesController::class, 'view'])
+                    ->name('bpemo.admin.manage.species.view');
+                //updating another user
+                Route::get('/update-page/{id}', [SpeciesController::class, 'updatePage'])
+                    ->name('bpemo.admin.manage.species.update.page');
+                Route::put('/update/{id}', [SpeciesController::class, 'update'])
+                    ->name('bpemo.admin.manage.species.update');
+                //disabling another user
+                Route::patch('/{category}/archive/{id}', [SpeciesController::class, 'archive'])
+                    ->name('bpemo.admin.manage.species.archive');
             });
         });
     });
