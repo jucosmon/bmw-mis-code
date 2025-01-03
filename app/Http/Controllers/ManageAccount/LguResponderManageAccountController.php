@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\ManageAccount;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Notifications\CustomVerifyEmail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,7 +61,6 @@ class LguResponderManageAccountController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'contact_number' => 'nullable|string|min:11|max:15',
             'birthdate' => 'required|date',
             'sex' => 'required|in:male,female,other',
@@ -70,12 +71,14 @@ class LguResponderManageAccountController extends Controller
         // Ensure the authenticated user can only assign their municipality
         $municipalityId = Auth::user()->municipality_id;
 
+        $defaultPassword = Str::random(12);
+
         // Create the user
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($defaultPassword),
             'contact_number' => $request->contact_number,
             'birthdate' => $request->birthdate,
             'sex' => $request->sex,
@@ -85,7 +88,7 @@ class LguResponderManageAccountController extends Controller
             'barangay_id' => $request->barangay_id,
         ]);
 
-        $user->sendEmailVerificationNotification(true);
+        $user->notify(new CustomVerifyEmail($defaultPassword));
 
         return redirect()->route('lgu.responder.manage.account.index', ['type' => 'barangay_official']);
     }

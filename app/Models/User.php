@@ -63,14 +63,5 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function sendEmailVerificationNotification($isFromAdmin = false)
-    {
-        if ($isFromAdmin) {
-            $temporaryPassword = 'password123';
-            $this->notify(new \App\Notifications\CustomVerifyEmail($temporaryPassword));
-        } else {
-            parent::sendEmailVerificationNotification();
-        }
-    }
 
 }

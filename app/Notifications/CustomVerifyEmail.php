@@ -37,14 +37,14 @@ class CustomVerifyEmail extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your New Account is Ready, Please Complete Registration')
-            ->line('A BPEMO admin has created an account for you.')
+            ->subject('BMWMIS New Account Created for you, Please Complete Registration')
+            ->line('Welcome to Bohol Marine Wildlife Management Information System')
             ->line('Here are your login credentials:')
             ->line('Email: ' . $notifiable->email)
             ->line('Password: ' . $this->password)
-            ->line('Please log in to your account and resend the email verification.')
+            ->line('Please log in to your account and resend the email verification to complete registration.')
             ->action('Login', url('/login'))
-            ->line('Once logged in, resend the verification email.')
+            ->line('Once you successfully logged in, go to profile and change your password.')
             ->line('Thank you for being part of our application!');
     }
 

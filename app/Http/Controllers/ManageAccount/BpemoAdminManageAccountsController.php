@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\ManageAccount;
 
+use App\Notifications\CustomVerifyEmail;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -68,7 +70,6 @@ class BpemoAdminManageAccountsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'contact_number' => 'nullable|string|min:11|max:15',
             'birthdate' => 'required|date',
             'sex' => 'required|in:male,female,other',
@@ -77,12 +78,13 @@ class BpemoAdminManageAccountsController extends Controller
             'barangay_id' => 'required|integer|exists:barangays,id',
         ]);
 
+        $defaultPassword = Str::random(12);
         // Create the user with all fields
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($defaultPassword),
             'contact_number' => $request->contact_number,
             'birthdate' => $request->birthdate,
             'sex' => $request->sex,
@@ -92,7 +94,7 @@ class BpemoAdminManageAccountsController extends Controller
             'barangay_id' => $request->barangay_id,
         ]);
 
-        $user->sendEmailVerificationNotification(true);
+        $user->notify(new CustomVerifyEmail($defaultPassword));
 
         // Redirect to the manage account index with the user type
         return redirect()->route('bpemo.admin.manage.account.index', ['type' => $type]);

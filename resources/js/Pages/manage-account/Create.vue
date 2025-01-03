@@ -71,17 +71,12 @@ const form = useForm({
     last_name: '',
     email: '',
     contact_number:'',
-    password: '',
-    password_confirmation: '',
     birthdate: '',
     sex:'',
     position:'',
     municipality_id: '',
     barangay_id: ''
 });
-
-// State for the "Show Password" checkbox
-const showPassword = ref(false);
 
 const submit = () => {
     // Check if contact number is at least 11 characters
@@ -98,7 +93,6 @@ const submit = () => {
         onError: (errors) => {
             formErrors.value = errors; // Set errors on failed submission
         },
-        onFinish: () => form.reset('password', 'password_confirmation'), // Reset the entire form
     });
 
 };
@@ -217,27 +211,6 @@ const allowOnlyNumbers = (event) => {
                                 <InputError class="mt-2" :message="form.errors.barangay_id" />
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Password Fields -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div>
-                            <InputLabel for="password" value="Password" />
-                            <TextInput id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" required class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.password" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="password_confirmation" value="Confirm Password" />
-                            <TextInput id="password_confirmation" :type="showPassword ? 'text' : 'password'" v-model="form.password_confirmation" required class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.password_confirmation" />
-                        </div>
-                    </div>
-
-                    <!-- Show Password Checkbox -->
-                    <div class="flex items-center mt-4">
-                        <input id="show-password" type="checkbox" v-model="showPassword" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                        <label for="show-password" class="ml-2 text-sm text-gray-600">Show Password</label>
                     </div>
 
                     <!-- Submit and Cancel Buttons -->

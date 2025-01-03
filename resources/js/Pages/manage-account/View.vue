@@ -196,6 +196,7 @@ const disableUser = ()=> {
                         Personal Information
                     </h2>
                     <div class="space-y-2">
+                        <p><strong>ID Number:</strong> {{ props.user.id }}</p>
                         <p>
                             <strong>Name:</strong> {{ props.user.first_name }}
                             {{ props.user.last_name }}
