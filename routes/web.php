@@ -36,7 +36,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Role-specific capabilities
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
     Route::get('/profile/view', [ProfileController::class, 'view'])->name('profile.view');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
