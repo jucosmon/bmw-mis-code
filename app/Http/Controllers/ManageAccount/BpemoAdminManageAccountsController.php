@@ -239,4 +239,43 @@ class BpemoAdminManageAccountsController extends Controller
                         ->with('success', 'You have successfully disabled the account!');
     }
 
+    public function activate(Request $request, $type, $user_id)
+    {
+        $validRoles = ['public_user', 'bpemo_staff', 'lgu_responder', 'barangay_official'];
+
+        // Check if the user role is valid
+        if (!in_array($type, $validRoles)) {
+            abort(404, 'Invalid user role');
+        }
+
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        // Find the user by ID
+        $user = User::findOrFail($user_id);
+
+        // Ensure the authenticated user is not disabling their own account
+        if ($user->id === $currentUser->id) {
+            return back()->withErrors(['error' => 'You cannot disable your own account.']);
+        }
+
+        // Mark the user as inactive
+        $user->is_active = true;
+
+        // Save the changes to the user
+        $user->save();
+
+        // Redirect back with success message
+        return redirect()->route('bpemo.admin.manage.account.view', ['user_id' => $user->id])
+                        ->with('success', 'You have successfully activated the account!');
+    }
+
 }

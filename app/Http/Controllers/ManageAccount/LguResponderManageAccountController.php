@@ -161,4 +161,28 @@ class LguResponderManageAccountController extends Controller
         return redirect()->route('lgu.responder.manage.account.view', ['user_id' => $user->id])
                         ->with('success', 'You have successfully disabled the account!');
     }
+
+    public function activate(Request $request, $user_id)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        $user = User::findOrFail($user_id);
+
+        if ($user->municipality_id !== $currentUser->municipality_id || $user->id === $currentUser->id) {
+            return back()->withErrors(['error' => 'Unauthorized action.']);
+        }
+
+        $user->is_active = true;
+        $user->save();
+
+        return redirect()->route('lgu.responder.manage.account.view', ['user_id' => $user->id])
+                        ->with('success', 'You have successfully activated the account!');
+    }
 }

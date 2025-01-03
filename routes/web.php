@@ -62,6 +62,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 //disabling another user
                 Route::put('/{type}/disable/{user_id}', [BpemoAdminManageAccountsController::class, 'disable'])
                     ->name('bpemo.admin.manage.account.disable');
+                //activating another user account
+                Route::put('/{type}/activate/{user_id}', [BpemoAdminManageAccountsController::class, 'activate'])
+                    ->name('bpemo.admin.manage.account.activate');
             });
 
             // manage species (CRUD Functionality)
@@ -118,6 +121,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 //disabling another user
                 Route::put('/disable/barangay-official/{user_id}', [LguResponderManageAccountController::class, 'disable'])
                     ->name('lgu.responder.manage.account.disable');
+                //activating another barangay user account
+                Route::put('/activate/barangay-official/{user_id}', [LguResponderManageAccountController::class, 'activate'])
+                    ->name('lgu.responder.manage.account.activate');
             });
         });
     });

@@ -52,6 +52,19 @@ const disableRoute = computed(()=>{
     }
 })
 
+const activateRoute = computed(()=>{
+    if (page.props.auth?.user?.user_role === 'lgu_responder') {
+        return route('lgu.responder.manage.account.activate', {
+            user_id: props.user.id,
+            });
+    } else {
+        return route('bpemo.admin.manage.account.activate', {
+            user_id: props.user.id,
+            type: props.user.user_role
+        });
+    }
+})
+
 const userRole = computed(() => {
     if(page.props.auth.user.user_role ==='lgu_responder'){
         return 'Barangay Official';
@@ -109,7 +122,6 @@ const updateUser = ()=> {
 }
 
 //disable user modal
-
 const showConfirmDisableUserModal = ref(false);
 
 const confirmDisableUser = () => {
@@ -121,21 +133,32 @@ const closeModal = () => {
 
 // Initialize the form
 const form = useForm({
-    is_active: true, // or any other default values you need
+    is_active: true,
     password: '',
 });
 
 const disableUser = ()=> {
-    form.put(disableRoute.value, {
-        onSuccess: () => {
-            closeModal();
-            form.reset('password'); // Reset password field after success
-        },
-        onError: (errors) => {
-            console.error(errors); // Log errors for debugging
-        },
-
-    });
+    if(props.user.is_active){
+        form.put(disableRoute.value, {
+            onSuccess: () => {
+                closeModal();
+                form.reset('password');
+            },
+            onError: (errors) => {
+                console.error(errors);
+            },
+        });
+    }else{
+        form.put(activateRoute.value, {
+            onSuccess: () => {
+                closeModal();
+                form.reset('password');
+            },
+            onError: (errors) => {
+                console.error(errors);
+            },
+        });
+    }
 }
 </script>
 
@@ -222,10 +245,17 @@ const disableUser = ()=> {
                     >
                         Disable Account
                     </button>
-                    <Modal :show="showConfirmDisableUserModal" @close="closeModal" v-if="props.user.is_active===true">
+                    <button
+                        class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 hover:scale-105 hover:shadow-lg transition"
+                        @click="confirmDisableUser"
+                        v-if="props.user.is_active===false"
+                    >
+                        Activate Account
+                    </button>
+                    <Modal :show="showConfirmDisableUserModal" @close="closeModal">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-slate-800">
-                                Are you sure you want to disable this account?
+                                {{ props.user.is_active ? 'Are you sure you want to disable this account?' : 'Are you sure you want to activate this account?' }}
                             </h2>
 
                             <!-- Password Input -->
