@@ -125,7 +125,6 @@ class SpeciesController extends Controller
                 'max_size' => 'nullable|numeric',
                 'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
                 'is_dangerous' => 'nullable|boolean',
-                'is_active' => 'nullable|boolean',
                 'mediaFiles' => 'nullable|array',
                 'mediaFiles.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'deletedImages' => 'nullable|array', // Ensure this matches the Vue component
@@ -187,6 +186,26 @@ class SpeciesController extends Controller
 
         $species = Species::findOrFail($id);
         $species->is_active = false;
+        $species->save();
+
+        return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])->with('success', 'Species archived successfully.');
+    }
+
+    public function unarchive(Request $request, $category, $id)
+        {
+            // Validate the request, ensuring the password is provided
+            $request->validate([
+                'password' => 'required|string',
+            ]);
+
+            // Check if the provided password matches the authenticated user's password
+            $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        $species = Species::findOrFail($id);
+        $species->is_active = true;
         $species->save();
 
         return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])->with('success', 'Species archived successfully.');

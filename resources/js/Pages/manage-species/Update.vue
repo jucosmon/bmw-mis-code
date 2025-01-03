@@ -53,7 +53,6 @@ const form = useForm({
     max_size: props.species.max_size || '',
     shape: props.species.shape || '',
     is_dangerous: typeof props.species.is_dangerous === 'boolean' ? props.species.is_dangerous : false,
-    is_active: typeof props.species.is_active === 'boolean' ? props.species.is_active : false,
     mediaFiles: [], // This will hold the new files to upload
     deletedImages: [], // Initialize as an empty array
 });
@@ -66,7 +65,7 @@ const hasChanges = computed(() => {
     // Check if basic fields are different
     const dataChanged = Object.keys(currentData).some((key) => {
         // Handle boolean fields carefully
-        if (key === 'is_dangerous' || key === 'is_active') {
+        if (key === 'is_dangerous') {
             return currentData[key] !== !!props.species[key]; // Coerce species[key] to boolean
         }
 
@@ -232,7 +231,17 @@ const submit = () => {
                             </select>
                             <InputError class="mt-2" :message="form.errors.shape" />
                         </div>
+
                         <div>
+                            <InputLabel for="is_dangerous" value="Is this species dangerous?" />
+                            <select id="is_dangerous" v-model="form.is_dangerous" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled>Select an option</option>
+                                <option :value="true">Yes, it is dangerous</option>
+                                <option :value="false">No, it is not dangerous</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.is_dangerous" />
+                        </div>
+                        <div class="sm:col-span-2 col-span-1">
                             <InputLabel for="max_size" value="Maximum Size (in centimeters)" />
                             <TextInput
                                 id="max_size"
@@ -244,25 +253,6 @@ const submit = () => {
                                 placeholder="Enter the maximum size"
                             />
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.max_size" />
-                        </div>
-                        <div>
-                            <InputLabel for="is_dangerous" value="Is this species dangerous?" />
-                            <select id="is_dangerous" v-model="form.is_dangerous" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select an option</option>
-                                <option :value="true">Yes, it is dangerous</option>
-                                <option :value="false">No, it is not dangerous</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.is_dangerous" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="is_active" value="Status" />
-                            <select id="is_active" v-model="form.is_active" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select an option</option>
-                                <option :value="true">Active</option>
-                                <option :value="false">Inactive</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.is_active" />
                         </div>
                          <!-- Existing Image Previews -->
                          <div class="mt-4 sm:col-span-2 col-span-1">

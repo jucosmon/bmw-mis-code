@@ -29,6 +29,13 @@ const archiveRoute = computed(() => {
     });
 });
 
+const unarchiveRoute = computed(() => {
+    return route('bpemo.admin.manage.species.unarchive', {
+        id: props.species.id,
+        category: props.species.category,
+    });
+});
+
 const speciesCategory = computed(() => {
     switch (props.species.category) {
         case 'marine_turtles':
@@ -62,15 +69,28 @@ const form = useForm({
 });
 
 const archiveSpecies = () => {
-    form.patch(archiveRoute.value, {
+    if(props.species.is_active){
+        form.patch(archiveRoute.value, {
         onSuccess: () => {
             closeModal();
             form.reset('password');
-        },
+            },
         onError: (errors) => {
             console.error(errors);
-        },
-    });
+            },
+        });
+    } else {
+        form.patch(unarchiveRoute.value, {
+        onSuccess: () => {
+            closeModal();
+            form.reset('password');
+            },
+        onError: (errors) => {
+            console.error(errors);
+            },
+        });
+    }
+
 };
 </script>
 
@@ -150,11 +170,18 @@ const archiveSpecies = () => {
                     >
                         Archive Species
                     </button>
+                    <button
+                        class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+                        @click="confirmArchiveSpecies"
+                        v-if="props.species.is_active===false"
+                    >
+                        Unarchive Species
+                    </button>
 
                     <Modal :show="showConfirmArchiveModal" @close="closeModal">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-gray-800">
-                                Are you sure you want to archive this species?
+                               {{ props.species.is_active ? 'Are you sure you want to archive this species?' : 'Are you sure you want to unarchive this species?'}}
                             </h2>
                             <div class="mt-4">
                                 <label for="admin-password" class="text-sm text-gray-500">
