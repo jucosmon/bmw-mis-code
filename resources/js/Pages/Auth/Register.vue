@@ -7,6 +7,7 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
+const formErrors = ref([]);
 const form = useForm({
     first_name: '',
     last_name: '',

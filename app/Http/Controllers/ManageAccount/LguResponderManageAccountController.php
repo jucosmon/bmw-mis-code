@@ -85,8 +85,7 @@ class LguResponderManageAccountController extends Controller
             'barangay_id' => $request->barangay_id,
         ]);
 
-        // Fire the Registered event
-        event(new Registered(user: $user));
+        $user->sendEmailVerificationNotification(true);
 
         return redirect()->route('lgu.responder.manage.account.index', ['type' => 'barangay_official']);
     }

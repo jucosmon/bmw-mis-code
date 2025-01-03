@@ -36,7 +36,7 @@ class RegisteredUserController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'contact_number' => 'string|min:11|max:15',
+            'contact_number' => 'string|min:10',
             'birthdate' => 'required|date',
             'sex' => 'required|in:male,female,other',
         ]);
@@ -53,8 +53,6 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
-
-        $user->sendEmailVerificationNotification();
 
         Auth::login($user);
 
