@@ -135,7 +135,6 @@ class BpemoAdminManageAccountsController extends Controller
             'position' => 'required|string|max:255',
             'municipality_id' => 'required|exists:municipalities,id',
             'barangay_id' => 'required|exists:barangays,id',
-            'is_active' => 'required|boolean'
         ]);
 
         // If validation fails, return with error messages
@@ -181,10 +180,6 @@ class BpemoAdminManageAccountsController extends Controller
 
         if ($request->has('barangay_id') && $user->barangay_id !== $request->barangay_id) {
             $user->barangay_id = $request->barangay_id;
-        }
-
-        if ($request->has('is_active') && $user->is_active !== $request->is_active) {
-            $user->is_active = $request->is_active;
         }
 
         // Save the updated user data only if there are changes

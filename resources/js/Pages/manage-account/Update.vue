@@ -87,7 +87,6 @@ const form = useForm({
     birthdate: props.user.birthdate || '',
     sex: props.user.sex || '',
     position: props.user.position || '',
-    is_active: typeof props.user.is_active === 'boolean' ? props.user.is_active : false,
     municipality_id: props.user.municipality_id || '',
     barangay_id: props.user.barangay_id || ''
 });
@@ -199,19 +198,10 @@ const allowOnlyNumbers = (event) => {
                             <InputError class="mt-2" :message="form.errors.sex" />
                         </div>
 
-                        <div>
+                        <div class="sm:col-span-2 col-span-1">
                             <InputLabel for="position" value="User's Position" />
                             <TextInput id="position" type="text" v-model="form.position" required class="w-full" />
                             <InputError class="mt-2" :message="form.errors.position" />
-                        </div>
-                        <div>
-                            <InputLabel for="is_active" :value="props.user.is_active ? 'Active' : 'Inactive'" />
-                            <select id="is_active" v-model="form.is_active" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select user's is_active</option>
-                                <option :value="true">Active</option>
-                                <option :value="false">Inactive</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.is_active" />
                         </div>
                         <div>
                             <InputLabel for="municipality_id" value="Municipality" />

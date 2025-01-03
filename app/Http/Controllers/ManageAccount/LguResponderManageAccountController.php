@@ -116,7 +116,6 @@ class LguResponderManageAccountController extends Controller
             'sex' => 'required|in:male,female,other',
             'position' => 'required|string|max:255',
             'barangay_id' => 'required|exists:barangays,id',
-            'is_active' => 'required|boolean'
         ]);
 
         if ($validator->fails()) {
@@ -131,7 +130,7 @@ class LguResponderManageAccountController extends Controller
 
         $user->update($request->only([
             'first_name', 'last_name', 'email', 'contact_number',
-            'birthdate', 'sex', 'position', 'barangay_id', 'is_active'
+            'birthdate', 'sex', 'position', 'barangay_id'
         ]));
 
         return redirect()->route('lgu.responder.manage.account.view', ['user_id' => $user->id])
