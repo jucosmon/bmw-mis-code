@@ -11,7 +11,7 @@ const props = defineProps({
     message: String,
 });
 
-const speciesCatagory = computed(() => {
+const speciesCategory = computed(() => {
     switch (props.category) {
         case 'marine_turtles':
             return 'Marine Turtles';
@@ -23,39 +23,44 @@ const speciesCatagory = computed(() => {
             return 'Unknown Category';
     }
 });
-const title = computed(() => `Manage Species (${speciesCatagory.value})`);
+const title = computed(() => `Manage Species (${speciesCategory.value})`);
 
-//pagination of 123 next
 const PER_PAGE = 5; // Number of items per page
+const currentPage = ref(1); // Initialize current page
+const filterStatus = ref('active'); // Default filter
 
-const currentPage = ref(parseInt(page.props.pagination?.current_page, 10) || 1);
-
-const Species = computed(() => {
-  const startIndex = (currentPage.value - 1) * PER_PAGE;
-  const endIndex = startIndex + PER_PAGE;
-  return props.species.slice(startIndex, endIndex);
+// Filter species based on the selected status
+const filteredSpecies = computed(() => {
+    if (filterStatus.value === 'active') {
+        return props.species.filter((species) => species.is_active);
+    } else if (filterStatus.value === 'inactive') {
+        return props.species.filter((species) => !species.is_active);
+    } else {
+        return props.species; // 'all'
+    }
 });
 
-const hasMorePages = computed(() => {
-  return props.species.length > PER_PAGE * currentPage.value;
+// Paginate the filtered species
+const paginatedSpecies = computed(() => {
+    const startIndex = (currentPage.value - 1) * PER_PAGE;
+    const endIndex = startIndex + PER_PAGE;
+    return filteredSpecies.value.slice(startIndex, endIndex);
 });
 
-const totalPages = computed(() => {
-  return Math.ceil(props.species.length / PER_PAGE);
-});
+// Update pagination calculations
+const totalPages = computed(() => Math.ceil(filteredSpecies.value.length / PER_PAGE));
 
-//button routes
+const hasMorePages = computed(() => filteredSpecies.value.length > PER_PAGE * currentPage.value);
+
+// Button routes
 const createSpecies = () => {
-    Inertia.get(route('bpemo.admin.manage.species.create.page',
-        { category: props.category }
-    ));
-}
-const viewSpecies = (id)=> {
-    Inertia.visit(route('bpemo.admin.manage.species.view',
-        {id: id}
-    ));
-}
+    Inertia.get(route('bpemo.admin.manage.species.create.page', { category: props.category }));
+};
+const viewSpecies = (id) => {
+    Inertia.visit(route('bpemo.admin.manage.species.view', { id }));
+};
 </script>
+
 
 <template>
     <Head title="Manage Species" />
@@ -70,13 +75,23 @@ const viewSpecies = (id)=> {
         <div class="container mx-auto px-7 py-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-center">{{ speciesCatagory }} List</h2>
-                <button v-if="type !== 'public_user'"
-                    type="button"
-                    @click="createSpecies"
-                    class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                    Create
-                </button>
+                <div class="flex mx-10 gap-4">
+                    <select
+                            v-model="filterStatus"
+                            class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 w-auto pr-8"
+                        >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="all">All</option>
+                        </select>
+                    <button
+                        type="button"
+                        @click="createSpecies"
+                        class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    >
+                        Create
+                    </button>
+                </div>
             </div>
 
             <!-- Responsive Table -->
@@ -91,7 +106,7 @@ const viewSpecies = (id)=> {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="species in Species" :key="species.id">
+                        <tr v-for="species in paginatedSpecies" :key="species.id">
                             <td class="px-4 py-2 border border-gray-300">{{ species.id }}</td>
                             <td class="px-4 py-2 border border-gray-300">{{ species.name }}</td>
                             <td class="px-4 py-2 border border-gray-300"> {{ species.is_active ? 'Active' : 'Inactive' }}</td>

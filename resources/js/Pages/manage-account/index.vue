@@ -37,19 +37,29 @@ const PER_PAGE = 5; // Number of items per page
 
 const currentPage = ref(parseInt(page.props.pagination?.current_page, 10) || 1);
 
+const activeFilter = ref('active'); // Default filter
+
+// Filtered Users
+const filteredUsers = computed(() => {
+    if (activeFilter.value === 'active') {
+        return props.users.filter((user) => user.is_active);
+    } else if (activeFilter.value === 'inactive') {
+        return props.users.filter((user) => !user.is_active);
+    }
+    return props.users; // All users
+});
+
+// Paginated Users
 const paginatedUsers = computed(() => {
-  const startIndex = (currentPage.value - 1) * PER_PAGE;
-  const endIndex = startIndex + PER_PAGE;
-  return props.users.slice(startIndex, endIndex);
+    const startIndex = (currentPage.value - 1) * PER_PAGE;
+    const endIndex = startIndex + PER_PAGE;
+    return filteredUsers.value.slice(startIndex, endIndex);
 });
 
-const hasMorePages = computed(() => {
-  return props.users.length > PER_PAGE * currentPage.value;
-});
+// Update pagination calculations
+const totalPages = computed(() => Math.ceil(filteredUsers.value.length / PER_PAGE));
 
-const totalPages = computed(() => {
-  return Math.ceil(props.users.length / PER_PAGE);
-});
+const hasMorePages = computed(() => filteredUsers.value.length > PER_PAGE * currentPage.value);
 
 //button routes
 const createUser = () => {
@@ -81,13 +91,23 @@ const viewUser = (user_id)=> {
         <div class="container mx-auto px-7 py-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-center">{{ userRole }}s List</h2>
-                <button v-if="type !== 'public_user'"
-                    type="button"
-                    @click="createUser"
-                    class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                    Create
-                </button>
+                <div class="flex mx-10 gap-4">
+                    <select
+                            v-model="activeFilter"
+                            class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 w-auto pr-8"
+                        >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="all">All</option>
+                        </select>
+                    <button v-if="type !== 'public_user'"
+                        type="button"
+                        @click="createUser"
+                        class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    >
+                        Create
+                    </button>
+                </div>
             </div>
 
             <!-- Responsive Table -->
@@ -99,6 +119,7 @@ const viewUser = (user_id)=> {
                             <th class="px-4 py-2 text-left border border-gray-300">Name</th>
                             <th class="px-4 py-2 text-left border border-gray-300">Email</th>
                             <th v-if="type !== 'public_user'" class="px-4 py-2 text-left border border-gray-300">Position</th>
+                            <th class="px-4 py-2 text-left border border-gray-300">Status</th>
                             <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
                         </tr>
                     </thead>
@@ -108,6 +129,7 @@ const viewUser = (user_id)=> {
                             <td class="px-4 py-2 border border-gray-300">{{ user.first_name }} {{ user.last_name }}</td>
                             <td class="px-4 py-2 border border-gray-300">{{ user.email }}</td>
                             <td v-if="type !== 'public_user'" class="px-4 py-2 border border-gray-300">{{ user.position }}</td>
+                            <td class="px-4 py-2 border border-gray-300">{{ user.is_active ? 'Active': 'Inactive' }}</td>
                             <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
                                 <button
                                 class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900"
