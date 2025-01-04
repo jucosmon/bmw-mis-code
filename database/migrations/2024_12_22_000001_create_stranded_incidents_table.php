@@ -18,12 +18,12 @@ return new class extends Migration
             $table->time('time');
             $table->text('species_involved')->nullable(); // Nullable
             $table->unsignedTinyInteger('quantity');
-            $table->string('condition', 30);
+            $table->enum('condition', ['alive', 'dead']);
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
-            $table->string('sea_state', 10);
-            $table->string('weather', 10);
-            $table->string('beach_type', 10);
+            $table->enum('sea_state', ['calm', 'rough', 'moderate'])->nullable();
+            $table->enum('weather', ['sunny', 'cloudy', 'rainy'])->nullable();
+            $table->enum('beach_type', ['mangrove', 'rocky', 'sandy', 'reef'])->nullable();
             $table->text('detailed_location')->nullable(); // Nullable
             $table->text('more_information')->nullable(); // Nullable
             $table->enum('report_status', ['pending', 'verified', 'completed', 'resolved', 'false'])->default('pending');
@@ -31,11 +31,13 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('municipality_id')->nullable(); // Nullable
             $table->unsignedInteger('barangay_id')->nullable(); // Nullable
+            $table->unsignedInteger('user_id')->nullable(); // Nullable
             $table->timestamps();
 
             // Foreign key constraints
             $table->foreign('municipality_id')->references('id')->on('municipalities')->onDelete('set null');
             $table->foreign('barangay_id')->references('id')->on('barangays')->onDelete('set null');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
         });
     }
 

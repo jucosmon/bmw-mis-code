@@ -61,10 +61,16 @@ console.log(user);
         <Link :href="route('dashboard')" class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" active>Dashboard</Link>
 
         <!-- Manage Stranded Incident for all type of users but different capabilities within the page -->
-        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Manage Stranded Incident</Link>
+        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+        :href="route('stranded.incident.index')">
+            Stranded Incident
+        </Link>
+
+        <!-- Manage Sightings -->
+        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Sightings</Link>
 
         <!-- Explore Marine Wildlife Species for all type of users -->
-        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Explore Marine Wildlife Species</Link>
+        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Explore Species</Link>
 
         <!-- Manage Species Record Dropdown for BPEMO admin only -->
         <div v-if="user.user_role==='bpemo_admin'" class="relative">
@@ -165,10 +171,6 @@ console.log(user);
         href="#">
         Guidelines
         </Link>
-
-
-        <!-- Manage Sightings -->
-        <Link class="block px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-transparent rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline" href="#">Manage Sightings</Link>
 
         <!-- Generate Report Dropdown -->
         <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff'" class="relative">

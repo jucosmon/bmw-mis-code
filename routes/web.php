@@ -13,6 +13,7 @@ use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicUserDashboardController;
 use App\Http\Controllers\SpeciesController;
+use App\Http\Controllers\StrandedIncidentController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,12 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
     Route::get('/profile/view', [ProfileController::class, 'view'])->name('profile.view');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    //manage stranded incident use case
+    Route::prefix('stranded-incident')->group(function () {
+        Route::get('/', [StrandedIncidentController::class, 'index'])->name('stranded.incident.index');
+    });
+
     //bpemo admin
     Route::prefix('bpemo-admin')->group(function(){
         Route::middleware('role:bpemo_admin')->group(function () {
