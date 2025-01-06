@@ -44,7 +44,27 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
     //manage stranded incident use case
     Route::prefix('stranded-incident')->group(function () {
+        // index
         Route::get('/', [StrandedIncidentController::class, 'index'])->name('stranded.incident.index');
+        //creating another stranded incident
+        Route::get('/create-page', [StrandedIncidentController::class, 'createPage'])
+        ->name('stranded.incident.createPage');
+        Route::post('create', [StrandedIncidentController::class, 'create'])
+            ->name('stranded.incident.create');
+        //viewing another stranded incident
+        Route::get('/view/{id}', [StrandedIncidentController::class, 'view'])
+            ->name('stranded.incident.view');
+        //updating another stranded incident
+        Route::get('/update-page/{id}', [StrandedIncidentController::class, 'updatePage'])
+            ->name('stranded.incident.update.page');
+        Route::post('/update/{id}', [StrandedIncidentController::class, 'update'])
+            ->name('stranded.incident.update');
+        //archiving another stranded incident
+        Route::patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
+            ->name('stranded.incident.archive');
+        //unarchiving another stranded incident
+        Route::patch('/unarchive/{id}', [StrandedIncidentController::class, 'unarchive'])
+            ->name('stranded.incident.unarchive');
     });
 
     //bpemo admin

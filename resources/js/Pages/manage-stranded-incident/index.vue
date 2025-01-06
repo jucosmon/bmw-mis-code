@@ -36,10 +36,10 @@ const groupedIncidents = computed(() => {
 
 // Button routes
 const createStrandedIncidents = () => {
-    Inertia.get(route('bpemo.admin.manage.strandedIncidents.create.page'));
+    Inertia.get(route('stranded.incident.createPage'));
 };
 const viewStrandedIncidents = (id) => {
-    Inertia.visit(route('bpemo.admin.manage.strandedIncidents.view', { id }));
+    Inertia.visit(route('stranded.incident.view', { id }));
 };
 </script>
 
@@ -86,6 +86,7 @@ const viewStrandedIncidents = (id) => {
                             <tr class="bg-gray-100">
                                 <th class="px-4 py-2 text-left border border-gray-300">ID</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Date & Time</th>
+                                <th class="px-4 py-2 text-left border border-gray-300">Species Involved</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Report Status</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
                             </tr>
@@ -94,6 +95,7 @@ const viewStrandedIncidents = (id) => {
                             <tr v-for="strandedIncidents in groupedIncidents[filterStatus]" :key="strandedIncidents.id">
                                 <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.id }}</td>
                                 <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.date }} - {{ strandedIncidents.time }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.species_involved }}</td>
                                 <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.report_status }}</td>
                                 <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
                                     <button
@@ -124,6 +126,7 @@ const viewStrandedIncidents = (id) => {
                                 <tr class="bg-gray-100">
                                     <th class="px-4 py-2 text-left border border-gray-300">ID</th>
                                     <th class="px-4 py-2 text-left border border-gray-300">Date & Time</th>
+                                    <th class="px-4 py-2 text-left border border-gray-300">Species Involved</th>
                                     <th class="px-4 py-2 text-left border border-gray-300">Report Status</th>
                                     <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
                                 </tr>
@@ -132,6 +135,7 @@ const viewStrandedIncidents = (id) => {
                                 <tr v-for="strandedIncidents in incidents" :key="strandedIncidents.id">
                                     <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.id }}</td>
                                     <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.date }} - {{ strandedIncidents.time }}</td>
+                                    <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.species_involved }}</td>
                                     <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.report_status }}</td>
                                     <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
                                         <button
