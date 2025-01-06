@@ -102,7 +102,6 @@ onMounted(() => {
 
 
 // Use current location
-// Use current location
 const setLocationFromMap = () => {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(

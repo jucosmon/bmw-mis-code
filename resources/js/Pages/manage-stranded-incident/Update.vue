@@ -38,7 +38,6 @@ const fetchBarangays = async (municipalityId = props.strandedIncident.municipali
 
 const existingImages = ref(props.strandedIncident.mediaFiles ? props.strandedIncident.mediaFiles : []);
 
-
 const backRoute = computed(() => {
     return route('stranded.incident.view', {id: props.strandedIncident.id});
 });
