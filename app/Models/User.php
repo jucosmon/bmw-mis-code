@@ -39,6 +39,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function barangays(){
         return $this->belongsTo(Barangay::class, 'barangay_id');
     }
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+    public function user_actions()
+    {
+        return $this->hasMany(UserAction::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

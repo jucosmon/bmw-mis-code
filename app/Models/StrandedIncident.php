@@ -83,6 +83,11 @@ class StrandedIncident extends Model
     {
         return $this->hasMany(MediaFile::class);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
     /**
      * Scope to filter incidents by report status.
      */

@@ -58,7 +58,7 @@ class StrandedIncidentController extends Controller
 
         // Validate the incoming request
         $request->validate([
-            'certainty_level' => 'required|string|max:100',
+            'certainty_level' => 'required|numeric',
             'date' => 'required|date',
             'time' => 'required|date_format:H:i:s',
             'quantity' => 'required|numeric',
@@ -119,13 +119,13 @@ class StrandedIncidentController extends Controller
 
     public function view($id)
     {
-        $strandedIncident = StrandedIncident::with('mediaFiles')->findOrFail($id);
+        $strandedIncident = StrandedIncident::with(['mediaFiles', 'comments.user'])->findOrFail($id);
 
-            // Map media files to include public URLs
-            $strandedIncident->mediaFiles = $strandedIncident->mediaFiles->map(function ($file) {
-                $file->url = asset('storage/' . $file->path);
-                return $file;
-            });
+        // Map media files to include public URLs
+        $strandedIncident->mediaFiles = $strandedIncident->mediaFiles->map(function ($file) {
+            $file->url = asset('storage/' . $file->path);
+            return $file;
+        });
 
         return Inertia::render('manage-stranded-incident/View', ['strandedIncident' => $strandedIncident]);
     }
@@ -146,18 +146,22 @@ class StrandedIncidentController extends Controller
         {
             // Validate incoming data
             $validated = $request->validate([
-                'name' => 'required|string|max:100',
-                'scientific_name' => 'nullable|string|max:100',
-                'common_name' => 'nullable|string|max:100',
-                'local_name' => 'nullable|string|max:100',
-                'category' => 'required|in:marine_mammals,marine_turtles,sharks_rays',
-                'description' => 'required|string',
-                'conservation_status' => 'required|in:CR,NT,EN,DD,VU,NA,LC',
-                'max_size' => 'nullable|numeric',
-                'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
-                'is_dangerous' => 'nullable|boolean',
+                'certainty_level' => 'required|numeric',
+                'date' => 'required|date',
+                'time' => 'required|date_format:H:i:s',
+                'quantity' => 'required|numeric',
+                'condition' => 'required|in:alive,dead',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'sea_state' => 'nullable|in:calm,moderate,rough',
+                'weather' => 'nullable|in:sunny,cloudy,rainy',
+                'beach_type' => 'nullable|in:mangrove,rocky,sandy,reef',
+                'detailed_location' => 'nullable|string',
+                'more_information' => 'nullable|string',
+                'municipality_id' => 'required|exists:municipalities,id',
+                'barangay_id' => 'required|exists:barangays,id',
                 'mediaFiles' => 'nullable|array',
-                'mediaFiles.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+                'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:10240',
                 'deletedImages' => 'nullable|array', // Ensure this matches the Vue component
             ]);
 
@@ -187,9 +191,9 @@ class StrandedIncidentController extends Controller
                         $strandedIncident->mediaFiles()->create([
                             'path' => $path,
                             'name' => $file->getClientOriginalName(),
-                            'file_for' => 'strandedIncident',
+                            'file_for' => 'stranded_incident',
                             'type' => $file->getClientMimeType(),
-                            'strandedIncident_id' => $strandedIncident->id,
+                            'stranded_incident_id' => $strandedIncident->id,
                         ]);
                     }
                 }

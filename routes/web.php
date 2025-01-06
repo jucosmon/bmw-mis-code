@@ -2,16 +2,12 @@
 
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\BarangayController;
-use App\Http\Controllers\BarangayOfficialDashboardController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ManageAccount\BpemoAdminManageAccountsController;
 use App\Http\Controllers\ManageAccount\LguResponderManageAccountController;
-use App\Http\Controllers\BpemoAdminDashboardController;
-use App\Http\Controllers\BpemoStaffDashboardController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LguResponderDashboardController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\PublicUserDashboardController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StrandedIncidentController;
 use Illuminate\Foundation\Application;
@@ -49,7 +45,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         //creating another stranded incident
         Route::get('/create-page', [StrandedIncidentController::class, 'createPage'])
         ->name('stranded.incident.createPage');
-        Route::post('create', [StrandedIncidentController::class, 'create'])
+        Route::post('/create', [StrandedIncidentController::class, 'create'])
             ->name('stranded.incident.create');
         //viewing another stranded incident
         Route::get('/view/{id}', [StrandedIncidentController::class, 'view'])
@@ -65,6 +61,18 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         //unarchiving another stranded incident
         Route::patch('/unarchive/{id}', [StrandedIncidentController::class, 'unarchive'])
             ->name('stranded.incident.unarchive');
+
+        // comments inside a specific stranded incident
+        Route::prefix('comments')->group(function () {
+            Route::post('/create', [CommentController::class, 'create'])
+                ->name('comment.create');
+
+            Route::patch('/update/{comment}', [CommentController::class, 'update'])
+                ->name('comment.update');
+
+            Route::patch('/archive/{comment}', [CommentController::class, 'archive'])
+                ->name('comment.archive');
+        });
     });
 
     //bpemo admin
