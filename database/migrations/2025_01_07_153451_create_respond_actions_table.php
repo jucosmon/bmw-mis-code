@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('involved_users', function (Blueprint $table) {
+        Schema::create('respond_actions', function (Blueprint $table) {
             $table->id();
             $table->enum('response_status', ['unavailable', 'ongoing', 'onsite']); // Response status of the participant
             $table->foreignId('stranded_incident_id')->constrained()->onDelete('cascade'); // Foreign key for stranded incident
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('involved_users');
+        Schema::dropIfExists('respond_actions');
     }
 };

@@ -104,6 +104,48 @@ const respondButtonStatus = computed(() => {
             isBpemoStaff.value);
 });
 
+const respondModalVisible = ref(false);
+
+const showRespondModal = () => {
+    respondModalVisible.value = true;
+};
+
+const handleResponseAction = (response) => {
+    switch (response) {
+        case 'yes':
+            Inertia.post(route('incident.respond', { id: props.strandedIncident.id, status: 'going' }), {
+                onSuccess: () => {
+                    respondModalVisible.value = false;
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                }
+            });
+            break;
+        case 'no':
+            Inertia.post(route('incident.respond', { id: props.strandedIncident.id, status: 'not_available' }), {
+                onSuccess: () => {
+                    respondModalVisible.value = false;
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                }
+            });
+            break;
+        case 'onsite':
+            Inertia.post(route('incident.respond', { id: props.strandedIncident.id, status: 'on_site' }), {
+                onSuccess: () => {
+                    respondModalVisible.value = false;
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                }
+            });
+            break;
+        default:
+            break;
+    }
+};
 
 // Archive button status
 const archiveButtonStatus = computed(() => {
@@ -221,7 +263,7 @@ const scrollToCommentsSection = () => {
 
             <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-lg shadow-lg mb-8">
                 <h1 class="text-3xl font-bold">Stranded Incident Information</h1>
-                <p class="text-sm mt-2">({{ props.strandedIncident.report_status }})</p>
+                <p class="text-sm mt-2">({{ props.strandedIncident.created_at }})</p>
                 <div class="flex justify-end space-x-4">
                     <button
                         class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
@@ -273,12 +315,41 @@ const scrollToCommentsSection = () => {
                         Update Incident
                     </button>
                     <button
-                        v-if="respondButtonStatus"
+                         v-if="respondButtonStatus"
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
-                        @click=""
+                        @click="showRespondModal"
                     >
                         Respond
                     </button>
+
+                    <Modal :show="respondModalVisible" @close="respondModalVisible = false">
+                        <div class="p-6">
+                            <h2 class="text-lg font-semibold text-gray-800">
+                                Can you go to the incident location now?
+                            </h2>
+                            <div class="mt-4 flex justify-between space-x-2">
+                                <button
+                                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-800 transition sm:min-w-40"
+                                    @click="handleResponseAction('yes')"
+                                >
+                                    Yes, Going
+                                </button>
+                                <button
+                                    class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition sm:min-w-40"
+                                    @click="handleResponseAction('no')"
+                                >
+                                    Not Available
+                                </button>
+                                <button
+                                    class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-800 transition sm:min-w-40"
+                                    @click="handleResponseAction('onsite')"
+                                >
+                                    On Review
+                                </button>
+                            </div>
+                        </div>
+                    </Modal>
+
                 </div>
             </div>
 

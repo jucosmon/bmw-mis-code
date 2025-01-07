@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_actions', function (Blueprint $table) {
+        Schema::create('report_actions', function (Blueprint $table) {
             $table->id();
             $table->enum('action_type', ['verified', 'false', 'completed', 'resolved']);
-            $table->foreignId('user_id')->constrained()->onDelete('set null');
-            $table->foreignId('stranded_incident_id')->constrained()->onDelete('set null');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('stranded_incident_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_actions');
+        Schema::dropIfExists('report_actions');
     }
 };
