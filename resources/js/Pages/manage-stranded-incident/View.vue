@@ -13,29 +13,50 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    respondActions:{
+        type: Array,
+        required:true
+    },
+    userRespondStatus: {
+        type:String,
+        required: true
+    }
 });
+const comments = ref(props.strandedIncident.comments || []);
+const editingCommentId = ref(null);
+const newCommentText = ref('');
+const respondActions = ref(props.respondActions || []); // wala magamit
 
+
+//routes
 const backRoute = computed(() => {
     return route('stranded.incident.index');
 });
-
 const updateRoute = computed(() => {
     return route('stranded.incident.update.page', { id: props.strandedIncident.id });
 });
-
 const archiveRoute = computed(() => {
     return route('stranded.incident.archive', {
         id: props.strandedIncident.id,
         category: props.strandedIncident.category,
     });
 });
-
 const unarchiveRoute = computed(() => {
     return route('stranded.incident.unarchive', {
         id: props.strandedIncident.id
     });
 });
 
+// form defaults
+const form = useForm({
+    is_active: true,
+    password: '',
+    text: '',
+    stranded_incident_id: props.strandedIncident.id,
+});
+
+
+// main methods
 const updateIncident = () => {
     Inertia.visit(updateRoute.value);
 };
@@ -50,12 +71,6 @@ const closeModal = () => {
     showConfirmArchiveModal.value = false;
 };
 
-const form = useForm({
-    is_active: true,
-    password: '',
-    text: '',
-    stranded_incident_id: props.strandedIncident.id,
-});
 
 const archiveIncident = () => {
     if(props.strandedIncident.is_active){
@@ -91,17 +106,28 @@ const isBarangayOfficial = computed(() => page.props.auth.user.user_role === 'ba
 
 
 // Update button status
-const updateButtonStatus = computed(() => {
+const updateButtonStatusPublic = computed(() => {
     return isPublicUser.value && props.strandedIncident.report_status === 'pending';
+});
+
+
+// Update button status for responders
+const updateButtonStatusResponder = computed(() => {
+    if (isPublicUser.value) {
+        return false;
+    }
+    return props.userRespondStatus==='ongoing' ||
+           props.strandedIncident.report_status === 'verified' ||
+           props.strandedIncident.report_status === 'completed';
 });
 
 // Respond button status
 const respondButtonStatus = computed(() => {
     return props.strandedIncident.report_status === 'pending' &&
-           (isBarangayOfficial.value ||
-            isBpemoAdmin.value ||
-            isLguResponder.value ||
-            isBpemoStaff.value);
+           props.userRespondStatus!=='ongoing' &&
+           (isBarangayOfficial.value || isBpemoAdmin.value ||
+           isBpemoStaff.value || isLguResponder.value) &&
+           !isPublicUser.value;
 });
 
 const respondModalVisible = ref(false);
@@ -111,47 +137,48 @@ const showRespondModal = () => {
 };
 
 const handleResponseAction = (response) => {
+    let status = '';
+
+    // Check the response and assign status accordingly
     switch (response) {
         case 'yes':
-            Inertia.post(route('incident.respond', { id: props.strandedIncident.id, status: 'going' }), {
-                onSuccess: () => {
-                    respondModalVisible.value = false;
-                },
-                onError: (errors) => {
-                    console.error(errors);
-                }
-            });
+            status = 'ongoing';
             break;
         case 'no':
-            Inertia.post(route('incident.respond', { id: props.strandedIncident.id, status: 'not_available' }), {
-                onSuccess: () => {
-                    respondModalVisible.value = false;
-                },
-                onError: (errors) => {
-                    console.error(errors);
-                }
-            });
+            status = 'unavailable';
             break;
         case 'onsite':
-            Inertia.post(route('incident.respond', { id: props.strandedIncident.id, status: 'on_site' }), {
-                onSuccess: () => {
-                    respondModalVisible.value = false;
-                },
-                onError: (errors) => {
-                    console.error(errors);
-                }
-            });
+            status = 'onsite';
             break;
         default:
-            break;
+            console.error('Invalid response');
+            return;
     }
+
+    // Sending the POST request with appropriate data
+    Inertia.post(
+        route('stranded.incident.respond'),
+        { status, id: props.strandedIncident.id }, // Send the status as part of the request body
+        {
+
+            onSuccess: () => {
+                respondModalVisible.value = false; // Hide the modal after success
+            },
+            onError: (errors) => {
+                console.error(errors); // Handle errors, maybe show a user-friendly message
+            },
+        }
+    );
 };
+
 
 // Archive button status
 const archiveButtonStatus = computed(() => {
     return (isPublicUser.value && props.strandedIncident.report_status === 'pending');
 });
 
+
+//comments
 const submitComment = () => {
     // Validate the comment text
     if (!form.text.trim()) {
@@ -195,9 +222,7 @@ const scrollToNewComment = (commentId) => {
 const activeComments = computed(() => {
     return comments.value.filter(comment => comment.is_active);
 });
-const comments = ref(props.strandedIncident.comments || []);
-const editingCommentId = ref(null);
-const newCommentText = ref('');
+
 
 const startEditComment = (comment) => {
     editingCommentId.value = comment.id;
@@ -263,7 +288,7 @@ const scrollToCommentsSection = () => {
 
             <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-lg shadow-lg mb-8">
                 <h1 class="text-3xl font-bold">Stranded Incident Information</h1>
-                <p class="text-sm mt-2">({{ props.strandedIncident.created_at }})</p>
+                <p class="text-sm mt-2">({{ props.strandedIncident.report_status }}) - Marked as {{ props.userRespondStatus }}</p>
                 <div class="flex justify-end space-x-4">
                     <button
                         class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
@@ -308,11 +333,18 @@ const scrollToCommentsSection = () => {
                     </Modal>
 
                     <button
-                        v-if="updateButtonStatus"
+                        v-if="updateButtonStatusPublic"
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
                         @click="updateIncident"
                     >
                         Update Incident
+                    </button>
+                    <button
+                        v-if="updateButtonStatusResponder"
+                        class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
+                        @click="updateIncident"
+                    >
+                        Update Incident (Responder)
                     </button>
                     <button
                          v-if="respondButtonStatus"

@@ -73,11 +73,12 @@ class StrandedIncident extends Model
     /**
      * Get all the user actions related to the stranded incident.
      */
-    public function respond_action()
+    // In StrandedIncident model
+    public function respondActions()
     {
         return $this->hasMany(RespondAction::class);
     }
-    public function report_action()
+    public function reportActions()
     {
         return $this->hasMany(ReportAction::class);
     }

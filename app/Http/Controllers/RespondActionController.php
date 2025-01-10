@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RespondAction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RespondActionController extends Controller
 {
@@ -18,23 +19,58 @@ class RespondActionController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function respond(Request $request)
     {
-        //
+        $request->validate([
+            'status' => 'in:ongoing,unavailable,onsite',
+        ]);
+
+        $userId = Auth::id();
+        $strandedIncidentId = $request->id;
+
+        // Check if a RespondAction record already exists for this user and incident
+        $respondAction = RespondAction::where('stranded_incident_id', $strandedIncidentId)
+                                        ->where('user_id', $userId)
+                                        ->first();
+
+        // If a record exists, update it; otherwise, create a new record
+        if ($respondAction) {
+            // Update the existing record
+            $respondAction->update([
+                'response_status' => $request->status,
+            ]);
+            $message = 'Respond action updated successfully.';
+        } else {
+            // Create a new record
+            RespondAction::create([
+                'response_status' => $request->status,
+                'stranded_incident_id' => $strandedIncidentId,
+                'user_id' => $userId,
+            ]);
+            $message = 'Respond action created successfully.';
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'status' => 'in:ongoing,unavailable,onsite',
+        ]);
+
+        $respondAction = RespondAction::findOrFail($id);
+
+        $respondAction->update([
+            'response_status' => $request->status,
+        ]);
+
+        return redirect()->back()->with('success', 'Respond action updated successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(RespondAction $respondAction)
+
+    public function view(RespondAction $respondAction)
     {
         //
     }
@@ -42,19 +78,9 @@ class RespondActionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(RespondAction $respondAction)
-    {
-        //
-    }
-
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, RespondAction $respondAction)
-    {
-        //
-    }
-
     /**
      * Remove the specified resource from storage.
      */

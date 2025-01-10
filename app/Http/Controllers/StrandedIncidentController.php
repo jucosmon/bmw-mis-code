@@ -7,6 +7,7 @@ use App\Models\StrandedIncident;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -19,22 +20,22 @@ class StrandedIncidentController extends Controller
 
         if (in_array($user->user_role, ['bpemo_admin', 'bpemo_staff'])) {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
-                ->with('userActions')
+                ->with('reportActions')
                 ->get();
         } elseif ($user->user_role === 'lgu_responder') {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('municipality_id', $user->municipality_id)
-                ->with('userActions')
+                ->with('reportActions')
                 ->get();
         } elseif ($user->user_role === 'barangay_official') {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('barangay_id', $user->barangay_id)
-                ->with('userActions')
+                ->with('reportActions')
                 ->get();
         } else {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed', 'resolved'])
                 ->where('user_id', $user->id)
-                ->with('userActions')
+                ->with('reportActions')
                 ->get();
         }
 
@@ -119,7 +120,13 @@ class StrandedIncidentController extends Controller
 
     public function view($id)
     {
-        $strandedIncident = StrandedIncident::with(['mediaFiles', 'comments.user'])->findOrFail($id);
+        // Eager load necessary relationships
+        $strandedIncident = StrandedIncident::with([
+            'mediaFiles',
+            'comments.user',
+            'respondActions',
+            'reportActions'
+            ])->findOrFail($id);
 
         // Map media files to include public URLs
         $strandedIncident->mediaFiles = $strandedIncident->mediaFiles->map(function ($file) {
@@ -127,8 +134,16 @@ class StrandedIncidentController extends Controller
             return $file;
         });
 
-        return Inertia::render('manage-stranded-incident/View', ['strandedIncident' => $strandedIncident]);
+        $userId = Auth::id();
+        $userRespondAction = $strandedIncident->respondActions->firstWhere('user_id', $userId);
+
+        return Inertia::render('manage-stranded-incident/View', [
+            'strandedIncident' => $strandedIncident,
+            'respondActions' => $strandedIncident->respondActions->toArray(), // Convert collection to array
+            'userRespondStatus' => $userRespondAction ? $userRespondAction->response_status : null, // Pass the user's respond status or null
+        ]);
     }
+
 
     public function updatePage($id)
     {

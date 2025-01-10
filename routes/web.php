@@ -8,6 +8,7 @@ use App\Http\Controllers\ManageAccount\LguResponderManageAccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RespondActionController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StrandedIncidentController;
 use Illuminate\Foundation\Application;
@@ -55,6 +56,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->name('stranded.incident.update.page');
         Route::post('/update/{id}', [StrandedIncidentController::class, 'update'])
             ->name('stranded.incident.update');
+
         //archiving another stranded incident
         Route::patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
             ->name('stranded.incident.archive');
@@ -73,6 +75,11 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             Route::patch('/archive/{comment}', [CommentController::class, 'archive'])
                 ->name('comment.archive');
         });
+
+        // respond actions inside a specific stranded incident
+         Route::post('/respond', action: [RespondActionController::class, 'respond'])
+         ->name('stranded.incident.respond');
+
     });
 
     //bpemo admin

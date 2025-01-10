@@ -15,7 +15,7 @@ class ReportAction extends Model
         'user_id',
         'stranded_incident_id'
     ];
-    public function stranded_incident()
+    public function strandedIncident()
     {
         return $this->belongsTo(StrandedIncident::class, 'stranded_incident_id');
     }

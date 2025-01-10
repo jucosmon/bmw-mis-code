@@ -124,6 +124,7 @@ const form = useForm({
                         Personal Information
                     </h2>
                     <div class="space-y-2">
+                        <p><strong>ID:</strong> {{ user.id }}</p>
                         <p>
                             <strong>Name:</strong> {{ user.first_name }}
                             {{ user.last_name }}
