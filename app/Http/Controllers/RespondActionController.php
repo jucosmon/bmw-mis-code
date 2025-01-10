@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RespondAction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class RespondActionController extends Controller
 {
@@ -50,25 +51,12 @@ class RespondActionController extends Controller
             $message = 'Respond action created successfully.';
         }
 
+        if ($request->status === 'onsite') {
+            return Inertia::location(route('stranded.incident.responder.update.page', $strandedIncidentId));
+        }
+
         return redirect()->back()->with('success', $message);
     }
-
-
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'in:ongoing,unavailable,onsite',
-        ]);
-
-        $respondAction = RespondAction::findOrFail($id);
-
-        $respondAction->update([
-            'response_status' => $request->status,
-        ]);
-
-        return redirect()->back()->with('success', 'Respond action updated successfully.');
-    }
-
 
     public function view(RespondAction $respondAction)
     {

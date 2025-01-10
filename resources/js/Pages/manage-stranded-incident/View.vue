@@ -12,29 +12,58 @@ const props = defineProps({
     strandedIncident: {
         type: Object,
         required: true,
+        default: () => ({ id: null, report_status: '' }), // Default value
     },
     respondActions:{
         type: Array,
-        required:true
-    },
+        default: () => [],
+
+        },
     userRespondStatus: {
         type:String,
-        required: true
+        default: '',
     }
 });
 const comments = ref(props.strandedIncident.comments || []);
 const editingCommentId = ref(null);
 const newCommentText = ref('');
 const respondActions = ref(props.respondActions || []); // wala magamit
+const isPublicUser  = computed(() => page.props.auth.user.user_role === 'public_user');
+const isBpemoAdmin = computed(() => page.props.auth.user.user_role === 'bpemo_admin');
+const isBpemoStaff = computed(() => page.props.auth.user.user_role === 'bpemo_staff');
+const isLguResponder = computed(() => page.props.auth.user.user_role === 'lgu_responder');
+const isBarangayOfficial = computed(() => page.props.auth.user.user_role === 'barangay_official');
+
+// form defaults
+const form = useForm({
+    is_active: true,
+    password: '',
+    text: '',
+    stranded_incident_id: props.strandedIncident.id,
+});
 
 
 //routes
 const backRoute = computed(() => {
     return route('stranded.incident.index');
 });
+
+
 const updateRoute = computed(() => {
-    return route('stranded.incident.update.page', { id: props.strandedIncident.id });
+    const isResponder = isBarangayOfficial.value || isBpemoAdmin.value || isBpemoStaff.value || isLguResponder.value;
+    const isResponderEligible = isResponder &&
+        (props.strandedIncident.report_status === 'pending' || props.strandedIncident.report_status === 'verified'  || props.strandedIncident.report_status === 'completed');
+
+    if (isPublicUser.value) {
+        return route('stranded.incident.update.page', { id: props.strandedIncident.id });
+    } else if (isResponderEligible) {
+        return route('stranded.incident.responder.update.page', { id: props.strandedIncident.id });
+    } else {
+        return null; // Explicitly return null if no conditions are met
+    }
 });
+
+
 const archiveRoute = computed(() => {
     return route('stranded.incident.archive', {
         id: props.strandedIncident.id,
@@ -47,16 +76,7 @@ const unarchiveRoute = computed(() => {
     });
 });
 
-// form defaults
-const form = useForm({
-    is_active: true,
-    password: '',
-    text: '',
-    stranded_incident_id: props.strandedIncident.id,
-});
-
-
-// main methods
+// main methods with consecutive modals
 const updateIncident = () => {
     Inertia.visit(updateRoute.value);
 };
@@ -71,6 +91,10 @@ const closeModal = () => {
     showConfirmArchiveModal.value = false;
 };
 
+// Archiving For public users only
+const archiveButtonStatus = computed(() => {
+    return (isPublicUser.value && props.strandedIncident.report_status === 'pending');
+});
 
 const archiveIncident = () => {
     if(props.strandedIncident.is_active){
@@ -97,49 +121,42 @@ const archiveIncident = () => {
 
 };
 
-// button validations
-const isPublicUser  = computed(() => page.props.auth.user.user_role === 'public_user');
-const isBpemoAdmin = computed(() => page.props.auth.user.user_role === 'bpemo_admin');
-const isBpemoStaff = computed(() => page.props.auth.user.user_role === 'bpemo_staff');
-const isLguResponder = computed(() => page.props.auth.user.user_role === 'lgu_responder');
-const isBarangayOfficial = computed(() => page.props.auth.user.user_role === 'barangay_official');
-
-
-// Update button status
+// Update button validation for Public users only
 const updateButtonStatusPublic = computed(() => {
     return isPublicUser.value && props.strandedIncident.report_status === 'pending';
 });
 
 
-// Update button status for responders
+// Update button validation for responders
 const updateButtonStatusResponder = computed(() => {
     if (isPublicUser.value) {
         return false;
     }
+
+    if(props.strandedIncident.report_status==='completed' && isBarangayOfficial.value){
+        return false;
+    }
     return props.userRespondStatus==='ongoing' ||
+            props.userRespondStatus==='onsite' ||
            props.strandedIncident.report_status === 'verified' ||
            props.strandedIncident.report_status === 'completed';
 });
 
-// Respond button status
+// Respond Actions
 const respondButtonStatus = computed(() => {
     return props.strandedIncident.report_status === 'pending' &&
-           props.userRespondStatus!=='ongoing' &&
+           (props.userRespondStatus!=='ongoing' && props.userRespondStatus!=='onsite')  &&
            (isBarangayOfficial.value || isBpemoAdmin.value ||
            isBpemoStaff.value || isLguResponder.value) &&
            !isPublicUser.value;
 });
-
 const respondModalVisible = ref(false);
-
 const showRespondModal = () => {
     respondModalVisible.value = true;
 };
-
-const handleResponseAction = (response) => {
+const handleRespondAction = (response) => {
     let status = '';
 
-    // Check the response and assign status accordingly
     switch (response) {
         case 'yes':
             status = 'ongoing';
@@ -155,38 +172,90 @@ const handleResponseAction = (response) => {
             return;
     }
 
-    // Sending the POST request with appropriate data
     Inertia.post(
         route('stranded.incident.respond'),
-        { status, id: props.strandedIncident.id }, // Send the status as part of the request body
+        { status, id: props.strandedIncident.id },
         {
 
             onSuccess: () => {
-                respondModalVisible.value = false; // Hide the modal after success
+                respondModalVisible.value = false;
             },
             onError: (errors) => {
-                console.error(errors); // Handle errors, maybe show a user-friendly message
+                console.error(errors);
             },
         }
     );
 };
 
-
-// Archive button status
-const archiveButtonStatus = computed(() => {
-    return (isPublicUser.value && props.strandedIncident.report_status === 'pending');
+// completed button
+const completeButtonStatus = computed(() => {
+    return props.strandedIncident.report_status === 'verified' &&
+           (isBpemoAdmin.value || isBpemoStaff.value || isLguResponder.value);
 });
 
+const completeModalVisible = ref(false);
 
-//comments
+const showCompleteModal = () => {
+    completeModalVisible.value = true;
+};
+
+const handleCompleteAction = (response) => {
+    if (response === 'yes') {
+        console.log('Stranded Incident ID:', props.strandedIncident.id); // Check the ID value
+        Inertia.patch(
+            route('stranded.incident.complete', { id: props.strandedIncident.id }), // Pass the ID here
+            {},
+            {
+                onSuccess: () => {
+                    completeModalVisible.value = false;
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                },
+            }
+        );
+    } else {
+        completeModalVisible.value = false;
+    }
+};
+
+// resolved button
+const resolveButtonStatus = computed(() => {
+    return props.strandedIncident.report_status === 'completed' &&
+           (isBpemoAdmin.value || isBpemoStaff.value);
+});
+
+const resolveModalVisible = ref(false);
+
+const showResolveModal = () => {
+    resolveModalVisible.value = true;
+};
+
+const handleResolveAction = (response) => {
+    if (response === 'yes') {
+        Inertia.patch(
+            route('stranded.incident.resolve', { id: props.strandedIncident.id }), // Pass the ID here
+            {},
+            {
+                onSuccess: () => {
+                    resolveModalVisible.value = false;
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                },
+            }
+        );
+    } else {
+        resolveModalVisible.value = false;
+    }
+};
+
+//COMMENTS
 const submitComment = () => {
-    // Validate the comment text
     if (!form.text.trim()) {
         form.errors.text = 'Comment cannot be empty.';
         return;
     }
-
-    // Send the comment data via Inertia
     Inertia.post(route('comment.create'), {
         text: form.text,
         stranded_incident_id: props.strandedIncident.id // Ensure this is included
@@ -211,7 +280,6 @@ const submitComment = () => {
     });
 };
 
-// Function to scroll to the new comment
 const scrollToNewComment = (commentId) => {
     const newCommentElement = document.getElementById(`comment-${commentId}`); // Ensure this ID matches your comment element
     if (newCommentElement) {
@@ -222,7 +290,6 @@ const scrollToNewComment = (commentId) => {
 const activeComments = computed(() => {
     return comments.value.filter(comment => comment.is_active);
 });
-
 
 const startEditComment = (comment) => {
     editingCommentId.value = comment.id;
@@ -264,7 +331,6 @@ const archiveComment = (commentId) => {
     });
 };
 
-// Function to scroll to the comments section
 const scrollToCommentsSection = () => {
     const commentsSection = document.getElementById('comments-section'); // Ensure this ID matches your comments section
     if (commentsSection) {
@@ -344,7 +410,8 @@ const scrollToCommentsSection = () => {
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
                         @click="updateIncident"
                     >
-                        Update Incident (Responder)
+                    {{ userRespondStatus === 'ongoing' || userRespondStatus === 'onsite' && props.strandedIncident.report_status==='pending'
+                        ? 'Verify Incident' : 'Update Incident (Responder)' }}
                     </button>
                     <button
                          v-if="respondButtonStatus"
@@ -362,22 +429,64 @@ const scrollToCommentsSection = () => {
                             <div class="mt-4 flex justify-between space-x-2">
                                 <button
                                     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-800 transition sm:min-w-40"
-                                    @click="handleResponseAction('yes')"
+                                    @click="handleRespondAction('yes')"
                                 >
                                     Yes, Going
                                 </button>
                                 <button
                                     class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition sm:min-w-40"
-                                    @click="handleResponseAction('no')"
+                                    @click="handleRespondAction('no')"
                                 >
                                     Not Available
                                 </button>
                                 <button
                                     class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-800 transition sm:min-w-40"
-                                    @click="handleResponseAction('onsite')"
+                                    @click="handleRespondAction('onsite')"
                                 >
                                     On Review
                                 </button>
+                            </div>
+                        </div>
+                    </Modal>
+
+                    <!-- Complete Button -->
+                    <button
+                        v-if="completeButtonStatus"
+                        class="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 transition"
+                        @click="showCompleteModal"
+                    >
+                        Mark as Complete
+                    </button>
+
+                    <Modal :show="completeModalVisible" @close="completeModalVisible = false">
+                        <div class="p-6">
+                            <h2 class="text-lg font-semibold text-gray-800">
+                                Are you sure the response is finished and all species forms are complete?
+                            </h2>
+                            <div class="mt-6 flex justify-end space-x-4">
+                                <SecondaryButton @click="completeModalVisible = false">No</SecondaryButton>
+                                <DangerButton @click="handleCompleteAction('yes')">Yes</DangerButton>
+                            </div>
+                        </div>
+                    </Modal>
+
+                    <!-- Resolve Button -->
+                    <button
+                        v-if="resolveButtonStatus"
+                        class="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 transition"
+                        @click="showResolveModal"
+                    >
+                        Mark as Resolved
+                    </button>
+
+                    <Modal :show="resolveModalVisible" @close="resolveModalVisible = false">
+                        <div class="p-6">
+                            <h2 class="text-lg font-semibold text-gray-800">
+                                Do you confirm to resolve the incident?
+                            </h2>
+                            <div class="mt-6 flex justify-end space-x-4">
+                                <SecondaryButton @click="resolveModalVisible = false">Cancel</SecondaryButton>
+                                <DangerButton @click="handleResolveAction('yes')">Confirm</DangerButton>
                             </div>
                         </div>
                     </Modal>

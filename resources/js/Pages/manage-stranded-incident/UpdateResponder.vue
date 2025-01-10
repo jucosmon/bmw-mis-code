@@ -1,10 +1,11 @@
 <script setup>
+import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
@@ -13,9 +14,16 @@ const props = defineProps({
     strandedIncident:  {
         type: Object,
         required: true
+    },
+    userRespondStatus: {
+        type: String,
+        default: '',
+
     }
 });
 
+const page = usePage();
+const currentUserRole = page.props.auth.user.user_role;
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const municipalities = ref([]);
@@ -64,7 +72,7 @@ const form = useForm({
   more_information: props.strandedIncident.more_information || '',
   municipality_id: props.strandedIncident.municipality_id || '',
   barangay_id: props.strandedIncident.barangay_id || '',
-  report_status: props.strandedIncident.report_status || 'pending',
+  report_status: props.strandedIncident.report_status || '',
   mediaFiles: [],
   deletedImages: [],
 });
@@ -77,24 +85,21 @@ const normalizeValue = (value) => {
     if (value === null || value === undefined) return '';
     return value;
 };
-
 const hasChanges = computed(() => {
     const currentData = form.data();
 
-    // Check for basic field changes
+    // Check if basic fields are different
     const dataChanged = Object.keys(currentData).some((key) => {
         if (key === 'mediaFiles' || key === 'deletedImages') return false;
         return normalizeValue(currentData[key]) !== normalizeValue(props.strandedIncident[key]);
     });
 
-    // Check if media files or deleted images changed
     const mediaFilesChanged = form.mediaFiles.length > 0;
     const deletedImagesChanged = deletedImages.value.length > 0;
+    const reportStatusChanged = form.report_status !== props.strandedIncident.report_status;
 
-    return dataChanged || mediaFilesChanged || deletedImagesChanged;
+    return dataChanged || mediaFilesChanged || deletedImagesChanged || reportStatusChanged;
 });
-
-
 
 const handleNewFileChange = (event) => {
     const files = event.target.files;
@@ -119,24 +124,8 @@ const removeExistingImage = (index) => {
     deletedImages.value.push(imageToDelete.id); // Assuming each image has an `id`
     existingImages.value.splice(index, 1);
 };
-const submit = () => {
-    if (hasChanges.value) {
-        form.deletedImages = deletedImages.value;
 
-        form.post(updateRoute.value, {
-            onSuccess: () => {
-                formErrors.value = null;
-            },
-            onError: (errors) => {
-                formErrors.value = errors;
-            },
-        });
-    } else {
-        alert('No changes detected in the form.');
-    }
-};
 
-// location
 // Map references
 const map = ref(null);
 const marker = ref(null);
@@ -188,7 +177,43 @@ const setLocationFromMap = () => {
   }
 };
 
+// button status
+const buttonStatus = computed(() => {
+    if (props.strandedIncident.report_status === 'pending' && currentUserRole !=='public_user'){
+        return true;
+    }else{
+        return false;
+    }
+});
 
+
+const falseIncident = () => {
+    form.report_status = 'false'; // Set report status
+};
+
+const verifyIncident = () => {
+    form.report_status = 'verified'; // Set report status
+};
+
+
+//submit form
+const submit = () => {
+    if (hasChanges.value) {
+        form.deletedImages = deletedImages.value;
+
+
+        form.post(updateRoute.value, {
+            onSuccess: () => {
+                formErrors.value = null;
+            },
+            onError: (errors) => {
+                formErrors.value = errors;
+            },
+        });
+    } else {
+        alert('No changes detected in the form.');
+    }
+};
 </script>
 
 <template>
@@ -206,7 +231,7 @@ const setLocationFromMap = () => {
         </template>
 
         <div class="container mx-auto px-4 py-8">
-            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Stranded Incident</h2>
+            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Stranded Incident for Responders</h2>
 
             <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
                 <form @submit.prevent="submit" class="space-y-6">
@@ -398,13 +423,28 @@ const setLocationFromMap = () => {
                         </div>
                     </div>
 
-                    <!-- Submit and Cancel Buttons -->
-                    <div class="flex items-center justify-between mt-6">
+                    <!-- Submit and Cancel Buttons for regular update -->
+                    <div v-if="!buttonStatus" class="flex items-center justify-between mt-6">
                         <Link :href="backRoute" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
-                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900">
-                            Update Stranded Incident
+
+                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }"
+                        class="bg-indigo-900">
+                            Update Incident
                         </PrimaryButton>
                     </div>
+
+                    <!-- False and Verify button for pending cases-->
+                    <div v-else class="flex items-center justify-end gap-5 mt-6">
+                        <DangerButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900"
+                        @click="falseIncident">
+                            Mark as False
+                        </DangerButton>
+                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900"
+                        @click="verifyIncident">
+                            Verify as True
+                        </PrimaryButton>
+                    </div>
+
                 </form>
             </div>
         </div>

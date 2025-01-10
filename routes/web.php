@@ -52,10 +52,20 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::get('/view/{id}', [StrandedIncidentController::class, 'view'])
             ->name('stranded.incident.view');
         //updating another stranded incident
-        Route::get('/update-page/{id}', [StrandedIncidentController::class, 'updatePage'])
+        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder,barangay_official'])->get('/responder/update-page/{id}', [StrandedIncidentController::class, 'updateResponderPage'])
+            ->name('stranded.incident.responder.update.page');
+        Route::middleware(['role:public_user'])->get('/public-user/update-page/{id}', [StrandedIncidentController::class, 'updatePage'])
             ->name('stranded.incident.update.page');
         Route::post('/update/{id}', [StrandedIncidentController::class, 'update'])
             ->name('stranded.incident.update');
+
+        // complete
+        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder'])->patch('/complete/{id}', [StrandedIncidentController::class, 'complete'])
+            ->name('stranded.incident.complete');
+
+        // resolve
+        Route::middleware(['role:bpemo_admin,bpemo_staff'])->patch('/resolve/{id}', [StrandedIncidentController::class, 'resolve'])
+            ->name('stranded.incident.resolve');
 
         //archiving another stranded incident
         Route::patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
