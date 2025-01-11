@@ -11,7 +11,7 @@ class StrandedSpecies extends Model
 
     protected  $table = 'stranded_species';
     protected $fillable = [
-        'condition',
+        'condition_code',
         'latitude',
         'longitude',
         'sex',
@@ -31,6 +31,9 @@ class StrandedSpecies extends Model
     protected $casts = [
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
+        'length' => 'decimal:7',
+        'weight' => 'decimal:7',
+        'girth' => 'decimal:7',
         'is_released' => 'boolean',
         'is_active' => 'boolean',
     ];

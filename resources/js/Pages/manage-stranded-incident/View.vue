@@ -337,6 +337,11 @@ const scrollToCommentsSection = () => {
         commentsSection.scrollIntoView({ behavior: 'smooth' });
     }
 };
+
+// detailed species forms
+const createSpeciesForm = () => {
+    Inertia.get(route('stranded.species.createPage', {id: props.strandedIncident.id}));
+}
 </script>
 
 <template>
@@ -495,6 +500,7 @@ const scrollToCommentsSection = () => {
             </div>
 
             <div class="space-y-6">
+                <!-- Text Details -->
                 <div class="bg-white shadow-lg rounded-xl p-6">
                     <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -547,18 +553,25 @@ const scrollToCommentsSection = () => {
                     <p v-else class="text-gray-500 text-center py-4">No media files available</p>
                 </div>
                 <!--Detailed Species Form section -->
-                <div class="bg-white shadow-lg rounded-xl p-6 relative z-10">
-                    <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-6 w-6 mr-2 text-indigo-10"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path d="M4.75 4A2.75 2.75 0 002 6.75v6.5A2.75 2.75 0 004.75 16h10.5A2.75 2.75 0 0018 13.25v-6.5A2.75 2.75 0 0015.25 4H4.75zM9.5 8.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5H10.5a.75.75 0 01-.75-.75zm-3.25 4.25a.75.75 0 110-1.5h7.5a.75.75 0 110 1.5H6.25z" />
-                        </svg>
-                        Detailed Species Forms
-                    </h2>
+                <div v-if="isBpemoAdmin || isBpemoStaff || isLguResponder" class="bg-white shadow-lg rounded-xl p-6 relative z-10">
+                    <div class="flex justify-between">
+                        <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-6 w-6 mr-2 text-indigo-10"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path d="M4.75 4A2.75 2.75 0 002 6.75v6.5A2.75 2.75 0 004.75 16h10.5A2.75 2.75 0 0018 13.25v-6.5A2.75 2.75 0 0015.25 4H4.75zM9.5 8.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5H10.5a.75.75 0 01-.75-.75zm-3.25 4.25a.75.75 0 110-1.5h7.5a.75.75 0 110 1.5H6.25z" />
+                            </svg>
+                            Detailed Species Forms
+                        </h2>
+                        <button  class="bg-indigo-900 text-white px-4 rounded" @click="createSpeciesForm">
+                            +
+                        </button>
+
+                    </div>
+
                     <div v-if="props.strandedIncident.strandedSpecies && props.strandedIncident.strandedSpecies.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div
                             v-for="file in props.strandedIncident.strandedSpecies"

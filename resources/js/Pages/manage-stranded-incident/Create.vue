@@ -174,12 +174,12 @@ const setLocationFromMap = () => {
 
             <div>
               <InputLabel for="quantity" value="How many species are involved in the incident?" />
-              <TextInput id="quantity" type="number" v-model="form.quantity" class="w-full" required/>
+              <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" required/>
               <InputError class="mt-2" :message="form.errors.quantity" />
             </div>
             <div>
               <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
-              <TextInput required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
+              <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
               <p class="text-center">{{ form.certainty_level }}</p>
               <InputError class="mt-2" :message="form.errors.certainty_level" />
             </div>

@@ -141,7 +141,7 @@ const submit = () => {
                         </div>
                         <div>
                             <InputLabel for="max_size" value="Maximum Size (in centimeters)" />
-                            <TextInput
+                            <input
                                 id="max_size"
                                 type="number"
                                 step="0.1"

@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RespondActionController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StrandedIncidentController;
+use App\Http\Controllers\StrandedSpeciesController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +74,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         //unarchiving another stranded incident
         Route::patch('/unarchive/{id}', [StrandedIncidentController::class, 'unarchive'])
             ->name('stranded.incident.unarchive');
+        // respond actions inside a specific stranded incident
+        Route::post('/respond', action: [RespondActionController::class, 'respond'])
+        ->name('stranded.incident.respond');
 
         // comments inside a specific stranded incident
         Route::prefix('comments')->group(function () {
@@ -86,10 +90,13 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
                 ->name('comment.archive');
         });
 
-        // respond actions inside a specific stranded incident
-         Route::post('/respond', action: [RespondActionController::class, 'respond'])
-         ->name('stranded.incident.respond');
-
+        // detailed species form inside a specific stranded incident
+        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder'])->prefix('stranded-species')->group(function () {
+            Route::get('/createPage/{id}', [StrandedSpeciesController::class, 'createPage'])
+                ->name('stranded.species.createPage');
+            Route::post('/create/{id}', [StrandedSpeciesController::class, 'create'])
+                ->name('stranded.species.create');
+        });
     });
 
     //bpemo admin
