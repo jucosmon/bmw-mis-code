@@ -11,10 +11,9 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const formErrors = ref(null);
 const props = defineProps({
-    strandedIncident: {
+    strandedSpecies: {
         type: Object,
         required: true,
-        default: () => ({ id: null, report_status: '' }),
     },
     species: {
         type: Array,
@@ -23,26 +22,26 @@ const props = defineProps({
 });
 
 
-const backRoute = computed(() => route('stranded.incident.view', { id: props.strandedIncident.id }));
-const createRoute = computed(() => route('stranded.species.create', { id: props.strandedIncident.id }));
+const backRoute = computed(() => route('stranded.species.view', { id: props.strandedSpecies.id }));
+const updateRoute = computed(() => route('stranded.species.update', { id: props.strandedSpecies.id }));
 
 const form = useForm({
-    condition_code: 1,
-    latitude: props.strandedIncident.latitude || null,
-    longitude: props.strandedIncident.longitude || null,
-    sex: 'unknown',
-    length: null,
-    weight: null,
-    girth: null,
-    disposition: '',
-    disposal_site: '',
-    more_information: '',
-    is_released: false,
-    species_id: null,
+    condition_code: props.strandedSpecies.condition_code || 1,
+    latitude: props.strandedSpecies.latitude || null,
+    longitude: props.strandedSpecies.longitude || null,
+    sex: props.strandedSpecies.sex || 'unknown',
+    length: props.strandedSpecies.length ||  null,
+    weight: props.strandedSpecies.weight ||  null,
+    girth: props.strandedSpecies.girth || null,
+    disposition: props.strandedSpecies.disposition || '',
+    disposal_site: props.strandedSpecies.disposal_site || '',
+    more_information: props.strandedSpecies.more_information ||  '',
+    is_released: props.strandedSpecies.is_released ||  false,
+    species_id: props.strandedSpecies.species_id ||  null,
 });
 
 const submit = () => {
-  form.post(createRoute.value, {
+  form.post(updateRoute.value, {
     onSuccess: () => {
       formErrors.value = null; // Clear errors on successful submission
     },
@@ -107,6 +106,15 @@ const setLocationFromMap = () => {
 const search = ref('');
 const isDropdownVisible = ref(false);
 
+// Set the search input to the existing species name if species is defined
+onMounted(() => {
+    if (props.species && props.species.length) {
+        const existingSpecies = props.species.find(species => species.id === form.species_id);
+        if (existingSpecies) {
+            search.value = existingSpecies.name; // Pre-populate the search input
+        }
+    }
+});
 // Filtered species list
 const filteredSpecies = computed(() => {
   return props.species.filter((species) =>
@@ -116,10 +124,11 @@ const filteredSpecies = computed(() => {
 
 // Select species handler
 const selectSpecies = (species) => {
-  search.value = species.name; // Display selected name in input
-  form.species_id = species.id; // Set species_id in form
-  isDropdownVisible.value = false; // Hide dropdown
+    search.value = species.name;
+    form.species_id = species.id;
+    isDropdownVisible.value = false;
 };
+
 
 const closeDropdown = (event) => {
   if (!event.target.closest('.dropdown-container')) {
@@ -141,7 +150,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Head title="Create Species Form" />
+  <Head title="Update Species Form" />
 
   <Sidebar>
     <template #header>
@@ -155,7 +164,7 @@ onBeforeUnmount(() => {
     </template>
 
     <div class="container mx-auto px-4 py-8">
-      <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Create Detailed Species Form</h2>
+      <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Species Form</h2>
 
       <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
         <form @submit.prevent="submit" class="space-y-6">
@@ -294,7 +303,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="text-center mt-6">
-            <PrimaryButton type="submit">Submit</PrimaryButton>
+            <PrimaryButton type="submit">Update</PrimaryButton>
           </div>
         </form>
       </div>

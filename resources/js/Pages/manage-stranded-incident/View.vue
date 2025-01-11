@@ -49,6 +49,10 @@ const form = useForm({
     stranded_incident_id: props.strandedIncident.id,
 });
 
+// Computed property to filter active stranded species
+const activeStrandedSpecies = computed(() => {
+    return props.strandedSpecies.filter(species => species.is_active);
+});
 
 //routes
 const backRoute = computed(() => {
@@ -645,8 +649,8 @@ onMounted(() => {
                         <button class="bg-indigo-900 text-white px-3 m-1 rounded" @click="createSpeciesForm">+</button>
                     </div>
 
-                    <div v-if="props.strandedSpecies && props.strandedSpecies.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-                        <div v-for="(strandedSpecies, index) in props.strandedSpecies" :key="strandedSpecies.id" class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer">
+                    <div v-if="activeStrandedSpecies && activeStrandedSpecies.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                        <div v-for="(strandedSpecies, index) in activeStrandedSpecies" :key="strandedSpecies.id" class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer">
                             <button @click="handleSpeciesClick(strandedSpecies.id)" class="w-full h-full text-left p-4">
                                 <p class="font-semibold text-md text-indigo-950">Species {{ index + 1 }}</p>
                                 <p class="text-sm">{{ strandedSpecies.species_name }}</p>

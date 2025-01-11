@@ -39,7 +39,7 @@ const backRoute = computed(() => {
 });
 
 const updateRoute = computed(() => {
-    return route('stranded.species.update.page', { id: props.strandedIncident.id });
+    return route('stranded.species.update.page', { id: props.strandedSpecies.id });
 });
 
 const archiveRoute = computed(() => {
@@ -325,26 +325,6 @@ const getConditionDescription = (code) => {
 </template>
 
 <style scoped>
-
-.bg-white {
-    background-color: #ffffff;
-}
-
-.container {
-    padding: 0 2rem; /* Reduced padding */
-}
-
-.text-indigo-700 {
-    color: #4f46e5;
-}
-
-.text-gray-600 {
-    color: #4b5563;
-}
-
-.text-gray-500 {
-    color: #6b7280;
-}
 
 @media print {
     button {

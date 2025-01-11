@@ -85,7 +85,11 @@ class StrandedSpeciesController extends Controller
     public function updatePage($id)
     {
         $strandedSpecies = StrandedSpecies::findOrFail($id);
-        return Inertia::render('manage-stranded-incident/stranded-species/Update', ['strandedSpecies' => $strandedSpecies]);
+        $species = Species::get();
+        return Inertia::render('manage-stranded-incident/stranded-species/Update',
+        ['strandedSpecies' => $strandedSpecies,
+        'species' => $species
+    ]);
     }
     public function update(Request $request, $id)
     {

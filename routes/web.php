@@ -98,9 +98,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
                 ->name('stranded.species.create');
             Route::get('/view/{id}', [StrandedSpeciesController::class, 'view'])
                 ->name('stranded.species.view');
-            Route::get('/updatePage/{id}', [StrandedSpeciesController::class, 'updatePage'])
+            Route::get('/update-page/{id}', [StrandedSpeciesController::class, 'updatePage'])
                 ->name('stranded.species.update.page');
-            Route::patch('/update/{id}', [StrandedSpeciesController::class, 'update'])
+            Route::post('/update/{id}', [StrandedSpeciesController::class, 'update'])
                 ->name('stranded.species.update');
             Route::patch('/archive/{id}', [StrandedSpeciesController::class, 'archive'])
                 ->name('stranded.species.archive');
