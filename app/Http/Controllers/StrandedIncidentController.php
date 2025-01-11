@@ -298,26 +298,26 @@ class StrandedIncidentController extends Controller
 
         // Check if the provided password matches the authenticated user's password
         $currentUser = Auth::user();
-    if (!Hash::check($request->password, $currentUser->password)) {
-        return back()->withErrors(['password' => 'The provided password is incorrect.']);
-    }
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
 
-    $strandedIncident = StrandedIncident::findOrFail($id);
-    $strandedIncident->is_active = false;
-    $strandedIncident->save();
+        $strandedIncident = StrandedIncident::findOrFail($id);
+        $strandedIncident->is_active = false;
+        $strandedIncident->save();
 
-    return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully archived stranded incident report'])->with('success', 'Stranded Incident archived successfully.');
+        return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully archived stranded incident report'])->with('success', 'Stranded Incident archived successfully.');
     }
 
     public function unarchive(Request $request, $id)
-        {
-            // Validate the request, ensuring the password is provided
-            $request->validate([
-                'password' => 'required|string',
-            ]);
+    {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
 
-            // Check if the provided password matches the authenticated user's password
-            $currentUser = Auth::user();
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
         if (!Hash::check($request->password, $currentUser->password)) {
             return back()->withErrors(['password' => 'The provided password is incorrect.']);
         }

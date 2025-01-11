@@ -7,6 +7,7 @@ use App\Models\StrandedIncident;
 use App\Models\StrandedSpecies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class StrandedSpeciesController extends Controller
@@ -79,5 +80,75 @@ class StrandedSpeciesController extends Controller
             'strandedSpecies' => $strandedSpecies,
             'strandedIncident' => $strandedSpecies->strandedIncident, // Access the related strandedIncident
         ]);
+    }
+
+    public function updatePage($id)
+    {
+        $strandedSpecies = StrandedSpecies::findOrFail($id);
+        return Inertia::render('manage-stranded-incident/stranded-species/Update', ['strandedSpecies' => $strandedSpecies]);
+    }
+    public function update(Request $request, $id)
+    {
+        // Validate incoming data
+        $validated = $request->validate([
+            'condition_code' => 'required|numeric|min:1|max:6',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'sex' => 'required|in:male,female,unknown',
+            'length' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
+            'girth' => 'nullable|numeric',
+            'disposition' => 'nullable|string',
+            'disposal_site' => 'nullable|string',
+            'more_information' => 'nullable|string',
+            'is_released' => 'required|boolean',
+            'species_id' => 'nullable|exists:species,id'
+        ]);
+
+        $strandedSpecies = StrandedSpecies::findOrFail($id);
+        $strandedSpecies->update($validated);
+
+        return redirect()->route('stranded.species.view', $id)
+            ->with('success', 'Stranded Species updated successfully.');
+    }
+
+    public function archive(Request $request, $id)
+    {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        $strandedSpecies = StrandedSpecies::findOrFail($id);
+        $strandedSpecies->is_active = false;
+        $strandedSpecies->save();
+
+        return redirect()->route('stranded.species.view', ['id' => $id, 'message'=> 'Successfully archived stranded species report'])->with('success', 'Stranded species archived successfully.');
+    }
+
+    public function unarchive(Request $request, $id)
+    {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        $strandedSpecies = StrandedSpecies::findOrFail($id);
+        $strandedSpecies->is_active = true;
+        $strandedSpecies->save();
+
+        return redirect()->route('stranded.species.view', ['id' => $id, 'message'=> 'Successfully unarhived stranded species'])->with('success', 'Stranded incident unarchived successfully.');
     }
 }
