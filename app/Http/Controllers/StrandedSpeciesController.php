@@ -72,6 +72,9 @@ class StrandedSpeciesController extends Controller
     {
         $strandedSpecies = StrandedSpecies::with('strandedIncident')->findOrFail($id);
 
+        $species = Species::find($strandedSpecies->species_id);
+        $strandedSpecies->species_name = $species ? $species->name : 'Unknown Species';
+
         return Inertia::render('manage-stranded-incident/stranded-species/View', [
             'strandedSpecies' => $strandedSpecies,
             'strandedIncident' => $strandedSpecies->strandedIncident, // Access the related strandedIncident
