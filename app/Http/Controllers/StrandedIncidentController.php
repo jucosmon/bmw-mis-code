@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MediaFile;
+use App\Models\Species;
 use App\Models\StrandedIncident;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -125,7 +126,8 @@ class StrandedIncidentController extends Controller
             'mediaFiles',
             'comments.user',
             'respondActions',
-            'reportActions'
+            'reportActions',
+            'strandedSpecies'
             ])->findOrFail($id);
 
         // Map media files to include public URLs
@@ -137,10 +139,15 @@ class StrandedIncidentController extends Controller
         $userId = Auth::id();
         $userRespondAction = $strandedIncident->respondActions->firstWhere('user_id', $userId);
 
+        foreach ($strandedIncident->strandedSpecies as $strandedSpecies) {
+            $species = Species::find($strandedSpecies->species_id);
+            $strandedSpecies->species_name = $species ? $species->name : 'Unknown Species';
+        }
         return Inertia::render('manage-stranded-incident/View', [
             'strandedIncident' => $strandedIncident,
-            'respondActions' => $strandedIncident->respondActions->toArray(), // Convert collection to array
-            'userRespondStatus' => $userRespondAction ? $userRespondAction->response_status : null, // Pass the user's respond status or null
+            'respondActions' => $strandedIncident->respondActions->toArray(),
+            'userRespondStatus' => $userRespondAction ? $userRespondAction->response_status : null,
+            'strandedSpecies' => $strandedIncident->strandedSpecies->toArray(),
         ]);
     }
 

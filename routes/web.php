@@ -96,6 +96,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
                 ->name('stranded.species.createPage');
             Route::post('/create/{id}', [StrandedSpeciesController::class, 'create'])
                 ->name('stranded.species.create');
+            Route::get('/view/{id}', [StrandedSpeciesController::class, 'view'])
+                ->name('stranded.species.view');
         });
     });
 

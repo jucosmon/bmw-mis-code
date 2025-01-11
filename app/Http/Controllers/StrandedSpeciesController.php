@@ -67,4 +67,14 @@ class StrandedSpeciesController extends Controller
 
         return redirect()->route('stranded.incident.view', $id)->with('success', 'Stranded Incident created successfully!');
     }
+
+    public function view($id)
+    {
+        $strandedSpecies = StrandedSpecies::with('strandedIncident')->findOrFail($id);
+
+        return Inertia::render('manage-stranded-incident/stranded-species/View', [
+            'strandedSpecies' => $strandedSpecies,
+            'strandedIncident' => $strandedSpecies->strandedIncident, // Access the related strandedIncident
+        ]);
+    }
 }

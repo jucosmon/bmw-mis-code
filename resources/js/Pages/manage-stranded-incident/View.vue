@@ -5,7 +5,10 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { computed, nextTick, onMounted, ref } from 'vue';
+
 
 const page = usePage();
 const props = defineProps({
@@ -22,6 +25,10 @@ const props = defineProps({
     userRespondStatus: {
         type:String,
         default: '',
+    },
+    strandedSpecies:{
+        type: Array,
+        default: () => [],
     }
 });
 const comments = ref(props.strandedIncident.comments || []);
@@ -342,6 +349,71 @@ const scrollToCommentsSection = () => {
 const createSpeciesForm = () => {
     Inertia.get(route('stranded.species.createPage', {id: props.strandedIncident.id}));
 }
+
+// view species form
+const handleSpeciesClick = ($id) => {
+    Inertia.get(route('stranded.species.view', {id: $id}));
+}
+
+// location data
+const municipalityData = ref([]);
+const barangayData = ref([]);
+
+const municipalityName = computed(() => {
+    const municipality = municipalityData.value.find(
+        (m) => m.id === props.strandedIncident.municipality_id
+    );
+    return municipality ? municipality.name : 'Unknown Municipality';
+});
+
+const barangayName = computed(() => {
+    const barangay = barangayData.value.find(
+        (b) => b.id === props.strandedIncident.barangay_id
+    );
+    return barangay ? barangay.name : 'Unknown Barangay';
+});
+
+onMounted(async () => {
+    try {
+        const municipalityResponse = await axios.get('/municipalities');
+        municipalityData.value = municipalityResponse.data;
+
+        const barangayResponse = await axios.get(
+            `/barangays?municipality_id=${props.strandedIncident.municipality_id}`
+        );
+        barangayData.value = barangayResponse.data;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+});
+
+// Map references
+const map = ref(null);
+const marker = ref(null);
+
+// Initialize Leaflet map
+onMounted(() => {
+  nextTick(() => {
+    console.log('Stranded Incident:', props.strandedIncident); // Log the stranded incident for debugging
+
+    // Initialize the map with the latitude and longitude from props
+    map.value = L.map('map', {
+      dragging: false, // Disable dragging
+      scrollWheelZoom: false, // Disable zooming with the mouse wheel
+      touchZoom: false, // Disable touch zooming on mobile
+      doubleClickZoom: false, // Disable double-click zooming
+      boxZoom: false, // Disable box zooming
+    }).setView([props.strandedIncident.latitude, props.strandedIncident.longitude], 13);
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map.value);
+
+    // Add a marker at the specified location (non-draggable)
+    marker.value = L.marker([props.strandedIncident.latitude, props.strandedIncident.longitude]).addTo(map.value);
+  });
+});
 </script>
 
 <template>
@@ -408,7 +480,7 @@ const createSpeciesForm = () => {
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
                         @click="updateIncident"
                     >
-                        Update Incident
+                        Update Report
                     </button>
                     <button
                         v-if="updateButtonStatusResponder"
@@ -416,7 +488,7 @@ const createSpeciesForm = () => {
                         @click="updateIncident"
                     >
                     {{ userRespondStatus === 'ongoing' || userRespondStatus === 'onsite' && props.strandedIncident.report_status==='pending'
-                        ? 'Verify Incident' : 'Update Incident (Responder)' }}
+                        ? 'Verify Incident' : 'Update Incident' }}
                     </button>
                     <button
                          v-if="respondButtonStatus"
@@ -501,27 +573,36 @@ const createSpeciesForm = () => {
 
             <div class="space-y-6">
                 <!-- Text Details -->
-                <div class="bg-white shadow-lg rounded-xl p-6">
-                    <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-9-4h2v2H9V6zm0 4h2v6H9v-6z" />
-                        </svg>
-                        Stranded Incident Details
-                    </h2>
-                    <div class="space-y-2">
-                        <p><strong>ID:</strong> {{ props.strandedIncident.id }}</p>
-                        <p><strong>Certainty Level:</strong> {{ props.strandedIncident.certainty_level }}</p>
-                        <p><strong>Date:</strong> {{ props.strandedIncident.date }}</p>
-                        <p><strong>Time:</strong> {{ props.strandedIncident.time }}</p>
-                        <p><strong>Species Involved:</strong> {{ props.strandedIncident.species_involved }}</p>
-                        <p><strong>Quantity:</strong> {{ props.strandedIncident.quantity }}</p>
-                        <p><strong>Condition:</strong> {{ props.strandedIncident.condition }}</p>
-                        <p><strong>Sea State:</strong> {{ props.strandedIncident.sea_state }}</p>
-                        <p><strong>Weather:</strong> {{ props.strandedIncident.weather }} </p>
-                        <p><strong>Beach Type:</strong> {{ props.strandedIncident.beach_type }}</p>
-                        <p><strong>More Information:</strong> {{ props.strandedIncident.more_information  }}</p>
-                        <p><strong>False Information?</strong> {{ props.strandedIncident.is_false ? 'Yes' : 'No' }}</p>
-                        <p><strong>Active Status:</strong> {{ props.strandedIncident.is_active ? 'Active' : 'Inactive' }}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white shadow-lg rounded-xl p-6">
+                        <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-9-4h2v2H9V6zm0 4h2v6H9v-6z" />
+                            </svg>
+                            Stranded Incident Details
+                        </h2>
+                        <div class="space-y-2">
+                            <p><strong>ID:</strong> {{ props.strandedIncident.id }}</p>
+                            <p><strong>Certainty Level:</strong> {{ props.strandedIncident.certainty_level }}</p>
+                            <p><strong>Date:</strong> {{ props.strandedIncident.date }}</p>
+                            <p><strong>Time:</strong> {{ props.strandedIncident.time }}</p>
+                            <p><strong>Species Involved:</strong> {{ props.strandedIncident.species_involved }}</p>
+                            <p><strong>Quantity:</strong> {{ props.strandedIncident.quantity }}</p>
+                            <p><strong>Condition:</strong> {{ props.strandedIncident.condition }}</p>
+                            <p><strong>Sea State:</strong> {{ props.strandedIncident.sea_state }}</p>
+                            <p><strong>Weather:</strong> {{ props.strandedIncident.weather }} </p>
+                            <p><strong>Beach Type:</strong> {{ props.strandedIncident.beach_type }}</p>
+                            <p><strong>More Information:</strong> {{ props.strandedIncident.more_information  }}</p>
+                            <p><strong>False Information?</strong> {{ props.strandedIncident.is_false ? 'Yes' : 'No' }}</p>
+                            <p><strong>Active Status:</strong> {{ props.strandedIncident.is_active ? 'Active' : 'Inactive' }}</p>
+                        </div>
+                    </div>
+                    <div class="bg-white shadow-lg rounded-xl p-6">
+                        <h2 class="text-xl font-semibold text-indigo-700 mb-4">Incident Location</h2>
+                        <p class="mb-1"><strong>Location:</strong> {{ barangayName }}, {{ municipalityName }}</p>
+                        <div id="map" style="height: 400px; width: 100%;" class="mb-3"></div>
+                        <p class="mt-2 text-gray-500 text-sm text-center">{{ props.strandedIncident.latitude }} lat. | {{ props.strandedIncident.longitude }} long.</p>
+
                     </div>
                 </div>
                 <!--Media Files section -->
@@ -556,33 +637,20 @@ const createSpeciesForm = () => {
                 <div v-if="isBpemoAdmin || isBpemoStaff || isLguResponder" class="bg-white shadow-lg rounded-xl p-6 relative z-10">
                     <div class="flex justify-between">
                         <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6 mr-2 text-indigo-10"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-10" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M4.75 4A2.75 2.75 0 002 6.75v6.5A2.75 2.75 0 004.75 16h10.5A2.75 2.75 0 0018 13.25v-6.5A2.75 2.75 0 0015.25 4H4.75zM9.5 8.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5H10.5a.75.75 0 01-.75-.75zm-3.25 4.25a.75.75 0 110-1.5h7.5a.75.75 0 110 1.5H6.25z" />
                             </svg>
                             Detailed Species Forms
                         </h2>
-                        <button  class="bg-indigo-900 text-white px-4 rounded" @click="createSpeciesForm">
-                            +
-                        </button>
-
+                        <button class="bg-indigo-900 text-white px-3 m-1 rounded" @click="createSpeciesForm">+</button>
                     </div>
 
-                    <div v-if="props.strandedIncident.strandedSpecies && props.strandedIncident.strandedSpecies.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div
-                            v-for="file in props.strandedIncident.strandedSpecies"
-                            :key="file.id"
-                            class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
-                        >
-                            <img
-                                :src="file.url"
-                                :alt="`Detailed Species forms of ${props.strandedIncident.species_involved}`"
-                                class="w-full h-48 object-cover"
-                            />
+                    <div v-if="props.strandedSpecies && props.strandedSpecies.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                        <div v-for="(strandedSpecies, index) in props.strandedSpecies" :key="strandedSpecies.id" class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer">
+                            <button @click="handleSpeciesClick(strandedSpecies.id)" class="w-full h-full text-left p-4">
+                                <p class="font-semibold text-md text-indigo-950">Species {{ index + 1 }}</p>
+                                <p class="text-sm">{{ strandedSpecies.species_name }}</p>
+                            </button>
                         </div>
                     </div>
                     <p v-else class="text-gray-500 text-center py-4">No detailed species form created</p>
@@ -642,3 +710,9 @@ const createSpeciesForm = () => {
         </div>
     </Sidebar>
 </template>
+
+<style>
+#map {
+    height: 400px; /* Ensure this is set */
+    width: 100%; /* Ensure this is set */
+}</style>

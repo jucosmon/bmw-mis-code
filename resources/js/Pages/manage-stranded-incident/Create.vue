@@ -321,10 +321,11 @@ const setLocationFromMap = () => {
   height: 40px; /* Adjust height as needed */
   color: white;
 
-  #map {
+
+}
+#map {
     height: 400px; /* Ensure this is set */
     width: 100%; /* Ensure this is set */
-}
 }
 
 /* Hide the file name text after file is selected */
