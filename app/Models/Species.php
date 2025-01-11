@@ -23,4 +23,10 @@ class Species extends Model
     {
         return $this->hasMany(MediaFile::class);
     }
+
+    public function strandedSpecies()
+    {
+        return $this->hasMany(StrandedSpecies::class);
+    }
+
 }

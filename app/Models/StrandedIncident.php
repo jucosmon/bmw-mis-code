@@ -9,7 +9,6 @@ class StrandedIncident extends Model
 {
     use HasFactory;
 
-    // Specify the table name if it doesn't follow Laravel's pluralization convention
     protected $table = 'stranded_incidents';
 
     // Define the fillable attributes for mass assignment
@@ -35,7 +34,6 @@ class StrandedIncident extends Model
         'user_id',
     ];
 
-    // Specify the attributes that should be cast to specific types
     protected $casts = [
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
@@ -91,6 +89,11 @@ class StrandedIncident extends Model
     public function comments()
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function strandedSpecies()
+    {
+        return $this->hasMany(StrandedSpecies::class);
     }
     /**
      * Scope to filter incidents by report status.

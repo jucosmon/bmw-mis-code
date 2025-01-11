@@ -39,6 +39,17 @@ class User extends Authenticatable implements MustVerifyEmail
     public function barangays(){
         return $this->belongsTo(Barangay::class, 'barangay_id');
     }
+
+    public function strandedIncidents()
+    {
+        return $this->hasMany(StrandedIncident::class);
+    }
+
+    public function strandedSpecies()
+    {
+        return $this->hasMany(StrandedSpecies::class);
+    }
+
     public function comments()
     {
         return $this->hasMany(Comment::class);
