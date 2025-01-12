@@ -45,6 +45,33 @@ class StrandedIncidentController extends Controller
         ]);
     }
 
+    public function indexResolvedIncidents()
+    {
+        $user = Auth::user();
+
+        if (in_array($user->user_role, ['bpemo_admin', 'bpemo_staff'])) {
+            $strandedIncidents = StrandedIncident::whereIn('report_status', ['false', 'resolved'])
+                ->with('reportActions')
+                ->get();
+        } elseif ($user->user_role === 'lgu_responder') {
+            $strandedIncidents = StrandedIncident::whereIn('report_status', ['false', 'resolved'])
+                ->where('municipality_id', $user->municipality_id)
+                ->with('reportActions')
+                ->get();
+        } elseif ($user->user_role === 'barangay_official') {
+            $strandedIncidents = StrandedIncident::whereIn('report_status', ['false', 'resolved'])
+                ->where('barangay_id', $user->barangay_id)
+                ->with('reportActions')
+                ->get();
+        } else {
+            abort(403);
+        }
+
+        return Inertia::render('manage-stranded-incident/resolved-incidents/index', [
+            'strandedIncidents' => $strandedIncidents,
+        ]);
+    }
+
 
     public function createPage()
     {

@@ -68,6 +68,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::middleware(['role:bpemo_admin,bpemo_staff'])->patch('/resolve/{id}', [StrandedIncidentController::class, 'resolve'])
             ->name('stranded.incident.resolve');
 
+        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder, barangay_official'])->get('/resolve-incidents', [StrandedIncidentController::class, 'indexResolvedIncidents'])
+            ->name('resolved.incidents.index');
+
         //archiving another stranded incident
         Route::patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
             ->name('stranded.incident.archive');
