@@ -27,7 +27,6 @@ class StrandedIncident extends Model
         'detailed_location',
         'more_information',
         'report_status',
-        'is_false',
         'is_active',
         'municipality_id',
         'barangay_id',
@@ -37,7 +36,6 @@ class StrandedIncident extends Model
     protected $casts = [
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
-        'is_false' => 'boolean',
         'is_active' => 'boolean',
         'report_status' => 'string',
     ];
@@ -109,14 +107,6 @@ class StrandedIncident extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
-    }
-
-    /**
-     * Scope to check if the incident is false.
-     */
-    public function scopeFalseIncident($query)
-    {
-        return $query->where('is_false', true);
     }
 
 }

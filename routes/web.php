@@ -67,18 +67,19 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         // resolve
         Route::middleware(['role:bpemo_admin,bpemo_staff'])->patch('/resolve/{id}', [StrandedIncidentController::class, 'resolve'])
             ->name('stranded.incident.resolve');
-
-        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder, barangay_official'])->get('/resolve-incidents', [StrandedIncidentController::class, 'indexResolvedIncidents'])
+        Route::middleware(['role:bpemo_admin,bpemo_staff'])->patch('/unresolve/{id}', [StrandedIncidentController::class, 'unresolve'])
+            ->name('stranded.incident.unresolve');
+        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder, barangay_official'])->get('/resolved-incidents', [StrandedIncidentController::class, 'indexResolvedIncidents'])
             ->name('resolved.incidents.index');
 
         //archiving another stranded incident
-        Route::patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
+        Route::middleware(['role:public_user'])->patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
             ->name('stranded.incident.archive');
         //unarchiving another stranded incident
-        Route::patch('/unarchive/{id}', [StrandedIncidentController::class, 'unarchive'])
+        Route::middleware(['role:public_user'])->patch('/unarchive/{id}', [StrandedIncidentController::class, 'unarchive'])
             ->name('stranded.incident.unarchive');
         // respond actions inside a specific stranded incident
-        Route::post('/respond', action: [RespondActionController::class, 'respond'])
+        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder, barangay_official'])->post('/respond', action: [RespondActionController::class, 'respond'])
         ->name('stranded.incident.respond');
 
         // comments inside a specific stranded incident

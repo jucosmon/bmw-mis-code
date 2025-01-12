@@ -27,7 +27,6 @@ return new class extends Migration
             $table->text('detailed_location')->nullable(); // Nullable
             $table->text('more_information')->nullable(); // Nullable
             $table->enum('report_status', ['pending', 'verified', 'completed', 'resolved', 'false'])->default('pending');
-            $table->boolean('is_false')->default(false);
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('municipality_id')->nullable(); // Nullable
             $table->unsignedInteger('barangay_id')->nullable(); // Nullable

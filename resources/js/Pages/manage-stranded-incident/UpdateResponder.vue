@@ -179,7 +179,9 @@ const setLocationFromMap = () => {
 
 // button status
 const buttonStatus = computed(() => {
-    if (props.strandedIncident.report_status === 'pending' && currentUserRole !=='public_user'){
+    if (props.strandedIncident.report_status === 'pending' ||
+        props.strandedIncident.report_status === 'false'
+    && currentUserRole !=='public_user'){
         return true;
     }else{
         return false;
@@ -192,7 +194,7 @@ const falseIncident = () => {
 };
 
 const verifyIncident = () => {
-    form.report_status = 'verified'; // Set report status
+    form.report_status = 'verified';
 };
 
 

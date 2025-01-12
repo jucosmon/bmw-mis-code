@@ -56,14 +56,20 @@ const activeStrandedSpecies = computed(() => {
 
 //routes
 const backRoute = computed(() => {
-    return route('stranded.incident.index');
+    if( props.strandedIncident.report_status === 'resolved' || props.strandedIncident.report_status === 'false'){
+        return route('resolved.incidents.index');
+    }else{
+        return route('stranded.incident.index');
+    }
 });
 
 
 const updateRoute = computed(() => {
     const isResponder = isBarangayOfficial.value || isBpemoAdmin.value || isBpemoStaff.value || isLguResponder.value;
     const isResponderEligible = isResponder &&
-        (props.strandedIncident.report_status === 'pending' || props.strandedIncident.report_status === 'verified'  || props.strandedIncident.report_status === 'completed');
+        (props.strandedIncident.report_status === 'pending' || props.strandedIncident.report_status === 'verified'  || props.strandedIncident.report_status === 'completed'
+            || props.strandedIncident.report_status === 'false'
+        );
 
     if (isPublicUser.value) {
         return route('stranded.incident.update.page', { id: props.strandedIncident.id });
@@ -150,7 +156,8 @@ const updateButtonStatusResponder = computed(() => {
     return props.userRespondStatus==='ongoing' ||
             props.userRespondStatus==='onsite' ||
            props.strandedIncident.report_status === 'verified' ||
-           props.strandedIncident.report_status === 'completed';
+           props.strandedIncident.report_status === 'completed' ||
+           props.strandedIncident.report_status === 'false';
 });
 
 // Respond Actions
@@ -258,6 +265,37 @@ const handleResolveAction = (response) => {
         );
     } else {
         resolveModalVisible.value = false;
+    }
+};
+
+//unresolve button
+const unresolveButtonStatus = computed(() => {
+    return props.strandedIncident.report_status === 'resolved' &&
+           (isBpemoAdmin.value || isBpemoStaff.value);
+});
+
+const unresolveModalVisible = ref(false);
+
+const showUnresolveModal = () => {
+    unresolveModalVisible.value = true;
+};
+
+const handleUnresolveAction = (response) => {
+    if (response === 'yes') {
+        Inertia.patch(
+            route('stranded.incident.unresolve', { id: props.strandedIncident.id }), // Pass the ID here
+            {},
+            {
+                onSuccess: () => {
+                    unresolveModalVisible.value = false;
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                },
+            }
+        );
+    } else {
+        unresolveModalVisible.value = false;
     }
 };
 
@@ -447,7 +485,7 @@ onMounted(() => {
                     <button
                         class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
                         @click="confirmArchiveIncident"
-                        v-if="props.strandedIncident.is_active===false"
+                        v-if="props.strandedIncident.is_active===false && isPublicUser"
                     >
                         Unarchive Incident
                     </button>
@@ -491,7 +529,8 @@ onMounted(() => {
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
                         @click="updateIncident"
                     >
-                    {{ userRespondStatus === 'ongoing' || userRespondStatus === 'onsite' && props.strandedIncident.report_status==='pending'
+                    {{ userRespondStatus === 'ongoing' || userRespondStatus === 'onsite' && props.strandedIncident.report_status==='pending' ||
+                        (props.strandedIncident.report_status==='false' && !isPublicUser)
                         ? 'Verify Incident' : 'Update Incident' }}
                     </button>
                     <button
@@ -571,7 +610,24 @@ onMounted(() => {
                             </div>
                         </div>
                     </Modal>
-
+                    <button
+                        v-if="unresolveButtonStatus"
+                        class="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 transition"
+                        @click="showUnresolveModal"
+                    >
+                        Unresolve Incident
+                    </button>
+                    <Modal :show="unresolveModalVisible" @close="unresolveModalVisible = false">
+                        <div class="p-6">
+                            <h2 class="text-lg font-semibold text-gray-800">
+                                Do you confirm to unresolve the incident?
+                            </h2>
+                            <div class="mt-6 flex justify-end space-x-4">
+                                <SecondaryButton @click="unresolveModalVisible = false">Cancel</SecondaryButton>
+                                <DangerButton @click="handleUnresolveAction('yes')">Confirm</DangerButton>
+                            </div>
+                        </div>
+                    </Modal>
                 </div>
             </div>
 
@@ -597,7 +653,6 @@ onMounted(() => {
                             <p><strong>Weather:</strong> {{ props.strandedIncident.weather }} </p>
                             <p><strong>Beach Type:</strong> {{ props.strandedIncident.beach_type }}</p>
                             <p><strong>More Information:</strong> {{ props.strandedIncident.more_information  }}</p>
-                            <p><strong>False Information?</strong> {{ props.strandedIncident.is_false ? 'Yes' : 'No' }}</p>
                             <p><strong>Active Status:</strong> {{ props.strandedIncident.is_active ? 'Active' : 'Inactive' }}</p>
                         </div>
                     </div>

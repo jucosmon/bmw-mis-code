@@ -124,7 +124,6 @@ class StrandedIncidentController extends Controller
             'municipality_id' => $request->municipality_id,
             'barangay_id' => $request->barangay_id,
             'is_active' => true,
-            'is_false' => false,
             'user_id' => $user->id,
         ]);
 
@@ -221,8 +220,6 @@ class StrandedIncidentController extends Controller
 
     public function update(Request $request, $id)
     {
-
-        // Validate incoming data
         $validated = $request->validate([
             'certainty_level' => 'required|numeric',
             'date' => 'required|date',
@@ -248,11 +245,15 @@ class StrandedIncidentController extends Controller
         if ($user->user_role === 'public_user' && $request->report_status !== 'pending') {
             abort(403, 'Unauthorized action. The report is already reviewed by responders.');
         }
-        // Find StrandedIncident to update
+
         $strandedIncident = StrandedIncident::findOrFail($id);
+
+        if($validated['report_status'] === 'false'){
+            $validated['is_active'] = false;
+        }
+
         $strandedIncident->update($validated);
 
-        // Handle media file deletion
         if ($request->has('deletedImages')) {
             $deletedMediaIds = $request->input('deletedImages'); // Get the IDs of images to delete
             foreach ($deletedMediaIds as $deletedMediaId) {
@@ -282,6 +283,11 @@ class StrandedIncidentController extends Controller
             }
         }
 
+        if($validated['report_status'] === 'false'){
+            return redirect()->route('stranded.incident.index')
+                        ->with('success', 'Stranded Incident marked as false successfully.');
+        }
+
         // Redirect to the updated strandedIncident view with a success message
         return redirect()->route('stranded.incident.view', $id)
                         ->with('success', 'Stranded Incident updated successfully.');
@@ -308,7 +314,7 @@ class StrandedIncidentController extends Controller
         if ($strandedIncident->report_status === 'completed') {
             $strandedIncident->update(['report_status' => 'resolved']);
 
-            return redirect()->back()->with('success', 'Incident marked as resolved.');
+            return redirect()->route('stranded.incident.index')->with('success', 'Stranded Incident resolved successfully.');
         } else {
             abort(400, 'Invalid report status.');
         }
@@ -354,6 +360,18 @@ class StrandedIncidentController extends Controller
         $strandedIncident->save();
 
         return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully unarhived stranded incident'])->with('success', 'Stranded incident unarchived successfully.');
+    }
+
+    public function unresolve($id)
+    {
+        $strandedIncident = StrandedIncident::findOrFail($id);
+        if($strandedIncident->report_status!=='resolved'){
+            abort(403, 'Invalid');
+        }
+        $strandedIncident->report_status = 'completed';
+        $strandedIncident->save();
+
+        return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully unresolved stranded incident'])->with('success', 'Stranded incident unresolved successfully.');
     }
 
 }
