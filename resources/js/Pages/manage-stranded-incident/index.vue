@@ -67,7 +67,7 @@ const resolvedIncidentsButton = () => {
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-center">Active Stranded Incident List</h2>
                 <div class="flex gap-3">
-                    <button @click="resolvedIncidentsButton" class="cursor-pointer">
+                    <button v-if="!isPublicUser" @click="resolvedIncidentsButton" class="cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-0.5 -0.5 30 30" id="Archive--Streamline-Ionic-Filled" height="30" width="30">
                             <desc>Archive Streamline Icon: https://streamlinehq.com</desc>
                             <path fill="#1A237E" d="M2.31873125 8.663810416666665v15.47875c0 0.9421374999999999 0.37428125 1.845789583333333 1.0404958333333332

@@ -529,8 +529,8 @@ onMounted(() => {
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
                         @click="updateIncident"
                     >
-                    {{ userRespondStatus === 'ongoing' || userRespondStatus === 'onsite' && props.strandedIncident.report_status==='pending' ||
-                        (props.strandedIncident.report_status==='false' && !isPublicUser)
+                    {{ (userRespondStatus === 'ongoing' || userRespondStatus === 'onsite' )&&
+                    (props.strandedIncident.report_status==='pending' || props.strandedIncident.report_status==='false') && !isPublicUser
                         ? 'Verify Incident' : 'Update Incident' }}
                     </button>
                     <button
@@ -659,6 +659,7 @@ onMounted(() => {
                     <div class="bg-white shadow-lg rounded-xl p-6">
                         <h2 class="text-xl font-semibold text-indigo-700 mb-4">Incident Location</h2>
                         <p class="mb-1"><strong>Location:</strong> {{ barangayName }}, {{ municipalityName }}</p>
+                        <p class="mb-1"><strong>Detailed Location:</strong> {{ props.strandedIncident.detailed_location }}</p>
                         <div id="map" style="height: 400px; width: 100%;" class="mb-3"></div>
                         <p class="mt-2 text-gray-500 text-sm text-center">{{ props.strandedIncident.latitude }} lat. | {{ props.strandedIncident.longitude }} long.</p>
 

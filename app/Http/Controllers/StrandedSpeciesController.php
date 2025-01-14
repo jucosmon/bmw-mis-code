@@ -133,7 +133,7 @@ class StrandedSpeciesController extends Controller
         $strandedSpecies->is_active = false;
         $strandedSpecies->save();
 
-        return redirect()->route('stranded.species.view', ['id' => $id, 'message'=> 'Successfully archived stranded species report'])->with('success', 'Stranded species archived successfully.');
+        return redirect()->route('stranded.incident.view', ['id' => $strandedSpecies->stranded_incident_id, 'message'=> 'Successfully archived stranded species report'])->with('success', 'Stranded species archived successfully.');
     }
 
     public function unarchive(Request $request, $id)
