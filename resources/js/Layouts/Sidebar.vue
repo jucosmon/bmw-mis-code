@@ -1,15 +1,64 @@
 <script setup>
 import DropdownLink from '@/Components/DropdownLink.vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
 const state = reactive({
   sidebarOpen: false,
   activeDropdown: null,
   sidebarLargeScreenOpen: true,
-  profileDropdownOpen: false, // For profile dropdown
-  notificationsDropdownOpen: false, // For notifications dropdown
+  profileDropdownOpen: false,
+  notificationsDropdownOpen: false,
 });
+
+// notifications
+const notifications = ref([]);
+const displayedNotifications = ref([]);
+const limit = ref(8);
+const filterType = ref('all'); // Default filter type to 'all'
+
+const hasMoreNotifications = computed(() => notifications.value.length > limit.value);
+
+const toggleNotificationsDropdown = (event) => {
+  event.stopPropagation();
+  if (state.profileDropdownOpen) {
+    state.profileDropdownOpen = false;
+  }
+  state.notificationsDropdownOpen = !state.notificationsDropdownOpen;
+
+  if (state.notificationsDropdownOpen) {
+    fetchNotifications();
+  }
+};
+
+const fetchNotifications = async () => {
+  try {
+    const response = await fetch('/notifications'); // Fetch all notifications
+    const data = await response.json();
+    notifications.value = data; // Store all notifications
+    displayedNotifications.value = notifications.value.slice(0, limit.value); // Limit the displayed notifications
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+  }
+};
+
+const filteredNotifications = computed(() => {
+  if (filterType.value === 'all') {
+    return notifications.value; // Return all notifications
+  }
+  return notifications.value.filter(notification => notification.type === filterType.value); // Filter by type
+});
+
+const showMoreNotifications = () => {
+  limit.value += 8;
+  displayedNotifications.value = filteredNotifications.value.slice(0, limit.value);
+};
+
+const updateFilterType = (newFilterType) => {
+  filterType.value = newFilterType; // Update the filter type
+  limit.value = 8; // Reset the limit
+  displayedNotifications.value = filteredNotifications.value.slice(0, limit.value); // Update displayed notifications
+};
 
 // Load sidebar state from local storage on component mount
 onMounted(() => {
@@ -34,33 +83,24 @@ watch(() => state.sidebarLargeScreenOpen, (newValue) => {
   localStorage.setItem('sidebarLargeScreenOpen', JSON.stringify(newValue));
 });
 
+// Additional dropdown and close logic remains unchanged
 const toggleDropdown = (dropdownName, event) => {
-    event.stopPropagation(); // Prevent the click event from bubbling up
-
+  event.stopPropagation();
   state.activeDropdown = state.activeDropdown === dropdownName ? null : dropdownName;
 };
 
 const toggleProfileDropdown = (event) => {
-    event.stopPropagation(); // Prevent the click event from bubbling up
-    if(state.notificationsDropdownOpen){
-        state.notificationsDropdownOpen = false;
-    }
-    state.profileDropdownOpen = !state.profileDropdownOpen;
-};
-
-const toggleNotificationsDropdown = (event) => {
-    event.stopPropagation(); // Prevent the click event from bubbling up
-    if(state.profileDropdownOpen){
-        state.profileDropdownOpen = false;
-    }
-    state.notificationsDropdownOpen = !state.notificationsDropdownOpen;
+  event.stopPropagation();
+  if (state.notificationsDropdownOpen) {
+    state.notificationsDropdownOpen = false;
+  }
+  state.profileDropdownOpen = !state.profileDropdownOpen;
 };
 
 const closeDropdown = (event) => {
   if (!event.target.closest('.dropdown-container')) {
     state.profileDropdownOpen = false;
     state.notificationsDropdownOpen = false;
-
   }
 };
 
@@ -71,7 +111,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', closeDropdown);
 });
-
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -429,20 +468,31 @@ console.log(user);
               <!-- Notifications Button -->
               <button @click="toggleNotificationsDropdown($event)" class="relative rounded-lg lg:block hidden focus:outline-none focus:shadow-outline">
                 <span class="material-icons text-indigo-900">notifications</span>
-                <div v-if="state.notificationsDropdownOpen" class="dropdown-container absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
-                  <div class="py-2">
-                    <Link class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" href="#">
-                      Notification 1
-                    </Link>
-                    <Link class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" href="#">
-                      Notification 2
-                    </Link>
-                    <Link class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" href="#">
-                      Notification 3
-                    </Link>
-                  </div>
+                <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 mt-2 md:w-80 bg-white rounded-md shadow-lg z-20">
+                    <div class="py-2">
+                        <div class="flex justify-between px-4 ">
+                            <select v-model="filterType" @change="updateFilterType(filterType)" class="text-sm w-full text-center" @click.stop>
+                                <option value="all">All Notifications</option>
+                                <option value="stranding">Stranding</option>
+                                <option value="sighting">Sightings</option>
+                            </select>
+                        </div>
+                        <div class="max-h-60 overflow-y-auto">
+                            <template v-if="displayedNotifications.length > 0">
+                                <Link v-for="notification in displayedNotifications" :key="notification.id" class="block px-4 py-2 text-sm text-left text-gray-800 hover:bg-gray-100" :href="notification.link" @click.stop>
+                                    {{ notification.content }}
+                                </Link>
+                            </template>
+                            <template v-else>
+                                <div class="px-4 py-2 text-sm text-gray-500">No notifications available.</div>
+                            </template>
+                        </div>
+                        <div class="px-4 py-2">
+                            <button v-if="hasMoreNotifications" @click="showMoreNotifications" class="text-blue-500 text-sm" @click.stop>Show More</button>
+                        </div>
+                    </div>
                 </div>
-              </button>
+            </button>
 
               <!-- Profile Button -->
               <button @click="toggleProfileDropdown($event)" class="relative rounded-lg lg:block hidden focus:outline-none focus:shadow-outline">

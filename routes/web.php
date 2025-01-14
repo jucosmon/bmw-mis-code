@@ -7,6 +7,7 @@ use App\Http\Controllers\ManageAccount\BpemoAdminManageAccountsController;
 use App\Http\Controllers\ManageAccount\LguResponderManageAccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MunicipalityController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RespondActionController;
 use App\Http\Controllers\SpeciesController;
@@ -39,6 +40,11 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::post('/validate-password', [PasswordController::class, 'validatePassword'])->name('user.validatePassword');
     Route::get('/profile/view', [ProfileController::class, 'view'])->name('profile.view');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/notifications', [NotificationController::class, 'index']); // Fetch notifications
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']); // Mark as read
+    });
 
     //manage stranded incident use case
     Route::prefix('stranded-incident')->group(function () {
