@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\MediaFile;
+use App\Models\Notification;
+use App\Models\RespondAction;
 use App\Models\Species;
 use App\Models\StrandedIncident;
 use Illuminate\Http\Request;
@@ -142,7 +144,138 @@ class StrandedIncidentController extends Controller
             }
         }
 
+        $this->createNotification($strandedIncident, 'create');
+
         return redirect()->route('stranded.incident.index')->with('success', 'Stranded Incident created successfully!');
+    }
+
+    protected function createNotification( $strandedIncident, $action)
+    {
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Determine the user role
+        $userRole = '';
+        switch ($user->user_role) {
+            case "bpemo_admin":
+                $userRole = "BPEMO Administrator";
+                break;
+            case "bpemo_staff":
+                $userRole = "BPEMO Staff";
+                break;
+            case "lgu_responder":
+                $userRole = "LGU Responder";
+                break;
+            case "barangay_official":
+                $userRole = "Barangay Official";
+                break;
+            default:
+                $userRole = 'Public User';
+        }
+
+        if($action ==='create'){
+            // Create the notification
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} reported a new stranding incident.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+
+        } else if($action === 'verified'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is already onsite and verified the stranding incident.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'completed'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} marked the stranding incident as completed.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'resolved'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} marked the stranding incident as resolved.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        }else if($action === 'unresolved'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} updated the stranding incident as unresolved.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'archived'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} archived the reported stranding incident.",
+                'category' => 'false',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'unarchived'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} unarchived an archived stranding incident.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'false'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is already onsite and marked the reported stranding incident as false.",
+                'category' => 'false',
+                'notif_for' => 'all',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        }
+        else {
+            abort(403, 'Invalid action');
+        }
+
     }
 
     public function view($id)
@@ -248,11 +381,42 @@ class StrandedIncidentController extends Controller
 
         $strandedIncident = StrandedIncident::findOrFail($id);
 
+        // Store the old report status to check for changes
+        $oldReportStatus = $strandedIncident->report_status;
+
         if($validated['report_status'] === 'false'){
             $validated['is_active'] = false;
         }
 
         $strandedIncident->update($validated);
+
+
+        // Check if the report status has changed
+        if ($oldReportStatus !== $validated['report_status']) {
+            // Call the createNotification method here
+            $this->createNotification($strandedIncident, $validated['report_status']);
+
+            if($validated['report_status'] === 'verified' || $validated['report_status'] === 'false'){
+                $respondAction = RespondAction::where('stranded_incident_id', $strandedIncident->id)
+                ->where('user_id', $user->id)
+                ->first();
+
+                // If a record exists, update it; otherwise, create a new record
+                if ($respondAction) {
+                // Update the existing record
+                $respondAction->update([
+                    'response_status' => 'onsite',
+                ]);
+                } else {
+                // Create a new record
+                $respondAction = RespondAction::create([
+                'response_status' => 'onsite',
+                'stranded_incident_id' => $strandedIncident->id,
+                'user_id' => $user->id,
+                ]);
+                }
+            }
+        }
 
         if ($request->has('deletedImages')) {
             $deletedMediaIds = $request->input('deletedImages'); // Get the IDs of images to delete
@@ -301,6 +465,8 @@ class StrandedIncidentController extends Controller
         if ($strandedIncident->report_status === 'verified') {
             $strandedIncident->update(['report_status' => 'completed']);
 
+            $this->createNotification($strandedIncident, 'completed');
+
             return redirect()->back()->with('success', 'Incident marked as complete.');
         } else {
             abort(400, 'Invalid report status.');
@@ -313,7 +479,7 @@ class StrandedIncidentController extends Controller
 
         if ($strandedIncident->report_status === 'completed') {
             $strandedIncident->update(['report_status' => 'resolved']);
-
+            $this->createNotification($strandedIncident, 'resolved');
             return redirect()->route('stranded.incident.index')->with('success', 'Stranded Incident resolved successfully.');
         } else {
             abort(400, 'Invalid report status.');
@@ -339,6 +505,8 @@ class StrandedIncidentController extends Controller
         $strandedIncident->is_active = false;
         $strandedIncident->save();
 
+        $this->createNotification($strandedIncident, 'archived');
+
         return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully archived stranded incident report'])->with('success', 'Stranded Incident archived successfully.');
     }
 
@@ -359,6 +527,8 @@ class StrandedIncidentController extends Controller
         $strandedIncident->is_active = true;
         $strandedIncident->save();
 
+        $this->createNotification($strandedIncident, 'unarchived');
+
         return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully unarhived stranded incident'])->with('success', 'Stranded incident unarchived successfully.');
     }
 
@@ -371,7 +541,8 @@ class StrandedIncidentController extends Controller
         $strandedIncident->report_status = 'completed';
         $strandedIncident->save();
 
+        $this->createNotification($strandedIncident, 'unresolved');
+
         return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully unresolved stranded incident'])->with('success', 'Stranded incident unresolved successfully.');
     }
-
 }

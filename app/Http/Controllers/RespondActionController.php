@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\RespondAction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,10 @@ class RespondActionController extends Controller
         $userId = Auth::id();
         $strandedIncidentId = $request->id;
 
+        if ($request->status === 'onsite') {
+            return Inertia::location(route('stranded.incident.responder.update.page', $strandedIncidentId));
+        }
+
         // Check if a RespondAction record already exists for this user and incident
         $respondAction = RespondAction::where('stranded_incident_id', $strandedIncidentId)
                                         ->where('user_id', $userId)
@@ -43,7 +48,7 @@ class RespondActionController extends Controller
             $message = 'Respond action updated successfully.';
         } else {
             // Create a new record
-            RespondAction::create([
+            $respondAction = RespondAction::create([
                 'response_status' => $request->status,
                 'stranded_incident_id' => $strandedIncidentId,
                 'user_id' => $userId,
@@ -51,29 +56,80 @@ class RespondActionController extends Controller
             $message = 'Respond action created successfully.';
         }
 
-        if ($request->status === 'onsite') {
-            return Inertia::location(route('stranded.incident.responder.update.page', $strandedIncidentId));
-        }
+        $this->createNotification($respondAction);
+
+
+
 
         return redirect()->back()->with('success', $message);
     }
 
-    public function view(RespondAction $respondAction)
+    protected function createNotification( $respondAction)
     {
-        //
-    }
+        // Get the authenticated user
+        $user = Auth::user();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    /**
-     * Update the specified resource in storage.
-     */
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(RespondAction $respondAction)
-    {
-        //
+        // Determine the user role
+        $userRole = '';
+        switch ($user->user_role) {
+            case "bpemo_admin":
+                $userRole = "BPEMO Administrator";
+                break;
+            case "bpemo_staff":
+                $userRole = "BPEMO Staff";
+                break;
+            case "lgu_responder":
+                $userRole = "LGU Responder";
+                break;
+            case "barangay_official":
+                $userRole = "Barangay Official";
+                break;
+            default:
+                $userRole = 'Unknown Responder';
+        }
+
+        if($respondAction->response_status ==='ongoing'){
+            // Create the notification
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is now ongoing to the stranded incident.",
+                'category' => 'general',
+                'notif_for' => 'responders',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $respondAction->stranded_incident_id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+
+        } else if($respondAction->response_status === 'unavailable'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is currently unavailable to respond in the stranded incident.",
+                'category' => 'general',
+                'notif_for' => 'responders',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $respondAction->stranded_incident_id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($respondAction->response_status === 'onsite'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is already on site and on review of the stranded incident.",
+                'category' => 'general',
+                'notif_for' => 'responders',
+                'type' => 'stranding',
+                'is_read' => false,
+                'created_at' => now(),
+                'stranded_incident_id' => $respondAction->stranded_incident_id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        }
+        else {
+            abort(403, 'Invalid action');
+        }
+
     }
 }
