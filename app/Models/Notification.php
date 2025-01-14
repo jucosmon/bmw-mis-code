@@ -18,6 +18,7 @@ class Notification extends Model
         'sighting_id',
         'stranded_incident_id',
         'user_id',
+        'comment_id'
     ];
 
     public function user()
@@ -36,5 +37,10 @@ class Notification extends Model
     public function sighting()
     {
         return $this->belongsTo(Sighting::class, 'sighting_id');
+    }
+
+    public function comment()
+    {
+        return $this->belongsTo(Comment::class, 'comment_id');
     }
 }

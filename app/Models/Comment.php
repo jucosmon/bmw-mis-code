@@ -29,4 +29,10 @@ class Comment extends Model
     {
         return $this->belongsTo(StrandedIncident::class, 'stranded_incident_id');
     }
+
+    public function notification()
+    {
+        return $this->hasOne(Notification::class);
+    }
+
 }

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->foreignId('sighting_id')->nullable()->constrained()->onDelete('cascade'); // Foreign key for sighting
             $table->foreignId('stranded_incident_id')->nullable()->constrained()->onDelete('cascade'); // Foreign key for stranded incident
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade'); // Foreign key for user
+            $table->foreignId('comment_id')->nullable()->constrained()->onDelete('cascade'); // Foreign key for user
         });
     }
 
