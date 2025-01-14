@@ -9,7 +9,13 @@ class Comment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['text', 'stranded_incident_id', 'user_id', 'is_active'];
+    protected $fillable = [
+        'text',
+        'stranded_incident_id',
+        'user_id',
+        'is_active',
+        'is_automated'
+    ];
 
     public function user()
     {
@@ -19,7 +25,7 @@ class Comment extends Model
     /**
      * Get the stranded incident associated with the comment.
      */
-    public function stranded_incident()
+    public function strandedIncident()
     {
         return $this->belongsTo(StrandedIncident::class, 'stranded_incident_id');
     }
