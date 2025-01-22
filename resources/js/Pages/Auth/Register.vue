@@ -25,7 +25,7 @@ const showPassword = ref(false);
 
 const submit = () => {
     // Check if contact number is at least 11 characters
-    if (form.contact_number.length < 11) {
+    if (form.contact_number && form.contact_number.length < 11) {
         // Optionally, set an error message or handle it as needed
         alert("Contact number must be at least 11 digits long.");
         return; // Prevent form submission
@@ -166,7 +166,6 @@ const allowOnlyNumbers = (event) => {
                 type="text"
                 class="mt-1 block w-full"
                 v-model="form.contact_number"
-                required
                 autocomplete="contact_number"
                 @keydown="allowOnlyNumbers"
             />
