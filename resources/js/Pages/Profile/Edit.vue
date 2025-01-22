@@ -144,7 +144,7 @@ const allowOnlyNumbers = (event) => {
 
                         <div>
                             <InputLabel for="contact_number" value="Contact Number" />
-                            <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" required class="w-full" />
+                            <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" class="w-full" />
                             <InputError class="mt-2" :message="form.errors.contact_number" />
                         </div>
 

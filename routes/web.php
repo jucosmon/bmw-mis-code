@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index']); // Fetch notifications
         Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']); // Mark as read
+        Route::get('/stranded-incidents/{id}/status', action: [StrandedIncidentController::class, 'getStrandedIncidentStatus']);
     });
 
     //manage stranded incident use case

@@ -1,5 +1,8 @@
 <script setup>
 import DropdownLink from '@/Components/DropdownLink.vue';
+import Modal from '@/Components/Modal.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import { Inertia } from '@inertiajs/inertia';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
@@ -60,6 +63,56 @@ const updateFilterType = (newFilterType) => {
   displayedNotifications.value = filteredNotifications.value.slice(0, limit.value); // Update displayed notifications
 };
 
+//click single notification
+// Modal state
+const isFalseNotificationModalOpen = ref(false);
+const modalContent  = ref('');
+// Function to show the modal
+const openFalseNotificationModal = (content) => {
+    modalContent.value = content;
+    isFalseNotificationModalOpen.value = true;
+    console.log('Modal opened with content:', content); // Log the content
+};
+
+// Function to close the modal
+const closeFalseNotificationModal = () => {
+  isFalseNotificationModalOpen.value = false;
+  modalContent.value = '';
+};
+
+const openNotification = async (notification) => {
+    const userRole = user.value.user_role; // Adjust this based on how you access the user role
+
+    if (notification.category === 'general' && notification.type === 'stranding') {
+        try {
+            // Use fetch to call the controller method
+            const response = await fetch(`/stranded-incidents/${notification.stranded_incident_id}/status`);
+
+            // Check if the response is OK (status code 200)
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+
+            // Check the status from the response
+            if (data.status === 'false' && userRole === 'public_user') {
+                // Show the modal instead of navigating
+                openFalseNotificationModal(notification.content);
+            } else {
+                // Navigate to the Inertia route
+                Inertia.get(route('stranded.incident.view', { id: notification.stranded_incident_id }));
+            }
+        } catch (error) {
+            console.error('Error fetching stranded incident status:', error);
+        }
+    } else if (notification.category === 'general' && notification.type === 'sighting') {
+        Inertia.get(); // Add your logic here
+    } else if (notification.category === 'false' || notification.category === 'warning') {
+        openFalseNotificationModal(notification.content);
+    }
+};
+
 // Load sidebar state from local storage on component mount
 onMounted(() => {
   const savedSidebarState = localStorage.getItem('sidebarOpen');
@@ -115,6 +168,7 @@ onBeforeUnmount(() => {
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 console.log(user);
+
 </script>
 
 <template>
@@ -335,7 +389,7 @@ console.log(user);
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
                 href="#"
               >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+                <span class="material-icons text-lg mr-2 leading-none">map</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Marine Wildlife Cluster Map</span>
               </Link>
               <Link
@@ -370,7 +424,7 @@ console.log(user);
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
                 href="#"
               >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+                <span class="material-icons text-lg mr-2 leading-none">download</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Download Marine Wildlife Data</span>
               </Link>
             </div>
@@ -459,7 +513,7 @@ console.log(user);
 
       <!-- Page Content -->
       <div class="flex-grow overflow-y-auto">
-        <header class="shadow-md">
+        <header class="shadow-md mb-5">
           <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between">
             <div class="flex gap-5">
               <slot name="header" />
@@ -479,9 +533,9 @@ console.log(user);
                         </div>
                         <div class="max-h-60 overflow-y-auto">
                             <template v-if="displayedNotifications.length > 0">
-                                <Link v-for="notification in displayedNotifications" :key="notification.id" class="block px-4 py-2 text-sm text-left text-gray-800 hover:bg-gray-100" :href="notification.link" @click.stop>
+                                <div v-for="notification in displayedNotifications" :key="notification.id" class="block px-4 py-2 text-sm text-left text-gray-800 hover:bg-gray-100" @click="openNotification(notification)" @click.stop>
                                     {{ notification.content }}
-                                </Link>
+                                </div>
                             </template>
                             <template v-else>
                                 <div class="px-4 py-2 text-sm text-gray-500">No notifications available.</div>
@@ -494,7 +548,7 @@ console.log(user);
                 </div>
             </button>
 
-              <!-- Profile Button -->
+                <!-- Profile Button -->
               <button @click="toggleProfileDropdown($event)" class="relative rounded-lg lg:block hidden focus:outline-none focus:shadow-outline">
                 <span class="material-icons text-indigo-900">account_circle</span>
                 <div v-if="state.profileDropdownOpen" class="dropdown-container absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 text-center">
@@ -512,7 +566,19 @@ console.log(user);
           </div>
         </header>
         <main>
+
           <slot />
+          <Modal v-if="isFalseNotificationModalOpen" :show="isFalseNotificationModalOpen" @close="closeFalseNotificationModal" class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="p-6 bg-white rounded shadow-lg">
+                    <h2 class="text-lg font-semibold text-slate-800">
+                        Notification Details
+                    </h2>
+                    <p>{{ modalContent }}</p>
+                    <div class="mt-6 space-x-4 flex justify-end">
+                        <PrimaryButton @click="closeFalseNotificationModal">Ok</PrimaryButton>
+                    </div>
+                </div>
+            </Modal>
         </main>
     </div>
     </div>

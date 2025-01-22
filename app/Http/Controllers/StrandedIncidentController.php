@@ -394,6 +394,10 @@ class StrandedIncidentController extends Controller
         // Check if the report status has changed
         if ($oldReportStatus !== $validated['report_status']) {
             // Call the createNotification method here
+                    // Delete previous notifications if the status is marked as false
+            if ($validated['report_status'] === 'false') {
+                Notification::where('stranded_incident_id', $id)->delete();
+            }
             $this->createNotification($strandedIncident, $validated['report_status']);
 
             if($validated['report_status'] === 'verified' || $validated['report_status'] === 'false'){
@@ -505,6 +509,9 @@ class StrandedIncidentController extends Controller
         $strandedIncident->is_active = false;
         $strandedIncident->save();
 
+        // Delete previous notifications related to this stranded incident
+        Notification::where('stranded_incident_id', $id)->delete();
+
         $this->createNotification($strandedIncident, 'archived');
 
         return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully archived stranded incident report'])->with('success', 'Stranded Incident archived successfully.');
@@ -544,5 +551,18 @@ class StrandedIncidentController extends Controller
         $this->createNotification($strandedIncident, 'unresolved');
 
         return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully unresolved stranded incident'])->with('success', 'Stranded incident unresolved successfully.');
+    }
+
+
+
+    public function getStrandedIncidentStatus($id)
+    {
+        $strandedIncident = StrandedIncident::find($id);
+
+        if (!$strandedIncident) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json(['status' => $strandedIncident->status]);
     }
 }
