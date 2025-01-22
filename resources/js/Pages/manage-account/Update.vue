@@ -198,12 +198,12 @@ const allowOnlyNumbers = (event) => {
                             <InputError class="mt-2" :message="form.errors.sex" />
                         </div>
 
-                        <div class="sm:col-span-2 col-span-1">
+                        <div v-if="props.user.user_role!=='public_user'" class="sm:col-span-2 col-span-1">
                             <InputLabel for="position" value="User's Position" />
                             <TextInput id="position" type="text" v-model="form.position" required class="w-full" />
                             <InputError class="mt-2" :message="form.errors.position" />
                         </div>
-                        <div>
+                        <div v-if="props.user.user_role!=='public_user'">
                             <InputLabel for="municipality_id" value="Municipality" />
                             <select id="municipality_id" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" required
                             :disabled="page.props.auth?.user?.user_role === 'lgu_responder'"
@@ -216,7 +216,7 @@ const allowOnlyNumbers = (event) => {
                             <InputError class="mt-2" :message="form.errors.municipality_id" />
                         </div>
 
-                        <div>
+                        <div v-if="props.user.user_role!=='public_user'">
                             <InputLabel for="barangay_id" value="Barangay" />
                             <select id="barangay_id" v-model="form.barangay_id" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="" disabled>Select a barangay</option>

@@ -129,12 +129,12 @@ class BpemoAdminManageAccountsController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user_id,
-            'contact_number' => 'required|string|min:11',
+            'contact_number' => 'nullable|string|min:11|max:15',
             'birthdate' => 'required|date',
             'sex' => 'required|in:male,female,other',
-            'position' => 'required|string|max:255',
-            'municipality_id' => 'required|exists:municipalities,id',
-            'barangay_id' => 'required|exists:barangays,id',
+            'position' => 'nullable|string|max:255',
+            'municipality_id' => 'nullable|exists:municipalities,id',
+            'barangay_id' => 'nullable|exists:barangays,id',
         ]);
 
         // If validation fails, return with error messages
