@@ -32,7 +32,8 @@ class BpemoAdminManageAccountsController extends Controller
 
         return Inertia::render('manage-account/index', [
             'users' => $users,
-            'type' => $type
+            'type' => $type,
+            'success' => session('success')
         ]);
     }
 
@@ -45,9 +46,11 @@ class BpemoAdminManageAccountsController extends Controller
         if (!$user) {
             return redirect()->route('bpemo.admin.manage.account.index')->with('error', 'User  not found.');
         }
-
         // Return the view with user data
-        return Inertia::render('manage-account/View', ['user' => $user ]);
+        return Inertia::render('manage-account/View', [
+            'user' => $user ,
+            'success' => session('success')
+        ]);
     }
 
 
@@ -97,7 +100,8 @@ class BpemoAdminManageAccountsController extends Controller
         $user->notify(new CustomVerifyEmail($defaultPassword));
 
         // Redirect to the manage account index with the user type
-        return redirect()->route('bpemo.admin.manage.account.index', ['type' => $type]);
+        return redirect()->route('bpemo.admin.manage.account.index', ['type' => $type])
+        ->with('success', 'You have successfully created an account!.');
     }
 
     //function to navigate to the upate page
@@ -192,7 +196,7 @@ class BpemoAdminManageAccountsController extends Controller
 
         // Redirect back with success message
         return redirect()->route('bpemo.admin.manage.account.view', ['user_id' => $user->id])
-                        ->with('success', 'User account updated successfully.');
+                        ->with('success', 'You have successfully updated an account!.');
     }
 
     public function disable(Request $request, $type, $user_id)
@@ -231,7 +235,7 @@ class BpemoAdminManageAccountsController extends Controller
 
         // Redirect back with success message
         return redirect()->route('bpemo.admin.manage.account.view', ['user_id' => $user->id])
-                        ->with('success', 'You have successfully disabled the account!');
+                        ->with('success', 'You have successfully disabled an account!');
     }
 
     public function activate(Request $request, $type, $user_id)
@@ -270,7 +274,7 @@ class BpemoAdminManageAccountsController extends Controller
 
         // Redirect back with success message
         return redirect()->route('bpemo.admin.manage.account.view', ['user_id' => $user->id])
-                        ->with('success', 'You have successfully activated the account!');
+                        ->with('success', 'You have successfully activated an account!');
     }
 
 }

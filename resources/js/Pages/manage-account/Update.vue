@@ -93,7 +93,7 @@ const form = useForm({
 
 const formErrors = ref(null);
 const submit = () => {
-    if (form.contact_number.length < 11) {
+    if (form.contact_number && form.contact_number.length < 11) {
         alert("Contact number must be at least 11 digits long.");
         return; // Prevent form submission
     }
@@ -177,7 +177,7 @@ const allowOnlyNumbers = (event) => {
 
                         <div>
                             <InputLabel for="contact_number" value="Contact Number" />
-                            <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" required class="w-full" />
+                            <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" class="w-full" />
                             <InputError class="mt-2" :message="form.errors.contact_number" />
                         </div>
 

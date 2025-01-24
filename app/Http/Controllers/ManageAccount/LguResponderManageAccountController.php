@@ -26,10 +26,10 @@ class LguResponderManageAccountController extends Controller
         $users = User::where('user_role', 'barangay_official')
                      ->where('municipality_id', $municipalityId)
                      ->get();
-
         return Inertia::render('manage-account/index', [
             'users' => $users,
-            'type' => 'barangay_official'
+            'type' => 'barangay_official',
+            'success' => session('success'),
         ]);
     }
 
@@ -44,7 +44,10 @@ class LguResponderManageAccountController extends Controller
         }
 
         // Return the view with user data
-        return Inertia::render('manage-account/View', ['user' => $user]);
+        return Inertia::render('manage-account/View', [
+            'user' => $user,
+            'success' => session('success'),
+        ]);
     }
 
     public function createPage()
@@ -90,7 +93,8 @@ class LguResponderManageAccountController extends Controller
 
         $user->notify(new CustomVerifyEmail($defaultPassword));
 
-        return redirect()->route('lgu.responder.manage.account.index', ['type' => 'barangay_official']);
+        return redirect()->route('lgu.responder.manage.account.index', ['type' => 'barangay_official'])
+            ->with('success', 'You have successfully created an account!.');
     }
 
     public function updatePage($user_id)
@@ -136,7 +140,7 @@ class LguResponderManageAccountController extends Controller
         ]));
 
         return redirect()->route('lgu.responder.manage.account.view', ['user_id' => $user->id])
-                        ->with('success', 'User account updated successfully.');
+                        ->with('success', 'You have successfully updated an account!.');
     }
 
     public function disable(Request $request, $user_id)
@@ -160,7 +164,7 @@ class LguResponderManageAccountController extends Controller
         $user->save();
 
         return redirect()->route('lgu.responder.manage.account.view', ['user_id' => $user->id])
-                        ->with('success', 'You have successfully disabled the account!');
+                        ->with('success', 'You have successfully disabled an account!');
     }
 
     public function activate(Request $request, $user_id)
@@ -184,6 +188,6 @@ class LguResponderManageAccountController extends Controller
         $user->save();
 
         return redirect()->route('lgu.responder.manage.account.view', ['user_id' => $user->id])
-                        ->with('success', 'You have successfully activated the account!');
+                        ->with('success', 'You have successfully activated an account!');
     }
 }

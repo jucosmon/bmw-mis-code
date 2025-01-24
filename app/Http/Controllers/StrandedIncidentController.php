@@ -44,6 +44,7 @@ class StrandedIncidentController extends Controller
 
         return Inertia::render('manage-stranded-incident/index', [
             'strandedIncidents' => $strandedIncidents,
+            'success' => session('success'),
         ]);
     }
 
@@ -71,6 +72,7 @@ class StrandedIncidentController extends Controller
 
         return Inertia::render('manage-stranded-incident/resolved-incidents/index', [
             'strandedIncidents' => $strandedIncidents,
+            'success' => session('success'),
         ]);
     }
 
@@ -146,7 +148,8 @@ class StrandedIncidentController extends Controller
 
         $this->createNotification($strandedIncident, 'create');
 
-        return redirect()->route('stranded.incident.index')->with('success', 'Stranded Incident created successfully!');
+        return redirect()->route('stranded.incident.index')
+        ->with('success', 'You have successfully created a stranded incident report');
     }
 
     protected function createNotification( $strandedIncident, $action)
@@ -307,6 +310,7 @@ class StrandedIncidentController extends Controller
             'respondActions' => $strandedIncident->respondActions->toArray(),
             'userRespondStatus' => $userRespondAction ? $userRespondAction->response_status : null,
             'strandedSpecies' => $strandedIncident->strandedSpecies->toArray(),
+            'success' => session('success'),
         ]);
     }
 
@@ -353,6 +357,7 @@ class StrandedIncidentController extends Controller
 
     public function update(Request $request, $id)
     {
+
         $validated = $request->validate([
             'certainty_level' => 'required|numeric',
             'date' => 'required|date',
@@ -390,7 +395,6 @@ class StrandedIncidentController extends Controller
 
         $strandedIncident->update($validated);
 
-
         // Check if the report status has changed
         if ($oldReportStatus !== $validated['report_status']) {
             // Call the createNotification method here
@@ -408,18 +412,24 @@ class StrandedIncidentController extends Controller
                 // If a record exists, update it; otherwise, create a new record
                 if ($respondAction) {
                 // Update the existing record
-                $respondAction->update([
-                    'response_status' => 'onsite',
-                ]);
+                    $respondAction->update([
+                        'response_status' => 'onsite',
+                    ]);
                 } else {
                 // Create a new record
-                $respondAction = RespondAction::create([
-                'response_status' => 'onsite',
-                'stranded_incident_id' => $strandedIncident->id,
-                'user_id' => $user->id,
-                ]);
+                    $respondAction = RespondAction::create([
+                    'response_status' => 'onsite',
+                    'stranded_incident_id' => $strandedIncident->id,
+                    'user_id' => $user->id,
+                    ]);
+                }
+
+                if($validated['report_status'] === 'verified'){
+                    $successMessage = 'You have successfully verified a stranded incident report!';
                 }
             }
+        }else{
+            $successMessage = 'You have successfully updated a stranded incident report!';
         }
 
         if ($request->has('deletedImages')) {
@@ -453,12 +463,12 @@ class StrandedIncidentController extends Controller
 
         if($validated['report_status'] === 'false'){
             return redirect()->route('stranded.incident.index')
-                        ->with('success', 'Stranded Incident marked as false successfully.');
+                        ->with('success', 'You have successfully marked a stranded incident report as false.');
         }
 
         // Redirect to the updated strandedIncident view with a success message
         return redirect()->route('stranded.incident.view', $id)
-                        ->with('success', 'Stranded Incident updated successfully.');
+                        ->with('success', $successMessage);
     }
 
     // update report status
@@ -471,7 +481,8 @@ class StrandedIncidentController extends Controller
 
             $this->createNotification($strandedIncident, 'completed');
 
-            return redirect()->back()->with('success', 'Incident marked as complete.');
+            return redirect()->route('stranded.incident.view', $id)
+                ->with('success', 'You have successfuly marked a stranded incident as complete.');
         } else {
             abort(400, 'Invalid report status.');
         }
@@ -484,7 +495,8 @@ class StrandedIncidentController extends Controller
         if ($strandedIncident->report_status === 'completed') {
             $strandedIncident->update(['report_status' => 'resolved']);
             $this->createNotification($strandedIncident, 'resolved');
-            return redirect()->route('stranded.incident.index')->with('success', 'Stranded Incident resolved successfully.');
+            return redirect()->route('stranded.incident.index')
+                ->with('success', 'You have successfully marked a stranded incident as resolved.');
         } else {
             abort(400, 'Invalid report status.');
         }
@@ -514,7 +526,8 @@ class StrandedIncidentController extends Controller
 
         $this->createNotification($strandedIncident, 'archived');
 
-        return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully archived stranded incident report'])->with('success', 'Stranded Incident archived successfully.');
+        return redirect()->route('stranded.incident.view', ['id' => $id])
+            ->with('success', 'You have successfully archived a stranded incident report.');
     }
 
     public function unarchive(Request $request, $id)
@@ -536,7 +549,8 @@ class StrandedIncidentController extends Controller
 
         $this->createNotification($strandedIncident, 'unarchived');
 
-        return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully unarhived stranded incident'])->with('success', 'Stranded incident unarchived successfully.');
+        return redirect()->route('stranded.incident.view', ['id' => $id])
+            ->with('success', 'You have successfully unarchived a stranded incident report.');
     }
 
     public function unresolve($id)
@@ -550,7 +564,8 @@ class StrandedIncidentController extends Controller
 
         $this->createNotification($strandedIncident, 'unresolved');
 
-        return redirect()->route('stranded.incident.view', ['id' => $id, 'message'=> 'Successfully unresolved stranded incident'])->with('success', 'Stranded incident unresolved successfully.');
+        return redirect()->route('stranded.incident.view', ['id' => $id])
+            ->with('success', 'You have successfully unresolved a stranded incident report.');
     }
 
 

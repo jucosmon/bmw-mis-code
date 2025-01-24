@@ -12,6 +12,7 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    success: String,
 });
 
 const backRoute = computed(() => {
@@ -106,7 +107,10 @@ const archiveSpecies = () => {
         </template>
 
         <div class="container mx-auto px-6 pb-6 max-w-5xl">
-
+            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
+                <strong class="font-bold">Success! </strong>
+                <span class="block sm:inline">{{ props?.success}}</span>
+            </div>
             <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-lg shadow-lg mb-8">
                 <h1 class="text-3xl font-bold">Species Information</h1>
                 <p class="text-sm mt-2">({{ speciesCategory }})</p>

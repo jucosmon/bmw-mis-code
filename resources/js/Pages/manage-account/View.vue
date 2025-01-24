@@ -13,6 +13,7 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    success: String,
 });
 
 const page = usePage();
@@ -175,6 +176,10 @@ const disableUser = ()=> {
             </div>
         </template>
         <div class="container mx-auto px-6 pb-6 relative max-w-5xl">
+            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
+                <strong class="font-bold">Success! </strong>
+                <span class="block sm:inline">{{ props?.success}}</span>
+            </div>
             <!-- Header -->
             <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-lg shadow-lg relative z-10 mb-8">
                 <h1 class="text-3xl font-bold">User Account Information</h1>

@@ -58,10 +58,8 @@ class RespondActionController extends Controller
 
         $this->createNotification($respondAction);
 
-
-
-
-        return redirect()->back()->with('success', $message);
+        return redirect()->route('stranded.incident.view', ['id' => $strandedIncidentId])
+                ->with('success', $message);
     }
 
     protected function createNotification( $respondAction)

@@ -28,7 +28,8 @@ class SpeciesController extends Controller
 
         return Inertia::render('manage-species/index',
             ['species' => $species,
-            'category'=>$category
+            'category'=>$category,
+            'success' => session('success'),
             ]);
     }
     public function createPage($category)
@@ -83,7 +84,8 @@ class SpeciesController extends Controller
             }
         }
 
-        return redirect()->route('bpemo.admin.manage.species.index', [$category])->with('success', 'Species created successfully!');
+        return redirect()->route('bpemo.admin.manage.species.index', [$category])
+        ->with('success', 'You have successfully created a species!');
     }
 
     public function view($id)
@@ -96,7 +98,10 @@ class SpeciesController extends Controller
                 return $file;
             });
 
-        return Inertia::render('manage-species/View', ['species' => $species]);
+        return Inertia::render('manage-species/View', [
+            'species' => $species,
+            'success' => session('success'),
+        ]);
     }
 
     public function updatePage($id)
@@ -166,7 +171,7 @@ class SpeciesController extends Controller
 
             // Redirect to the updated species view with a success message
             return redirect()->route('bpemo.admin.manage.species.view', $id)
-                            ->with('success', 'Species updated successfully.');
+                            ->with('success', 'You have successfully updated a species!');
         }
 
 
@@ -188,7 +193,8 @@ class SpeciesController extends Controller
         $species->is_active = false;
         $species->save();
 
-        return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])->with('success', 'Species archived successfully.');
+        return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])
+        ->with('success', 'You have successfully archived a species!');
     }
 
     public function unarchive(Request $request, $category, $id)
@@ -208,6 +214,7 @@ class SpeciesController extends Controller
         $species->is_active = true;
         $species->save();
 
-        return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])->with('success', 'Species archived successfully.');
+        return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])
+        ->with('success', 'You have successfully unarchived a species!');
     }
 }

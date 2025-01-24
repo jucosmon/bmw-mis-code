@@ -10,7 +10,8 @@ const props = defineProps({
     notifications: {
         type: Array,
         default: []
-    }
+    },
+    success: String,
 });
 
 // Determine if the user is a public_user or not
@@ -63,7 +64,10 @@ const resolvedIncidentsButton = () => {
         </template>
 
         <div class="container mx-auto px-7 py-8">
-
+            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
+                <strong class="font-bold">Success! </strong>
+                <span class="block sm:inline">{{ props?.success}}</span>
+            </div>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-center">Active Stranded Incident List</h2>
                 <div class="flex gap-3">
