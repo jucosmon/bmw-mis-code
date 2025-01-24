@@ -29,4 +29,9 @@ class Species extends Model
         return $this->hasMany(StrandedSpecies::class);
     }
 
+    public function sightedSpecies()
+    {
+        return $this->hasMany(SightedSpecies::class);
+    }
+
 }

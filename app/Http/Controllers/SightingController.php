@@ -2,9 +2,374 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MediaFile;
+use App\Models\Notification;
+use App\Models\Sighting;
+use App\Models\Species;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class SightingController extends Controller
 {
     //
+    public function index()
+    {
+        $user = Auth::user();
+
+        // Retrieve pending sightings based on user role
+        $sightings = Sighting::where('report_status', 'pending');
+
+        if ($user->user_role !== 'bpemo_admin') {
+            $sightings->where('user_id', $user->id);
+        }
+
+        return Inertia::render('manage-sighting/index', [
+            'sightings' => $sightings->get(),
+            'success' => session('success'),
+        ]);
+    }
+
+    public function createPage()
+    {
+        return Inertia::render('manage-sighting/Create');
+    }
+
+    public function create(Request $request)
+    {
+        $user = Auth::user();
+
+        // Determine report status based on user role
+        $reportStatus = ($user->user_role === 'bpemo_admin') ? 'verified' : 'pending';
+
+        // Validate the incoming request
+        $request->validate([
+            'certainty_level' => 'required|numeric',
+            'date' => 'required|date',
+            'time' => 'required|date_format:H:i:s',
+            'species_involved' => 'required|string',
+            'quantity' => 'required|numeric',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'detailed_location' => 'nullable|string',
+            'more_information' => 'nullable|string',
+            'municipality_id' => 'required|exists:municipalities,id',
+            'barangay_id' => 'required|exists:barangays,id',
+            'mediaFiles' => 'nullable|array',
+            'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:10240',
+        ]);
+
+        // Create the sighting
+        $sighting = Sighting::create([
+            'certainty_level' => $request->certainty_level,
+            'date' => $request->date,
+            'time' => $request->time,
+            'species_involved' => $request->species_involved,
+            'quantity' => $request->quantity,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'detailed_location' => $request->detailed_location,
+            'more_information' => $request->more_information,
+            'report_status' => $reportStatus,
+            'municipality_id' => $request->municipality_id,
+            'barangay_id' => $request->barangay_id,
+            'is_active' => true,
+            'user_id' => $user->id,
+        ]);
+
+        // Handle file uploads
+        if ($request->hasFile('mediaFiles')) {
+            foreach ($request->file('mediaFiles') as $mediaFile) {
+                $path = $mediaFile->store('sighting', 'public');
+
+                MediaFile::create([
+                    'path' => $path,
+                    'name' => $mediaFile->getClientOriginalName(),
+                    'file_for' => 'sighting',
+                    'type' => $mediaFile->getClientMimeType(),
+                    'sighting_id' => $sighting->id,
+                ]);
+            }
+        }
+
+        $this->createNotification($sighting, 'create');
+
+        return redirect()->route('sighting.index')
+        ->with('success', 'You have successfully created a sighting report');
+    }
+
+    protected function createNotification( $sighting, $action)
+    {
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Determine the user role
+        $userRole = '';
+        switch ($user->user_role) {
+            case "bpemo_admin":
+                $userRole = "BPEMO Administrator";
+                break;
+            case "bpemo_staff":
+                $userRole = "BPEMO Staff";
+                break;
+            case "lgu_responder":
+                $userRole = "LGU Responder";
+                break;
+            case "barangay_official":
+                $userRole = "Barangay Official";
+                break;
+            default:
+                $userRole = 'Public User';
+        }
+
+        if($action ==='create'){
+            // Create the notification
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} reported a new sighting.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'sighting',
+                'is_read' => false,
+                'created_at' => now(),
+                'sighting_id' => $sighting->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+
+        } else if($action === 'verified'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} already reviewed the report and verified the sighting.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'sighting',
+                'is_read' => false,
+                'created_at' => now(),
+                'sighting_id' => $sighting->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'archived'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} archived the reported sighting.",
+                'category' => 'false',
+                'notif_for' => 'all',
+                'type' => 'sighting',
+                'is_read' => false,
+                'created_at' => now(),
+                'sighting_id' => $sighting->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'unarchived'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} unarchived an archived sighting.",
+                'category' => 'general',
+                'notif_for' => 'all',
+                'type' => 'sighting',
+                'is_read' => false,
+                'created_at' => now(),
+                'sighting_id' => $sighting->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        } else if($action === 'false'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is already onsite and marked the reported sighting as false.",
+                'category' => 'false',
+                'notif_for' => 'all',
+                'type' => 'sighting',
+                'is_read' => false,
+                'created_at' => now(),
+                'sighting_id' => $sighting->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
+        }
+        else {
+            abort(403, 'Invalid action');
+        }
+
+    }
+
+    public function view($id)
+    {
+        // Eager load necessary relationships
+        $sighting = Sighting::with([
+            'mediaFiles',
+            'sightedSpecies'
+            ])->findOrFail($id);
+
+        // Map media files to include public URLs
+        $sighting->mediaFiles = $sighting->mediaFiles->map(function ($file) {
+            $file->url = asset('storage/' . $file->path);
+            return $file;
+        });
+
+        foreach ($sighting->sightedSpecies as $sightedSpecies) {
+            $species = Species::find($sightedSpecies->species_id);
+            $sightedSpecies->species_name = $species ? $species->name : 'Unknown Species';
+        }
+        return Inertia::render('manage-sighting/View', [
+            'sighting' => $sighting,
+            'sighthtedSpecies' => $sighting->sightedSpecies->toArray(),
+            'success' => session('success'),
+        ]);
+    }
+
+
+    //update page for public users
+    public function updatePage($id)
+    {
+        $user = Auth::user();
+        $sighting = Sighting::findOrFail($id);
+        if($sighting->report_status!=='pending' && $user->user_role!=='bpemo_admin' ){
+            abort(403);
+        }
+        $sighting->load('mediaFiles');
+        $sighting->mediaFiles = $sighting->mediaFiles->map(function ($file) {
+        $file->url = asset('storage/' . $file->path);
+            return $file;
+        });
+        return Inertia::render('manage-sighting/Update', ['sighting' => $sighting]);
+    }
+
+    // update for responders
+    public function update(Request $request, $id)
+    {
+
+        $validated = $request->validate([
+            'certainty_level' => 'required|numeric',
+            'date' => 'required|date',
+            'time' => 'required|date_format:H:i:s',
+            'species_involved' => 'required|string',
+            'quantity' => 'required|numeric',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'detailed_location' => 'nullable|string',
+            'more_information' => 'nullable|string',
+            'municipality_id' => 'required|exists:municipalities,id',
+            'barangay_id' => 'required|exists:barangays,id',
+            'mediaFiles' => 'nullable|array',
+            'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:10240',
+            'deletedImages' => 'nullable|array',
+            'report_status' => 'nullable|in:pending,verified,false'
+        ]);
+
+        $user = Auth::user();
+        if ($user->user_role !== 'bpemo_admin' && $request->report_status !== 'pending') {
+            abort(403, 'Unauthorized action. The report is already verified as true.');
+        }
+
+        $sighting = Sighting::findOrFail($id);
+
+        // Store the old report status to check for changes
+        $oldReportStatus = $sighting->report_status;
+
+        if($validated['report_status'] === 'false'){
+            $validated['is_active'] = false;
+        }
+
+        $sighting->update($validated);
+
+        // Check if the report status has changed
+        if ($oldReportStatus !== $validated['report_status']) {
+            if ($validated['report_status'] === 'false') {
+                Notification::where('sighting_id', $id)->delete();
+            }
+            $this->createNotification($sighting, $validated['report_status']);
+
+        }else{
+            $successMessage = 'You have successfully updated a sighting report!';
+        }
+
+        if ($request->has('deletedImages')) {
+            $deletedMediaIds = $request->input('deletedImages'); // Get the IDs of images to delete
+            foreach ($deletedMediaIds as $deletedMediaId) {
+                $media = MediaFile::find($deletedMediaId);
+                if ($media) {
+                    // Delete the file from storage
+                    Storage::disk('public')->delete($media->path);
+                    // Delete the media record from the database
+                    $media->delete();
+                }
+            }
+        }
+
+        // Handle new media files upload
+        if ($request->hasFile('mediaFiles')) {
+            foreach ($request->file('mediaFiles') as $file) {
+                if ($file->isValid()) {
+                    $path = $file->store('sighting', 'public');
+                    $sighting->mediaFiles()->create([
+                        'path' => $path,
+                        'name' => $file->getClientOriginalName(),
+                        'file_for' => 'sighting',
+                        'type' => $file->getClientMimeType(),
+                        'sighting_id' => $sighting->id,
+                    ]);
+                }
+            }
+        }
+
+        if($validated['report_status'] === 'false'){
+            return redirect()->route('sighting.index')
+                        ->with('success', 'You have successfully marked a sighting report as false.');
+        }
+
+        // Redirect to the updated sighting view with a success message
+        return redirect()->route('sighting.view', $id)
+                        ->with('success', $successMessage);
+    }
+
+    public function archive(Request $request, $id)
+    {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        $sighting = Sighting::findOrFail($id);
+        $sighting->is_active = false;
+        $sighting->save();
+
+        // Delete previous notifications related to this sighting
+        Notification::where('sighting_id', $id)->delete();
+
+        $this->createNotification($sighting, 'archived');
+
+        return redirect()->route('sighting.view', ['id' => $id])
+            ->with('success', 'You have successfully archived a sighting report.');
+    }
+
+    public function unarchive(Request $request, $id)
+    {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        $sighting = Sighting::findOrFail($id);
+        $sighting->is_active = true;
+        $sighting->save();
+
+        $this->createNotification($sighting, 'unarchived');
+
+        return redirect()->route('sighting.view', ['id' => $id])
+            ->with('success', 'You have successfully unarchived a sighting report.');
+    }
+
 }

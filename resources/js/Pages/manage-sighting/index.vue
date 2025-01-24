@@ -1,54 +1,22 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Head } from '@inertiajs/vue3';
 
-const page = usePage();
 const props = defineProps({
     sightings: Array,
-    notifications: {
-        type: Array,
-        default: []
-    }
-});
-
-// Determine if the user is a public_user or not
-const isPublicUser = computed(() => page.props.auth.user.user_role === 'public_user');
-
-const filterStatus = ref('all'); // Default filter is "all"
-
-// Filter strandedIncidents based on the selected status
-const filteredSightings = computed(() => {
-    if (filterStatus.value === 'all') {
-        return props.strandedIncidents;
-    }
-    return props.strandedIncidents.filter(incident => incident.report_status === filterStatus.value);
-});
-
-// Group stranded incidents by status
-const groupedIncidents = computed(() => {
-    return {
-        pending: filteredSightings.value.filter(incident => incident.report_status === 'pending'),
-        verified: filteredSightings.value.filter(incident => incident.report_status === 'verified'),
-        completed: filteredSightings.value.filter(incident => incident.report_status === 'completed'),
-        resolved: isPublicUser.value
-            ? filteredSightings.value.filter(incident => incident.report_status === 'resolved')
-            : [], // Don't include resolved incidents if not a public_user
-    };
+    success: String,
 });
 
 // Button routes
-const createStrandedIncidents = () => {
-    Inertia.get(route('stranded.incident.createPage'));
+const createSightings = () => {
+    Inertia.get(route('sighting.createPage'));
 };
-const viewStrandedIncidents = (id) => {
-    Inertia.visit(route('stranded.incident.view', { id }));
+const viewSighting = (id) => {
+    Inertia.visit(route('sighting.view', { id }));
 };
-
-
-const resolvedIncidentsButton = () => {
-    Inertia.visit(route('resolved.incidents.index'));
+const verifiedSightingsButton = () => {
+    Inertia.visit(route('sighting.verified.index'));
 }
 
 </script>
@@ -58,16 +26,19 @@ const resolvedIncidentsButton = () => {
     <Sidebar>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Stranded Incidents
+                Sightings
             </h2>
         </template>
 
         <div class="container mx-auto px-7 py-8">
-
+            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
+                <strong class="font-bold">Success! </strong>
+                <span class="block sm:inline">{{ props?.success}}</span>
+            </div>
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-center">Active Stranded Incident List</h2>
+                <h2 class="text-xl font-semibold text-center">Pending Sightings List</h2>
                 <div class="flex gap-3">
-                    <button v-if="!isPublicUser" @click="resolvedIncidentsButton" class="cursor-pointer">
+                    <button @click="verifiedSightingsButton" class="cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-0.5 -0.5 30 30" id="Archive--Streamline-Ionic-Filled" height="30" width="30">
                             <desc>Archive Streamline Icon: https://streamlinehq.com</desc>
                             <path fill="#1A237E" d="M2.31873125 8.663810416666665v15.47875c0 0.9421374999999999 0.37428125 1.845789583333333 1.0404958333333332
@@ -92,20 +63,9 @@ const resolvedIncidentsButton = () => {
                             0 2.03 -0.9087875 2.03 -2.03v-1.015c0 -1.1210916666666666 -0.9088479166666666 -2.03 -2.03 -2.03Z" stroke-width="1"></path>
                         </svg>
                     </button>'
-                    <select
-                        v-model="filterStatus"
-                        class=" border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        <option value="all">All</option>
-                        <option value="pending">Pending</option>
-                        <option value="verified">Verified</option>
-                        <option value="completed">Completed</option>
-                        <!-- Only show "resolved" option for public users -->
-                        <option v-if="isPublicUser" value="resolved">Resolved</option>
-                    </select>
                     <button
                         type="button"
-                        @click="createStrandedIncidents"
+                        @click="createSightings"
                         class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                     >
                         Create
@@ -113,9 +73,7 @@ const resolvedIncidentsButton = () => {
                 </div>
             </div>
 
-            <!-- Conditional Rendering based on Filtered Status -->
-            <div v-if="filterStatus !== 'all' && groupedIncidents[filterStatus].length > 0">
-                <h3 class="text-lg font-semibold mt-4 capitalize">{{ filterStatus }} Incidents</h3>
+            <div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full table-auto border-collapse border border-gray-300">
                         <thead>
@@ -123,20 +81,20 @@ const resolvedIncidentsButton = () => {
                                 <th class="px-4 py-2 text-left border border-gray-300">ID</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Date & Time</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Species Involved</th>
-                                <th class="px-4 py-2 text-left border border-gray-300">Report Status</th>
+                                <th class="px-4 py-2 text-left border border-gray-300">Status</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="strandedIncidents in groupedIncidents[filterStatus]" :key="strandedIncidents.id">
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.id }}</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.date }} - {{ strandedIncidents.time }}</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.species_involved }}</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.report_status }}</td>
+                            <tr v-for="sighting in props.sightings" :key="sighting.id">
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.id }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.date }} - {{ sighting.time }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.species_involved }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.report_status }}</td>
                                 <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
                                     <button
                                         class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900"
-                                        @click="viewStrandedIncidents(strandedIncidents.id)"
+                                        @click="viewSighting(sighting.id)"
                                     >
                                         View
                                     </button>
@@ -147,45 +105,9 @@ const resolvedIncidentsButton = () => {
                 </div>
             </div>
 
-            <!-- Show No Incidents Message if Filtered Status has No Results -->
-            <div v-if="filterStatus !== 'all' && groupedIncidents[filterStatus].length === 0" class="text-center mt-4">
-                <p class="text-lg text-gray-600">No incidents for the selected status.</p>
-            </div>
-
-            <!-- Show All Incidents if 'All' is Selected -->
-            <div v-if="filterStatus === 'all'">
-                <div v-for="(incidents, status) in groupedIncidents" :key="status">
-                    <h3 v-if="incidents.length > 0" class="text-lg font-semibold mt-4 capitalize">{{ status }} Incidents</h3>
-                    <div class="overflow-x-auto" v-if="incidents.length > 0">
-                        <table class="min-w-full table-auto border-collapse border border-gray-300">
-                            <thead>
-                                <tr class="bg-gray-100">
-                                    <th class="px-4 py-2 text-left border border-gray-300">ID</th>
-                                    <th class="px-4 py-2 text-left border border-gray-300">Date & Time</th>
-                                    <th class="px-4 py-2 text-left border border-gray-300">Species Involved</th>
-                                    <th class="px-4 py-2 text-left border border-gray-300">Report Status</th>
-                                    <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="strandedIncidents in incidents" :key="strandedIncidents.id">
-                                    <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.id }}</td>
-                                    <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.date }} - {{ strandedIncidents.time }}</td>
-                                    <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.species_involved }}</td>
-                                    <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.report_status }}</td>
-                                    <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
-                                        <button
-                                            class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900"
-                                            @click="viewStrandedIncidents(strandedIncidents.id)"
-                                        >
-                                            View
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <!-- Show No Active Sightings Message if Filtered Status has No Results -->
+            <div v-if = "props.sightings.length === 0" class="text-center mt-4">
+                <p class="text-lg text-gray-600">No pending sightings.</p>
             </div>
         </div>
     </Sidebar>

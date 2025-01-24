@@ -15,12 +15,11 @@ return new class extends Migration
             $table->id();
             $table->enum('sex', ['Male', 'Female', 'Unknown']); // Sex of the species
             $table->string('size', 50)->nullable(); // Estimated size of the sighted species
-            $table->string('condition', 50)->nullable(); // Condition of the species
             $table->decimal('latitude', 10, 7)->nullable(); // Latitude coordinate
             $table->decimal('longitude', 10, 7)->nullable(); // Longitude coordinate
             $table->text('species_description'); // Physical description of the species
             $table->text('behavior_observed'); // Behavior observed of the species
-            $table->foreignId('species_id')->constrained()->onDelete('set null'); // Foreign key for species
+            $table->foreignId('species_id')->nullable()->constrained()->onDelete('set null'); // Foreign key for species
             $table->foreignId('sighting_id')->constrained()->onDelete('cascade'); // Foreign key for sighting incident
             $table->timestamps();
         });

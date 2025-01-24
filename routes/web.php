@@ -10,6 +10,7 @@ use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RespondActionController;
+use App\Http\Controllers\SightingController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StrandedIncidentController;
 use App\Http\Controllers\StrandedSpeciesController;
@@ -118,6 +119,31 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             Route::patch('/unarchive/{id}', [StrandedSpeciesController::class, 'unarchive'])
                 ->name('stranded.species.unarchive');
         });
+    });
+
+    // manage sightings
+    Route::prefix('sighting')->group(function () {
+        // index
+        Route::get('/', [SightingController::class, 'index'])->name('sighting.index');
+        //create
+        Route::get('/create-page', [SightingController::class, 'createPage'])
+        ->name('sighting.createPage');
+        Route::post('/create', [SightingController::class, 'create'])
+            ->name('sighting.create');
+        //view
+        Route::get('/view/{id}', [SightingController::class, 'view'])
+            ->name('sighting.view');
+        //update
+        Route::get('/update-page/{id}', [SightingController::class, 'updatePage'])
+            ->name('sighting.update.page');
+        Route::post('/update/{id}', [SightingController::class, 'update'])
+            ->name('sighting.update');
+        //archiving another stranded incident
+        Route::patch('/archive/{id}', [SightingController::class, 'archive'])
+            ->name('sighting.archive');
+        //unarchiving another stranded incident
+        Route::patch('/unarchive/{id}', [SightingController::class, 'unarchive'])
+            ->name('sighting.unarchive');
     });
 
     //bpemo admin

@@ -63,6 +63,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ReportAction::class);
     }
 
+    public function sightings()
+    {
+        return $this->hasMany(Sighting::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

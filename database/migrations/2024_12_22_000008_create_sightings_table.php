@@ -21,9 +21,8 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7)->nullable(); // Longitude coordinate
             $table->text('detailed_location'); // Detailed description of the location
             $table->text('more_information')->nullable(); // Additional information about the sighting
-            $table->enum('report_status', ['pending', 'verified'])->default('pending'); // Current status of the report
+            $table->enum('report_status', ['pending', 'verified', 'false'])->default('pending'); // Current status of the report
             $table->timestamps(); // Created at
-            $table->boolean('is_false')->default(false); // Flag indicating if the report is false
             $table->boolean('is_active')->default( true); // Flag indicating if the sighting record is active
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Foreign key for user
             $table->foreignId('municipality_id')->constrained()->onDelete('cascade'); // Foreign key for municipality
