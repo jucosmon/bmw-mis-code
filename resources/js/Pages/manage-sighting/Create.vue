@@ -134,22 +134,9 @@ const setLocationFromMap = () => {
   }
 };
 
-//species
-
+// Species
 const searches = ref([]);
 const dropdownVisibility = ref([]);
-
-const addSpeciesEntry = () => {
-  form.sightedSpecies.push({
-    size: '',
-    species_description: '',
-    behavior_observed: '',
-    species_id: '',
-  });
-  searches.value.push('');
-  dropdownVisibility.value.push(false);
-  console.log('Added species entry:', form.sightedSpecies);
-};
 
 const filteredSpecies = (index) => {
   return computed(() => {
@@ -161,35 +148,68 @@ const filteredSpecies = (index) => {
   });
 };
 
-// Select species handler
+const addSpeciesEntry = () => {
+    form.sightedSpecies.push({
+        size: '',
+        species_description: '',
+        behavior_observed: '',
+        species_id: '',
+    });
+    searches.value.push(''); // Ensure this is done
+    dropdownVisibility.value.push(false);
+    console.log('Added species entry:', form.sightedSpecies);
+    console.log('Updated searches:', searches.value); // Log the updated searches array
+};
+
 const selectSpecies = (species, index) => {
-  if (index < searches.value.length) {
-    searches.value[index] = species.name; // Update search term
+    console.log('Selected species:', species); // Debugging line
+    console.log('Index:', index); // Log the index
+    console.log('Searches length:', searches.value.length); // Log the length of searches
+
+    searches.value[index] = species.name; // Update the search term with the selected species name
     form.sightedSpecies[index].species_id = species.id; // Assign species_id
     dropdownVisibility.value[index] = false; // Hide dropdown
-    console.log('Selected species:', species, 'at index:', index);
-  }
+    console.log('Species ID assigned:', species.id); // Debugging line
+
 };
 
 const toggleDropdown = (index) => {
-  dropdownVisibility.value = dropdownVisibility.value.map((_, i) => i === index); // Only one open at a time
+  dropdownVisibility.value[index] = true; // Show dropdown on focus
   console.log('Toggled dropdown for index:', index);
 };
 
 // Close dropdown handler
-const closeDropdown = (event) => {
-  if (!event.target.closest('.dropdown-container')) {
-    dropdownVisibility.value = dropdownVisibility.value.map(() => false); // Close all dropdowns
-    console.log('Closed all dropdowns');
+const closeDropdown = (index) => {
+  dropdownVisibility.value[index] = false; // Close dropdown
+};
+
+
+// Use global setTimeout directly
+const handleBlur = (index) => {
+    setTimeout(() => closeDropdown(index), 100); // Delay closing to allow click
+};
+
+
+const handleClickOutside = (event, index) => {
+  const dropdown = document.getElementById(`dropdown-${index}`);
+  const input = document.getElementById(`species-${index}`);
+  if (dropdown && !dropdown.contains(event.target) && !input.contains(event.target)) {
+    closeDropdown(index);
   }
 };
 
 onMounted(() => {
-  document.addEventListener('click', closeDropdown);
+  document.addEventListener('click', (event) => {
+    for (let i = 0; i < dropdownVisibility.value.length; i++) {
+      if (dropdownVisibility.value[i]) {
+        handleClickOutside(event, i);
+      }
+    }
+  });
 });
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', closeDropdown);
+  document.removeEventListener('click', handleClickOutside);
 });
 
 const removeSpeciesEntry = (index) => {
@@ -246,23 +266,24 @@ const removeSpeciesEntry = (index) => {
               <InputError class="mt-2" :message="form.errors.certainty_level" />
             </div>
 
-            <!--Map-->
+            <!-- Map -->
             <div class="mt-4 sm:col-span-2">
-                <button
-                    @click.prevent="setLocationFromMap"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm w-full"
-                >
-                    Use Current Location
-                </button>
-                <p class="text-sm text-gray-600 mt-2">
-                    Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-                </p>
-                <div
-                    id="map"
-                    style="height: 400px; width: 100%; margin-top: 10px;"
-                    class="rounded-lg border shadow"
-                ></div>
-                </div>
+              <button
+                @click.prevent="setLocationFromMap"
+                class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm w-full"
+              >
+                Use Current Location
+              </button>
+              <p class="text-sm text-gray-600 mt-2">
+                Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
+              </p>
+              <div
+                id="map"
+                style="height: 400px; width: 100%; margin-top: 10px;"
+                class="rounded-lg border shadow"
+              ></div>
+            </div>
+
             <div>
               <InputLabel for="municipality_id" value="Municipality" />
               <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
@@ -293,7 +314,7 @@ const removeSpeciesEntry = (index) => {
                 autocomplete="detailed_location"
                 class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
                 placeholder="Please add more details of the exact location"
-            ></textarea>
+              ></textarea>
               <InputError class="mt-2" :message="form.errors.detailed_location" />
             </div>
             <div class="sm:col-span-2">
@@ -304,90 +325,95 @@ const removeSpeciesEntry = (index) => {
                 autocomplete="more_information"
                 class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
                 placeholder="Please share more information of the incident"
-            ></textarea>
+              ></textarea>
               <InputError class="mt-2" :message="form.errors.more_information" />
             </div>
-            <!--Sighted Speces-->
-            <div v-for="(species, index) in form.sightedSpecies" :key="index" class="border p-5 rounded-lg mb-4 sm:col-span-2 bg-gray-50" >
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <div class="relative dropdown-container">
-                  <InputLabel :for="'species-' + index" value="Species Involved" />
-                  <input
-                    :id="'species-' + index"
-                    v-model="searches[index]"
-                    @focus="toggleDropdown(index)"
-                    @input="toggleDropdown(index)"
-                    placeholder="Search and select what species is involved..."
-                    class="w-full border rounded-lg p-2"
-                  />
-                  <InputError class="mt-2" :message="form.errors?.sightedSpecies?.[index]?.species_id" />
 
-                  <!-- Dropdown -->
-                  <ul
-                    v-if="dropdownVisibility[index] && filteredSpecies(index).value.length"
-                    class="absolute bg-white border rounded-lg shadow-lg w-full max-h-40 overflow-y-auto z-10 mt-1"
+            <!-- Sighted Species -->
+            <div v-for="(species, index) in form.sightedSpecies" :key="index" class="border p-5 rounded-lg mb-4 sm:col-span-2 bg-gray-50">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <div class="relative dropdown-container">
+                    <InputLabel :for="'species-' + index" value="Species Involved" />
+                    <input
+                      :id="'species-' + index"
+                      v-model="searches[index]"
+                      @focus="toggleDropdown(index)"
+                      @input="filteredSpecies(index)"
+                      @blur="handleBlur(index)"
+                      placeholder="Search and select what species is involved..."
+                      class="w-full border rounded-lg p-2"
+                    />
+                    <InputError class="mt-2" :message="form.errors?.sightedSpecies?.[index]?.species_id" />
+
+                    <!-- Dropdown -->
+                    <ul
+                      :id="'dropdown-' + index"
+                      v-if="dropdownVisibility[index] && filteredSpecies(index).value.length > 0"
+                      class="absolute bg-white border rounded-lg shadow-lg w-full max-h-40 overflow-y-auto z-10 mt-1"
                     >
-                    <li
-                      v-for="species in filteredSpecies(index).value"
-                      :key="species.id"
-                      @click="selectSpecies(species, index)"
-                      class="px-4 py-2 hover:bg-indigo-100 cursor-pointer"
-                    >
-                      {{ species.name }}
-                    </li>
-                  </ul>
+                      <li
+                        v-for="species in filteredSpecies(index).value"
+                        :key="species.id"
+                        @click="selectSpecies(species, index)"
+                        class="px-4 py-2 hover:bg-indigo-100 cursor-pointer"
+                      >
+                        {{ species.name }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div>
+                  <InputLabel :for="'size-' + index" value="Size" />
+                  <select v-model="form.sightedSpecies[index].size" class="w-full" required>
+                    <option value="" disabled>Select an option</option>
+                    <option value="tiny">Tiny (Less than 1 foot)</option>
+                    <option value="small">Small (1 - 3 feet)</option>
+                    <option value="medium">Medium (3 - 10 feet)</option>
+                    <option value="large">Large (10 - 20 feet)</option>
+                    <option value="very_large">Very Large (20 - 30 feet)</option>
+                    <option value="giant">Giant (Over 30 feet)</option>
+                  </select>
+                  <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.size" />
+                </div>
+                <div>
+                  <InputLabel :for="'description-' + index" value="Species Description" />
+                  <textarea
+                    :id="'description-' + index"
+                    v-model="form.sightedSpecies[index].species_description"
+                    class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                    placeholder="Please add physical description of the species especially if you can't identify"
+                  ></textarea>
+                  <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.species_description" />
+                </div>
+                <div>
+                  <InputLabel :for="'behavior-' + index" value="Behavior Observed" />
+                  <textarea
+                    :id="'behavior-' + index"
+                    v-model="form.sightedSpecies[index].behavior_observed"
+                    class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                    placeholder="(e.g. feeding, swimming, resting)"
+                    required
+                  ></textarea>
+                  <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.behavior_observed" />
                 </div>
               </div>
-              <div>
-                <InputLabel :for="'size-' + index" value="Size" />
-                <select v-model="species.size" class="w-full" required>
-                  <option value="" disabled>Select an option</option>
-                  <option value="tiny">Tiny (Less than 1 foot)</option>
-                  <option value="small">Small (1 - 3 feet)</option>
-                  <option value="medium">Medium (3 - 10 feet)</option>
-                  <option value="large">Large (10 - 20 feet)</option>
-                  <option value="very_large">Very Large (20 - 30 feet)</option>
-                  <option value="giant">Giant (Over 30 feet)</option>
-                </select>
-                <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.size" />
-              </div>
-              <div>
-                <InputLabel :for="'description-' + index" value="Species Description" />
-                <textarea
-                  :id="'description-' + index"
-                  v-model="species.species_description"
-                  class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                  placeholder="Please add physical description of the species especially if you can't identify"
-                ></textarea>
-                <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.species_description" />
-              </div>
-              <div>
-                <InputLabel :for="'behavior-' + index" value="Behavior Observed" />
-                <textarea
-                  :id="'behavior-' + index"
-                  v-model="species.behavior_observed"
-                  class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                  placeholder="(e.g. feeding, swimming, resting)"
-                  required
-                ></textarea>
-                <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.behavior_observed" />
-              </div>
-
-              </div>
               <div class="flex justify-end mt-5">
-                <button v-if="form.sightedSpecies?.length > 1" @click.prevent="removeSpeciesEntry(index)">
-                    <span class="material-icons text-xl mr-2 leading-none text-red-600">delete</span>
+                <button v-if="form.sightedSpecies.length > 1" @click.prevent="removeSpeciesEntry(index)">
+                  <span class="material-icons text-xl mr-2 leading-none text-red-600">delete</span>
                 </button>
-                <button @click.prevent="addSpeciesEntry"><span class="material-icons text-xl mr-2 leading-none text-indigo-900">add_circle</span></button>
+                <button @click.prevent="addSpeciesEntry">
+                  <span class="material-icons text-xl mr-2 leading-none text-indigo-900">add_circle</span>
+                </button>
               </div>
             </div>
+
             <div class="sm:col-span-2">
               <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-              <input type="file" accept="image/*,video/*"  id="mediaFiles" @change="handleFileChange" multiple class="file-input w-full"/>
+              <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="file-input w-full" />
               <div v-if="previewImages.length" class="mt-2 flex gap-4">
                 <div v-for="(img, index) in previewImages" :key="index" class="relative">
-                  <img :src="img" alt="Preview" class="w-20 h-20 object-cover rounded-lg"/>
+                  <img :src="img" alt="Preview" class="w-20 h-20 object-cover rounded-lg" />
                   <button @click="removeImage(index)" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">X</button>
                 </div>
               </div>
@@ -417,8 +443,8 @@ const removeSpeciesEntry = (index) => {
   color: white;
 }
 #map {
-    height: 400px; /* Ensure this is set */
-    width: 100%; /* Ensure this is set */
+  height: 400px; /* Ensure this is set */
+  width: 100%; /* Ensure this is set */
 }
 
 /* Hide the file name text after file is selected */
@@ -437,5 +463,4 @@ const removeSpeciesEntry = (index) => {
   cursor: pointer;
   text-align: center;
 }
-
 </style>
