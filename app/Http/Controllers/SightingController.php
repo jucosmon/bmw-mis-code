@@ -229,11 +229,10 @@ class SightingController extends Controller
         }
         return Inertia::render('manage-sighting/View', [
             'sighting' => $sighting,
-            'sighthtedSpecies' => $sighting->sightedSpecies->toArray(),
+            'sightedSpecies' => $sighting->sightedSpecies->toArray(),
             'success' => session('success'),
         ]);
     }
-
 
     //update page for public users
     public function updatePage($id)
