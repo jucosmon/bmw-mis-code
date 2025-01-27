@@ -29,20 +29,14 @@ class SightedSpeciesController extends Controller
 
         // Validate the incoming request
         $request->validate([
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'sex' => 'required|in:male,female,unknown',
-            'size' => 'nullable|string|max:50',
-            'species_description' => 'string',
+            'size' => 'enum:tiny,small,medium,large,very_large,giant',
+            'species_description' => 'nulllable|string',
             'behavior_observed' => 'string',
             'species_id' => 'nullable|exists:species,id'
         ]);
 
         // Create the sightedSpecies
         $sightedSpeciesData = [
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'sex' => $request->sex,
             'size' => $request->size,
             'species_description' => $request->species_description,
             'behavior_observed' => $request->behavior_observed,
@@ -83,12 +77,9 @@ class SightedSpeciesController extends Controller
     {
         // Validate incoming data
         $validated = $request->validate([
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'sex' => 'required|in:male,female,unknown',
-            'size' => 'nullable|string|max:50',
+            'size' => 'enum:tiny,small,medium,large,very_large,giant',
             'species_description' => 'nullable|string',
-            'behavior_observed' => 'nullable|string',
+            'behavior_observed' => 'string',
             'species_id' => 'nullable|exists:species,id'
         ]);
 

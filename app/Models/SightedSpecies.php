@@ -11,19 +11,11 @@ class SightedSpecies extends Model
 
     protected  $table = 'sighted_species';
     protected $fillable = [
-        'latitude',
-        'longitude',
-        'sex',
         'size',
         'species_description',
         'behavior_observed',
         'species_id',
         'sighting_id',
-    ];
-
-    protected $casts = [
-        'latitude' => 'decimal:7',
-        'longitude' => 'decimal:7',
     ];
 
     public function species()

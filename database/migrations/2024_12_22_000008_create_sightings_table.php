@@ -16,10 +16,9 @@ return new class extends Migration
             $table->tinyInteger('certainty_level')->unsigned(); // Certainty level from 1 to 10
             $table->date('date'); // Date of the sighting incident
             $table->time('time')->nullable(); // Time of the sighting incident
-            $table->tinyInteger('quantity')->unsigned(); // Number of species involved
             $table->decimal('latitude', 10, 7)->nullable(); // Latitude coordinate
             $table->decimal('longitude', 10, 7)->nullable(); // Longitude coordinate
-            $table->text('detailed_location'); // Detailed description of the location
+            $table->text('detailed_location')->nullable(); // Detailed description of the location
             $table->text('more_information')->nullable(); // Additional information about the sighting
             $table->enum('report_status', ['pending', 'verified', 'false'])->default('pending'); // Current status of the report
             $table->timestamps(); // Created at

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MediaFile;
 use App\Models\Notification;
+use App\Models\SightedSpecies;
 use App\Models\Sighting;
 use App\Models\Species;
 use Illuminate\Http\Request;
@@ -34,7 +35,10 @@ class SightingController extends Controller
 
     public function createPage()
     {
-        return Inertia::render('manage-sighting/Create');
+        $species = Species::get();
+        return Inertia::render('manage-sighting/Create', [
+            'species' => $species,
+        ]);
     }
 
     public function create(Request $request)
@@ -49,8 +53,6 @@ class SightingController extends Controller
             'certainty_level' => 'required|numeric',
             'date' => 'required|date',
             'time' => 'required|date_format:H:i:s',
-            'species_involved' => 'required|string',
-            'quantity' => 'required|numeric',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'detailed_location' => 'nullable|string',
@@ -59,6 +61,11 @@ class SightingController extends Controller
             'barangay_id' => 'required|exists:barangays,id',
             'mediaFiles' => 'nullable|array',
             'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:10240',
+            'sightedSpecies' => 'required|array|min:1',
+            'sightedSpecies.*.species_id' => 'nullable|exists:species,id',
+            'sightedSpecies.*.size' => 'required|in:tiny,small,medium,large,very_large,giant',
+            'sightedSpecies.*.species_description' => 'nullable|string',
+            'sightedSpecies.*.behavior_observed' => 'required|string'
         ]);
 
         // Create the sighting
@@ -66,8 +73,6 @@ class SightingController extends Controller
             'certainty_level' => $request->certainty_level,
             'date' => $request->date,
             'time' => $request->time,
-            'species_involved' => $request->species_involved,
-            'quantity' => $request->quantity,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'detailed_location' => $request->detailed_location,
@@ -78,6 +83,7 @@ class SightingController extends Controller
             'is_active' => true,
             'user_id' => $user->id,
         ]);
+
 
         // Handle file uploads
         if ($request->hasFile('mediaFiles')) {
@@ -92,6 +98,16 @@ class SightingController extends Controller
                     'sighting_id' => $sighting->id,
                 ]);
             }
+        }
+
+        foreach ($request->sightedSpecies as $sightedSpecies) {
+            SightedSpecies::create([
+                'size' => $sightedSpecies['size'], // Use array notation
+                'species_description' => $sightedSpecies['species_description'], // Use array notation
+                'behavior_observed' => $sightedSpecies['behavior_observed'], // Use array notation
+                'species_id' => $sightedSpecies['species_id'], // Use array notation
+                'sighting_id' => $sighting->id,
+            ]);
         }
 
         $this->createNotification($sighting, 'create');
@@ -243,8 +259,6 @@ class SightingController extends Controller
             'certainty_level' => 'required|numeric',
             'date' => 'required|date',
             'time' => 'required|date_format:H:i:s',
-            'species_involved' => 'required|string',
-            'quantity' => 'required|numeric',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'detailed_location' => 'nullable|string',

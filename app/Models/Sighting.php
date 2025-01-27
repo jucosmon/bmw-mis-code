@@ -15,8 +15,6 @@ class Sighting extends Model
         'certainty_level',
         'date',
         'time',
-        'species_involved',
-        'quantity',
         'latitude',
         'longitude',
         'detailed_location',
