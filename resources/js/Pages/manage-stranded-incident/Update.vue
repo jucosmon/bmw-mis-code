@@ -347,8 +347,8 @@ const setLocationFromMap = () => {
                         <InputError class="mt-2" :message="form.errors.more_information" />
                         </div>
 
-                                           <!-- Existing Image Previews -->
-                                           <div class="mt-4 sm:col-span-2 col-span-1">
+                        <!-- Existing Image Previews -->
+                        <div class="mt-4 sm:col-span-2 col-span-1">
                             <InputLabel value="Existing Images" />
                             <div>
                                 <div v-if="existingImages.length===0" class="flex flex-wrap gap-2">No existing images</div>

@@ -238,16 +238,20 @@ class SightingController extends Controller
     public function updatePage($id)
     {
         $user = Auth::user();
-        $sighting = Sighting::findOrFail($id);
-        if($sighting->report_status!=='pending' && $user->user_role!=='bpemo_admin' ){
+        $sighting = Sighting::with(['sightedSpecies'])->findOrFail($id); // Ensure sightedSpecies is loaded
+        if ($sighting->report_status !== 'pending' && $user->user_role !== 'bpemo_admin') {
             abort(403);
         }
-        $sighting->load('mediaFiles');
+
+        // Load media files
         $sighting->mediaFiles = $sighting->mediaFiles->map(function ($file) {
-        $file->url = asset('storage/' . $file->path);
+            $file->url = asset('storage/' . $file->path);
             return $file;
         });
-        return Inertia::render('manage-sighting/Update', ['sighting' => $sighting]);
+
+
+        $species = Species::get();
+        return Inertia::render('manage-sighting/Update', ['sighting' => $sighting, 'species' => $species]);
     }
 
     // update for responders
@@ -267,7 +271,13 @@ class SightingController extends Controller
             'mediaFiles' => 'nullable|array',
             'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:10240',
             'deletedImages' => 'nullable|array',
-            'report_status' => 'nullable|in:pending,verified,false'
+            'report_status' => 'nullable|in:pending,verified,false',
+            'sightedSpecies' => 'required|array|min:1',
+            'sightedSpecies.*.species_id' => 'nullable|exists:species,id',
+            'sightedSpecies.*.size' => 'required|in:tiny,small,medium,large,very_large,giant',
+            'sightedSpecies.*.species_description' => 'nullable|string',
+            'sightedSpecies.*.behavior_observed' => 'required|string',
+            'deletedSightedSpecies' => 'nullable|array',
         ]);
 
         $user = Auth::user();
@@ -297,6 +307,7 @@ class SightingController extends Controller
             $successMessage = 'You have successfully updated a sighting report!';
         }
 
+        // Handle deleted images
         if ($request->has('deletedImages')) {
             $deletedMediaIds = $request->input('deletedImages'); // Get the IDs of images to delete
             foreach ($deletedMediaIds as $deletedMediaId) {
@@ -326,6 +337,35 @@ class SightingController extends Controller
             }
         }
 
+        // Handle deleted sighted species
+        if ($request->has('deletedSightedSpecies')) {
+            $deletedSightedSpeciesIds = $request->input('deletedSightedSpecies'); // Get the IDs of sighted species to delete
+            foreach ($deletedSightedSpeciesIds as $deletedSightedSpeciesId) {
+                $sightedSpecies = SightedSpecies::find($deletedSightedSpeciesId);
+                if ($sightedSpecies) {
+                    $sightedSpecies->delete();
+                }
+            }
+        }
+
+        // Handle updated sighted species
+        foreach ($validated['sightedSpecies'] as $sightedSpecies) {
+            if (isset($sightedSpecies['id'])) {
+                $sightedSpeciesModel = SightedSpecies::find($sightedSpecies['id']);
+                if ($sightedSpeciesModel) {
+                    $sightedSpeciesModel->update($sightedSpecies);
+                }
+            } else {
+                SightedSpecies::create([
+                    'size' => $sightedSpecies['size'],
+                    'species_description' => $sightedSpecies['species_description'],
+                    'behavior_observed' => $sightedSpecies['behavior_observed'],
+                    'species_id' => $sightedSpecies['species_id'],
+                    'sighting_id' => $sighting->id,
+                ]);
+            }
+        }
+
         if($validated['report_status'] === 'false'){
             return redirect()->route('sighting.index')
                         ->with('success', 'You have successfully marked a sighting report as false.');
@@ -334,6 +374,29 @@ class SightingController extends Controller
         // Redirect to the updated sighting view with a success message
         return redirect()->route('sighting.view', $id)
                         ->with('success', $successMessage);
+    }
+
+    public function unverify(Request $request, $id)
+    {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
+        $sighting = Sighting::findOrFail($id);
+        $sighting->report_status = 'pending';
+        $sighting->save();
+
+        $this->createNotification($sighting, 'unverify');
+
+        return redirect()->route('sighting.view', ['id' => $id])
+            ->with('success', 'You have successfully unverified a sighting report.');
     }
 
     public function archive(Request $request, $id)

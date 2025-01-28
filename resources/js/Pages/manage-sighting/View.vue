@@ -65,19 +65,7 @@ const backRoute = computed(() => {
 
 
 const updateRoute = computed(() => {
-    const isResponder = isBarangayOfficial.value || isBpemoAdmin.value || isBpemoStaff.value || isLguResponder.value;
-    const isResponderEligible = isResponder &&
-        (props.sighting.report_status === 'pending' || props.sighting.report_status === 'verified'  || props.sighting.report_status === 'completed'
-            || props.sighting.report_status === 'false'
-        );
-
-    if (isPublicUser.value) {
-        return route('sighting.update.page', { id: props.sighting.id });
-    } else if (isResponderEligible) {
-        return route('sighting.responder.update.page', { id: props.sighting.id });
-    } else {
-        return null; // Explicitly return null if no conditions are met
-    }
+    return route('sighting.update.page', { id: props.sighting.id });
 });
 
 

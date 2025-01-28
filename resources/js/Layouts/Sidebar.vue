@@ -150,7 +150,7 @@ const toggleProfileDropdown = (event) => {
   state.profileDropdownOpen = !state.profileDropdownOpen;
 };
 
-const closeDropdown = (event) => {
+const closeSidebarDropdown = (event) => {
   if (!event.target.closest('.dropdown-container')) {
     state.profileDropdownOpen = false;
     state.notificationsDropdownOpen = false;
@@ -158,11 +158,11 @@ const closeDropdown = (event) => {
 };
 
 onMounted(() => {
-  document.addEventListener('click', closeDropdown);
+  document.addEventListener('click', closeSidebarDropdown);
 });
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', closeDropdown);
+  document.removeEventListener('click', closeSidebarDropdown);
 });
 
 const page = usePage();

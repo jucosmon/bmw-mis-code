@@ -178,38 +178,37 @@ const toggleDropdown = (index) => {
   console.log('Toggled dropdown for index:', index);
 };
 
-// Close dropdown handler
+let closeTimeout; // Variable to hold the timeout ID
+
 const closeDropdown = (index) => {
-  dropdownVisibility.value[index] = false; // Close dropdown
+    if (!event.target.closest('.dropdown-container')) {
+        isDropdownVisible.value[index] = false;
+  }
 };
+
 
 
 // Use global setTimeout directly
 const handleBlur = (index) => {
-    setTimeout(() => closeDropdown(index), 100); // Delay closing to allow click
-};
-
-
-const handleClickOutside = (event, index) => {
-  const dropdown = document.getElementById(`dropdown-${index}`);
-  const input = document.getElementById(`species-${index}`);
-  if (dropdown && !dropdown.contains(event.target) && !input.contains(event.target)) {
-    closeDropdown(index);
-  }
+    closeTimeout = setTimeout(() => {
+        closeDropdown(index);
+    }, 100);
 };
 
 onMounted(() => {
-  document.addEventListener('click', (event) => {
-    for (let i = 0; i < dropdownVisibility.value.length; i++) {
-      if (dropdownVisibility.value[i]) {
-        handleClickOutside(event, i);
-      }
-    }
-  });
+    document.addEventListener('click', (event) => {
+        for (let i = 0; i < isDropdownVisible.value.length; i++) {
+            if (isDropdownVisible.value[i]) {
+                document.addEventListener('click', closeDropdown);
+            }
+        }
+    });
 });
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('click', closeDropdown);
+    clearTimeout(closeTimeout); // Clear the timeout on unmount
+
 });
 
 const removeSpeciesEntry = (index) => {
@@ -340,9 +339,10 @@ const removeSpeciesEntry = (index) => {
                       v-model="searches[index]"
                       @focus="toggleDropdown(index)"
                       @input="filteredSpecies(index)"
-                      @blur="handleBlur(index)"
+                      @blur="handleBlur"
                       placeholder="Search and select what species is involved..."
                       class="w-full border rounded-lg p-2"
+                      autocomplete="off"
                     />
                     <InputError class="mt-2" :message="form.errors?.sightedSpecies?.[index]?.species_id" />
 
