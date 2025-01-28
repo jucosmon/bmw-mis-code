@@ -33,6 +33,23 @@ class SightingController extends Controller
         ]);
     }
 
+    public function indexFinishedSightings()
+    {
+        $user = Auth::user();
+
+        if (in_array($user->user_role, ['bpemo_admin', 'bpemo_staff'])) {
+            $sightings = Sighting::whereIn('report_status', ['false', 'verified'])
+                ->get();
+        } else {
+            abort(403);
+        }
+
+        return Inertia::render('manage-sighting/finished-sightings/index', [
+            'sightings' => $sightings,
+            'success' => session('success'),
+        ]);
+    }
+
     public function createPage()
     {
         $species = Species::get();

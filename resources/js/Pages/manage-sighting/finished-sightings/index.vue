@@ -1,41 +1,47 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-const page = usePage();
+
 const props = defineProps({
-    strandedIncidents: Array,
+    sightings: Array,
+    success: String,
 });
 
-const filterStatus = ref('resolved'); // Default filter is "all"
+const filterStatus = ref('verified'); // Default filter is "all"
 
-// Filter strandedIncidents based on the selected status
-const filteredStrandedIncidents = computed(() => {
-    return props.strandedIncidents.filter(incident => incident.report_status === filterStatus.value);
+// Filter Sightings based on the selected status
+const filteredSightings = computed(() => {
+    return props.sightings.filter(incident => incident.report_status === filterStatus.value);
 });
 
 // Group stranded incidents by status
-const groupedIncidents = computed(() => {
+    const groupedIncidents = computed(() => {
     return {
-        false: filteredStrandedIncidents.value.filter(incident => incident.report_status === 'false'),
-        resolved: filteredStrandedIncidents.value.filter(incident => incident.report_status === 'resolved'),
+        false: filteredSightings.value.filter(incident => incident.report_status === 'false'),
+        verified: filteredSightings.value.filter(incident => incident.report_status === 'verified'),
     };
 });
 
+// Button routes
+const createSightings = () => {
+    Inertia.get(route('sighting.createPage'));
+};
 
-const viewStrandedIncidents = (id) => {
-    Inertia.visit(route('stranded.incident.view', { id }));
+const viewSighting = (id) => {
+    Inertia.visit(route('sighting.view', { id }));
 };
 
 const status = computed(() => {
-  return filterStatus.value === 'resolved' ? 'Resolved' : 'False';
+  return filterStatus.value === 'verified' ? 'Verified' : 'False';
 });
 
 const backRoute = computed(() => {
-    return route('stranded.incident.index');
+    return route('sighting.index');
 });
+
 
 </script>
 
@@ -51,24 +57,24 @@ const backRoute = computed(() => {
         </template>
 
         <div class="container mx-auto px-7 py-8">
-
+            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
+                <strong class="font-bold">Success! </strong>
+                <span class="block sm:inline">{{ props?.success}}</span>
+            </div>
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-center">{{ status }} Stranded Incident List</h2>
+                <h2 class="text-xl font-semibold text-center">{{ status }} Sightings List</h2>
                 <div class="flex gap-3">
-
                     <select
                         v-model="filterStatus"
                         class=" border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                        <option value="resolved">Resolved</option>
+                        <option value="verified">Verified</option>
                         <option value="false">False</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Conditional Rendering based on Filtered Status -->
-            <div v-if="filterStatus !== 'all' && groupedIncidents[filterStatus].length > 0">
-                <h3 class="text-lg font-semibold mt-4 capitalize">{{ filterStatus }} Incidents</h3>
+            <div v-if="filterStatus !== 'all' && groupedIncidents[filterStatus] && groupedIncidents[filterStatus].length > 0">
                 <div class="overflow-x-auto">
                     <table class="min-w-full table-auto border-collapse border border-gray-300">
                         <thead>
@@ -76,20 +82,20 @@ const backRoute = computed(() => {
                                 <th class="px-4 py-2 text-left border border-gray-300">ID</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Date & Time</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Species Involved</th>
-                                <th class="px-4 py-2 text-left border border-gray-300">Report Status</th>
+                                <th class="px-4 py-2 text-left border border-gray-300">Status</th>
                                 <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="strandedIncidents in groupedIncidents[filterStatus]" :key="strandedIncidents.id">
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.id }}</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.date }} - {{ strandedIncidents.time }}</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.species_involved }}</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ strandedIncidents.report_status }}</td>
+                            <tr v-for="sighting in groupedIncidents[filterStatus]" :key="sighting.id">
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.id }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.date }} - {{ sighting.time }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.species_involved }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ sighting.report_status }}</td>
                                 <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
                                     <button
                                         class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900"
-                                        @click="viewStrandedIncidents(strandedIncidents.id)"
+                                        @click="viewSighting(sighting.id)"
                                     >
                                         View
                                     </button>
@@ -104,7 +110,6 @@ const backRoute = computed(() => {
             <div v-if="filterStatus !== 'all' && groupedIncidents[filterStatus].length === 0" class="text-center mt-4">
                 <p class="text-lg text-gray-600">No incidents for the selected status.</p>
             </div>
-
         </div>
     </Sidebar>
 </template>
