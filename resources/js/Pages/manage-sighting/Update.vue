@@ -31,7 +31,7 @@ const barangays = ref([]);
 
 onMounted(async () => {
     console.log('Component mounted'); // Debugging: Check if the component is mounted
-    console.log('Props:', props); // Log the entire props object
+    console.log('The Props:', props.sighting); // Log the entire props object
 
     const response = await fetch('/municipalities');
     municipalities.value = await response.json();
@@ -73,7 +73,7 @@ const form = useForm({
     report_status: props.sighting.report_status || '',
     mediaFiles: [],
     deletedImages: [],
-    sightedSpecies: props.sighting.sighted_species.map(species => ({
+    sightedSpecies: (props.sighting.sighted_species || []).map(species => ({
         id: species.id,
         species_id: species.species_id || '',
         size: species.size || '',
@@ -124,36 +124,65 @@ const normalizeValue = (value) => {
     return value;
 };
 
+const normalizeDescription = (value) => {
+    return value === null ? '' : value; // Convert null to empty string
+};
+
+
+
 const hasChanges = computed(() => {
     const currentData = form.data();
+    props.sighting.deletedSightedSpecies = form.deletedSightedSpecies || [];
 
-    // Check if basic fields are different
+    // Check if basic fields are different, excluding sightedSpecies
     const dataChanged = Object.keys(currentData).some((key) => {
-        if (key === 'mediaFiles' || key === 'deletedImages') return false;
-        return normalizeValue(currentData[key]) !== normalizeValue(props.sighting[key]);
+        //dont inlcude the deletedSightedSpecies in here wplease
+        // Skip mediaFiles, deletedImages, and sightedSpecies
+        if (key === 'mediaFiles' || key === 'deletedImages' || key === 'sightedSpecies') return false;
+
+        const currentValue = normalizeValue(currentData[key]);
+        const originalValue = normalizeValue(props.sighting[key]);
+
+        console.log(`Comparing ${key}: currentValue=${currentValue}, originalValue=${originalValue}, changed=${currentValue !== originalValue}`);
+
+
+
+        return currentValue !== originalValue;
     });
 
     const mediaFilesChanged = form.mediaFiles.length > 0;
     const deletedImagesChanged = deletedImages.value.length > 0;
+    const deletedSightedSpeciesChanged = deletedSightedSpecies.value.length > 0;
+    console.log('Comparing deletedSightedSpecies:');
+    console.log(`  currentValue: ${deletedSightedSpecies}, changed: ${deletedSightedSpeciesChanged}`);
 
-    // Check for changes in sightedSpecies
+    // Check for changes in sightedSpecies separately
     const sightedSpeciesChanged = form.sightedSpecies.some((species, index) => {
-        const originalSpecies = props.sighting.sighted_species[index] || {};
-        return (
-            species.species_id !== originalSpecies.species_id || // Check if species_id has changed
-            species.size !== originalSpecies.size || // Check if size has changed
-            species.species_description !== originalSpecies.species_description || // Check if description has changed
-            species.behavior_observed !== originalSpecies.behavior_observed // Check if behavior has changed
-        );
+        const originalSpecies = (props.sighting.sighted_species || [])[index] || {};
+
+        // Log the species being compared
+        console.log(`Comparing species ${index}:`, species, originalSpecies);
+
+        // Compare each attribute individually
+        const speciesIdChanged = species.species_id !== originalSpecies.species_id;
+        const sizeChanged = species.size !== originalSpecies.size;
+        const speciesDescriptionChanged = normalizeDescription(species.species_description) !== normalizeDescription(originalSpecies.species_description);
+        const behaviorObservedChanged = species.behavior_observed !== originalSpecies.behavior_observed;
+
+        // Log the results of each comparison
+        console.log(`  species_id: current=${species.species_id}, original=${originalSpecies.species_id}, changed=${speciesIdChanged}`);
+        console.log(`  size: current=${species.size}, original=${originalSpecies.size}, changed=${sizeChanged}`);
+        console.log(`  species_description: current=${species.species_description}, original=${originalSpecies.species_description}, changed=${speciesDescriptionChanged}`);
+        console.log(`  behavior_observed: current=${species.behavior_observed}, original=${originalSpecies.behavior_observed}, changed=${behaviorObservedChanged}`);
+
+        // Return true if any attribute has changed
+        return speciesIdChanged || sizeChanged || speciesDescriptionChanged || behaviorObservedChanged;
     });
 
     // Check for new species added
     const newSpeciesAdded = form.sightedSpecies.length > props.sighting.sighted_species.length;
+    console.log('New species added:', newSpeciesAdded);
 
-    // Check for deleted species
-    const deletedSightedSpeciesChanged = deletedSightedSpecies.value.length > 0;
-
-    const reportStatusChanged = form.report_status !== props.sighting.report_status;
 
     // Return true if any of the checks indicate changes
     return (
@@ -162,8 +191,7 @@ const hasChanges = computed(() => {
         deletedImagesChanged ||
         sightedSpeciesChanged ||
         newSpeciesAdded ||
-        deletedSightedSpeciesChanged ||
-        reportStatusChanged
+        deletedSightedSpeciesChanged
     );
 });
 
@@ -238,6 +266,7 @@ const verifyIncident = () => {
 };
 
 const submit = () => {
+    console.log('Has changes:', hasChanges.value);
     if (hasChanges.value) {
         form.deletedImages = deletedImages.value;
         form.deletedSightedSpecies = deletedSightedSpecies.value;
@@ -292,7 +321,7 @@ const toggleDropdown = (index) => {
 
 let closeTimeout; // Variable to hold the timeout ID
 
-const closeDropdown = (index) => {
+const closeDropdown = (event, index) => {
     if (!event.target.closest('.dropdown-container')) {
         isDropdownVisible.value[index] = false;
   }
@@ -310,7 +339,7 @@ onMounted(() => {
     document.addEventListener('click', (event) => {
         for (let i = 0; i < isDropdownVisible.value.length; i++) {
             if (isDropdownVisible.value[i]) {
-                document.addEventListener('click', closeDropdown);
+                document.addEventListener('click', closeDropdown(event,i));
             }
         }
     });
