@@ -274,7 +274,6 @@ class SightingController extends Controller
     // update for responders
     public function update(Request $request, $id)
     {
-
         $validated = $request->validate([
             'certainty_level' => 'required|numeric',
             'date' => 'required|date',
@@ -290,6 +289,7 @@ class SightingController extends Controller
             'deletedImages' => 'nullable|array',
             'report_status' => 'nullable|in:pending,verified,false',
             'sightedSpecies' => 'required|array|min:1',
+            'sightedSpecies.*.id' => 'nullable|exists:sighted_species,id',
             'sightedSpecies.*.species_id' => 'nullable|exists:species,id',
             'sightedSpecies.*.size' => 'required|in:tiny,small,medium,large,very_large,giant',
             'sightedSpecies.*.species_description' => 'nullable|string',
@@ -319,8 +319,7 @@ class SightingController extends Controller
                 Notification::where('sighting_id', $id)->delete();
             }
             $this->createNotification($sighting, $validated['report_status']);
-
-        }else{
+        } else {
             $successMessage = 'You have successfully updated a sighting report!';
         }
 
@@ -354,25 +353,32 @@ class SightingController extends Controller
             }
         }
 
-        // Handle deleted sighted species
+       // Handle deleted sighted species
         if ($request->has('deletedSightedSpecies')) {
-            $deletedSightedSpeciesIds = $request->input('deletedSightedSpecies'); // Get the IDs of sighted species to delete
+            $deletedSightedSpeciesIds = $request->input('deletedSightedSpecies');
+
             foreach ($deletedSightedSpeciesIds as $deletedSightedSpeciesId) {
                 $sightedSpecies = SightedSpecies::find($deletedSightedSpeciesId);
                 if ($sightedSpecies) {
-                    $sightedSpecies->delete();
+                    $sightedSpecies->delete(); // This should work for soft deletes
+                    // or use $sightedSpecies->forceDelete(); for permanent deletion
+                } else {
+                    dd('Sighted Species not found for ID:', $deletedSightedSpeciesId);
                 }
             }
         }
 
         // Handle updated sighted species
         foreach ($validated['sightedSpecies'] as $sightedSpecies) {
-            if (isset($sightedSpecies['id'])) {
+            if (isset($sightedSpecies['id']) && !is_null($sightedSpecies['id'])) {
+                // Update existing species
                 $sightedSpeciesModel = SightedSpecies::find($sightedSpecies['id']);
                 if ($sightedSpeciesModel) {
                     $sightedSpeciesModel->update($sightedSpecies);
                 }
             } else {
+
+                // Create new species
                 SightedSpecies::create([
                     'size' => $sightedSpecies['size'],
                     'species_description' => $sightedSpecies['species_description'],

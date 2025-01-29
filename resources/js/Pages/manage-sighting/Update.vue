@@ -73,14 +73,29 @@ const form = useForm({
     report_status: props.sighting.report_status || '',
     mediaFiles: [],
     deletedImages: [],
-    sightedSpecies: Array.isArray(props.sighting.sighted_species) ? props.sighting.sighted_species : [{
+    sightedSpecies: props.sighting.sighted_species.map(species => ({
+        id: species.id,
+        species_id: species.species_id || '',
+        size: species.size || '',
+        species_description: species.species_description || '',
+        behavior_observed: species.behavior_observed || '',
+    })) || [],
+
+    deletedSightedSpecies: [],
+});
+
+// Function to add a new species entry
+const addSpeciesEntry = () => {
+    form.sightedSpecies.push({
+        id: null, // Set to null for new entries
         size: '',
         species_description: '',
         behavior_observed: '',
         species_id: '',
-    }],
-    deletedSightedSpecies: [],
-});
+    });
+    searches.value.push('');
+    isDropdownVisible.value.push(false);
+};
 
 // Create a mapping of species IDs to species names
 const speciesMap = computed(() => {
@@ -120,12 +135,36 @@ const hasChanges = computed(() => {
 
     const mediaFilesChanged = form.mediaFiles.length > 0;
     const deletedImagesChanged = deletedImages.value.length > 0;
-    const sightedSpeciesChanged = form.sightedSpecies.some(species => species.species_id);
+
+    // Check for changes in sightedSpecies
+    const sightedSpeciesChanged = form.sightedSpecies.some((species, index) => {
+        const originalSpecies = props.sighting.sighted_species[index] || {};
+        return (
+            species.species_id !== originalSpecies.species_id || // Check if species_id has changed
+            species.size !== originalSpecies.size || // Check if size has changed
+            species.species_description !== originalSpecies.species_description || // Check if description has changed
+            species.behavior_observed !== originalSpecies.behavior_observed // Check if behavior has changed
+        );
+    });
+
+    // Check for new species added
+    const newSpeciesAdded = form.sightedSpecies.length > props.sighting.sighted_species.length;
+
+    // Check for deleted species
     const deletedSightedSpeciesChanged = deletedSightedSpecies.value.length > 0;
+
     const reportStatusChanged = form.report_status !== props.sighting.report_status;
 
-    return dataChanged || mediaFilesChanged || deletedImagesChanged || sightedSpeciesChanged ||
-        deletedSightedSpeciesChanged || reportStatusChanged;
+    // Return true if any of the checks indicate changes
+    return (
+        dataChanged ||
+        mediaFilesChanged ||
+        deletedImagesChanged ||
+        sightedSpeciesChanged ||
+        newSpeciesAdded ||
+        deletedSightedSpeciesChanged ||
+        reportStatusChanged
+    );
 });
 
 const handleNewFileChange = (event) => {
@@ -237,16 +276,6 @@ const filteredSpecies = (index) => {
 
 };
 
-const addSpeciesEntry = () => {
-    form.sightedSpecies.push({
-        size: '',
-        species_description: '',
-        behavior_observed: '',
-        species_id: '',
-    });
-    searches.value.push('');
-    isDropdownVisible.value.push(false);
-};
 
 const selectSpecies = (species, index) => {
     console.log(`Dropdown visibility for index ${species}:`, isDropdownVisible.value[species]);
@@ -293,12 +322,17 @@ onBeforeUnmount(() => {
 
 });
 
-const removeSpeciesEntry = (index) => {
-    // Check if the species has an ID, indicating it exists in the database
-    if (form.sightedSpecies[index].species_id) {
-        deletedSightedSpecies.value.push(form.sightedSpecies[index].species_id); // Mark for deletion
+const removeSpeciesEntry = (species, index) => {
+
+    if (species.id) {
+        console.log(`Marking species ID for deletion: ${species.id}`);
+        deletedSightedSpecies.value.push(species.id); // Mark for deletion
+    } else {
+        console.log(`Removing new species entry, not marking for deletion:`, form.sightedSpecies[index]);
     }
-    form.sightedSpecies.splice(index, 1); // Remove the species from the form
+
+    // Remove the species from the form
+    form.sightedSpecies.splice(index, 1);
     searches.value.splice(index, 1); // Remove the search term
     isDropdownVisible.value.splice(index, 1); // Remove the dropdown visibility state
 };
@@ -419,7 +453,7 @@ const handleDropdownClick = (index) => {
                         </div>
 
                         <!-- Sighted Species -->
-                        <div v-for="(species, index) in form.sightedSpecies" :key="index" class="border p-5 rounded-lg mb-4 sm:col-span-2 bg-gray-50">
+                        <div v-for="(species, index) in form.sightedSpecies" :key="species.id || index" class="border p-5 rounded-lg mb-4 sm:col-span-2 bg-gray-50">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <div class="relative dropdown-container">
@@ -489,7 +523,7 @@ const handleDropdownClick = (index) => {
                                 </div>
                             </div>
                             <div class="flex justify-end mt-5">
-                                <button v-if="form.sightedSpecies.length > 1" @click.prevent="removeSpeciesEntry(index)">
+                                <button v-if="form.sightedSpecies.length > 1" @click.prevent="removeSpeciesEntry(species, index)">
                                     <span class="material-icons text-xl mr-2 leading-none text-red-600">delete</span>
                                 </button>
                                 <button @click.prevent="addSpeciesEntry">
