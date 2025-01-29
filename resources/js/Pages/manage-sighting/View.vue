@@ -35,6 +35,7 @@ const isBarangayOfficial = computed(() => page.props.auth.user.user_role === 'ba
 const form = useForm({
     is_active: true,
     password: '',
+    unverify_password: '',
     text: '',
     sighting_id: props.sighting.id,
 });
@@ -60,7 +61,12 @@ const sizeText = (sightedSpeciesSize) => {
 
 //routes
 const backRoute = computed(() => {
-    return route('sighting.index');
+    if( props.sighting.report_status === 'verified' || props.sighting.report_status === 'false'){
+        return route('sighting.finished.index');
+    }else{
+        return route('sighting.index');
+    }
+
 });
 
 
@@ -72,7 +78,6 @@ const updateRoute = computed(() => {
 const archiveRoute = computed(() => {
     return route('sighting.archive', {
         id: props.sighting.id,
-        category: props.sighting.category,
     });
 });
 const unarchiveRoute = computed(() => {
@@ -129,7 +134,8 @@ const archiveSighting = () => {
 
 // Update button validation for regular sighting reports
 const updateButton = computed(() => {
-    return archiveButtonStatus.value;
+    return ((isPublicUser.value || isBarangayOfficial.value || isLguResponder.value)
+    && props.sighting.report_status === 'pending' && props.sighting.is_active === true);
 });
 
 
@@ -141,10 +147,9 @@ const updateButtonStatusVerifier = computed(() => {
     return true;
 });
 
-
 //unverify button
 const unverifyButtonStatus = computed(() => {
-    return props.sighting.report_status === 'resolved' &&
+    return props.sighting.report_status === 'verified' &&
            (isBpemoAdmin.value || isBpemoStaff.value);
 });
 
@@ -154,23 +159,22 @@ const showUnverifyModal = () => {
     unverifyModalVisible.value = true;
 };
 
-const handleUnverifyAction = (response) => {
-    if (response === 'yes') {
-        Inertia.patch(
-            route('sighting.unverify', { id: props.sighting.id }), // Pass the ID here
-            {},
-            {
-                onSuccess: () => {
-                    unverifyModalVisible.value = false;
-                },
-                onError: (errors) => {
-                    console.error(errors);
-                },
-            }
-        );
-    } else {
-        unverifyModalVisible.value = false;
-    }
+const closeUnverifyModal = () => {
+    unverifyModalVisible.value = false;
+};
+const handleUnverifyAction = () => {
+    form.patch(
+        route('sighting.unverify', { id: props.sighting.id }),
+        {
+            onSuccess: () => {
+                closeUnverifyModal(); // Close only on success
+                form.reset('unverify_password'); // Reset form only on success
+            },
+            onError: (errors) => {
+                console.error(errors); // Log errors for debugging
+            },
+        }
+    );
 };
 
 
@@ -322,14 +326,29 @@ onMounted(() => {
                     >
                         Unverify Sighting
                     </button>
-                    <Modal :show="unverifyModalVisible" @close="unverifyModalVisible = false">
+                    <Modal :show="unverifyModalVisible" @close="closeUnverifyModal">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-gray-800">
-                                Do you confirm to unverify this sighting report?
+                              Are you sure you want to unverify this verified sighting report?
                             </h2>
+                            <div class="mt-4">
+                                <label for="bpemo-password" class="text-sm text-gray-500">
+                                    Confirm by entering your password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="bpemo-password"
+                                    v-model="form.unverify_password"
+                                    class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    placeholder="Enter your password"
+                                />
+                                <p v-if="form.errors.unverify_password" class="text-sm text-red-500 mt-1">
+                                    {{ form.errors.unverify_password }}
+                                </p>
+                            </div>
                             <div class="mt-6 flex justify-end space-x-4">
-                                <SecondaryButton @click="unverifyModalVisible = false">No</SecondaryButton>
-                                <DangerButton @click="handleUnverifyAction('yes')">Yes</DangerButton>
+                                <SecondaryButton @click="closeUnverifyModal">Cancel</SecondaryButton>
+                                <DangerButton @click="handleUnverifyAction">Confirm</DangerButton>
                             </div>
                         </div>
                     </Modal>

@@ -254,7 +254,8 @@ const setLocationFromMap = () => {
 };
 
 const buttonStatus = computed(() => {
-    return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') && currentUser!== 'public_user';
+    return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') &&
+    (currentUser!== 'lgu_responder'  && currentUser!== 'barangay_official' && currentUser!== 'public_user');
 });
 
 const falseIncident = () => {

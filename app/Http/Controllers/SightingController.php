@@ -21,7 +21,7 @@ class SightingController extends Controller
         $user = Auth::user();
 
         // Retrieve pending sightings based on user role
-        $sightings = Sighting::where('report_status', 'pending');
+        $sightings = Sighting::where('report_status', 'pending')->where('is_active', true);
 
         if ($user->user_role !== 'bpemo_admin') {
             $sightings->where('user_id', $user->id);
@@ -40,7 +40,12 @@ class SightingController extends Controller
         if (in_array($user->user_role, ['bpemo_admin', 'bpemo_staff'])) {
             $sightings = Sighting::whereIn('report_status', ['false', 'verified'])
                 ->get();
-        } else {
+        } else if (in_array($user->user_role, ['lgu_responder', 'barangay_official', 'public_user'])) {
+            $sightings = Sighting::whereIn('report_status', ['false', 'verified'])
+                ->where('user_id', $user->id)
+                ->get();
+        }
+         else {
             abort(403);
         }
 
@@ -219,6 +224,18 @@ class SightingController extends Controller
                 'user_id' => null,
                 'comment_id' => null,
             ]);
+        } else if($action === 'unverify'){
+            Notification::create([
+                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is unverified a verified sighting.",
+                'category' => 'false',
+                'notif_for' => 'all',
+                'type' => 'sighting',
+                'is_read' => false,
+                'created_at' => now(),
+                'sighting_id' => $sighting->id,
+                'user_id' => null,
+                'comment_id' => null,
+            ]);
         }
         else {
             abort(403, 'Invalid action');
@@ -298,7 +315,7 @@ class SightingController extends Controller
         ]);
 
         $user = Auth::user();
-        if ($user->user_role !== 'bpemo_admin' && $request->report_status !== 'pending') {
+        if ($user->user_role !== 'bpemo_admin' && ($request->report_status !== 'pending' || $request->is_active === 'false')) {
             abort(403, 'Unauthorized action. The report is already verified as true.');
         }
 
@@ -317,6 +334,12 @@ class SightingController extends Controller
         if ($oldReportStatus !== $validated['report_status']) {
             if ($validated['report_status'] === 'false') {
                 Notification::where('sighting_id', $id)->delete();
+            }else if($validated['report_status'] === 'verified' && $oldReportStatus === 'false'){
+                $successMessage = 'You have successfully verified a falsed sighting report!';
+                $sighting->is_active = true;
+                $sighting->save();
+            } else if($validated['report_status'] === 'verified'){
+                $successMessage = 'You have successfully verified a sighting report!';
             }
             $this->createNotification($sighting, $validated['report_status']);
         } else {
@@ -403,18 +426,18 @@ class SightingController extends Controller
     {
         // Validate the request, ensuring the password is provided
         $request->validate([
-            'password' => 'required|string',
+            'unverify_password' => 'required|string',
         ]);
 
-        // Check if the provided password matches the authenticated user's password
         $currentUser = Auth::user();
-        if (!Hash::check($request->password, $currentUser->password)) {
-            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        if (!Hash::check($request->unverify_password, $currentUser->password)) {
+            return back()->withErrors(['unverify_password' => 'The provided password is incorrect.']);
         }
 
         $sighting = Sighting::findOrFail($id);
         $sighting->report_status = 'pending';
         $sighting->save();
+
 
         $this->createNotification($sighting, 'unverify');
 

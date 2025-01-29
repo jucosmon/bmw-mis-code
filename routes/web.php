@@ -144,8 +144,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         //unarchiving another stranded incident
         Route::patch('/unarchive/{id}', [SightingController::class, 'unarchive'])
             ->name('sighting.unarchive');
-
-        Route::middleware(['role:bpemo_admin,bpemo_staff'])->get('/finished', [SightingController::class, 'indexFinishedSightings'])
+        Route::middleware(['role:bpemo_admin,bpemo_staff'])->patch('/unverify/{id}', [SightingController::class, 'unverify'])
+            ->name('sighting.unverify');
+        Route::get('/finished', [SightingController::class, 'indexFinishedSightings'])
             ->name('sighting.finished.index');
     });
 
