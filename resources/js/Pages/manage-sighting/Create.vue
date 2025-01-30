@@ -430,10 +430,6 @@ const removeSpeciesEntry = (index) => {
 </template>
 
 <style scoped>
-/* Custom styles can go here */
-</style>
-
-<style scoped>
 /* Hide the file name (text) but keep the button */
 .file-input {
   position: relative;

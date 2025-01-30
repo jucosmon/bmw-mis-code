@@ -156,7 +156,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         ->name('manage.guideline.index');
         //creating another guideline
         Route::get('/{user_role}/create-page', [GuidelineController::class, 'createPage'])
-            ->name('manage.guideline.create.page');
+            ->name('manage.guideline.createPage');
         Route::post('{user_role}/create', [GuidelineController::class, 'create'])
             ->name('manage.guideline.create');
         //viewing another guideline

@@ -17,12 +17,12 @@ return new class extends Migration
             $table->string('path', 255);
             $table->string('name', 255);
             $table->string('caption', 255)->nullable();
-            $table->enum('file_for', ['species', 'sighting', 'stranded_incident', 'comment','guideline']);
+            $table->enum('file_for', ['species', 'sighting', 'stranded_incident', 'comment','item']);
             $table->string('type', 60);
             $table->foreignId('species_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('comment_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('sighting_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('guideline_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('item_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('stranded_incident_id')->nullable()->constrained()->onDelete('cascade');
             $table->timestamps();
         });
@@ -32,11 +32,11 @@ return new class extends Migration
             ALTER TABLE media_files
             ADD CONSTRAINT check_one_foreign_key
             CHECK (
-                (species_id IS NOT NULL AND comment_id IS NULL AND sighting_id IS NULL AND guideline_id IS NULL AND stranded_incident_id IS NULL) OR
-                (species_id IS NULL AND comment_id IS NOT NULL AND sighting_id IS NULL AND guideline_id IS NULL AND stranded_incident_id IS NULL) OR
-                (species_id IS NULL AND comment_id IS NULL AND sighting_id IS NOT NULL AND guideline_id IS NULL AND stranded_incident_id IS NULL) OR
-                (species_id IS NULL AND comment_id IS NULL AND sighting_id IS NULL AND guideline_id IS NOT NULL AND stranded_incident_id IS NULL) OR
-                (species_id IS NULL AND comment_id IS NULL AND sighting_id IS NULL AND guideline_id IS NULL AND stranded_incident_id IS NOT NULL)
+                (species_id IS NOT NULL AND comment_id IS NULL AND sighting_id IS NULL AND item_id IS NULL AND stranded_incident_id IS NULL) OR
+                (species_id IS NULL AND comment_id IS NOT NULL AND sighting_id IS NULL AND item_id IS NULL AND stranded_incident_id IS NULL) OR
+                (species_id IS NULL AND comment_id IS NULL AND sighting_id IS NOT NULL AND item_id IS NULL AND stranded_incident_id IS NULL) OR
+                (species_id IS NULL AND comment_id IS NULL AND sighting_id IS NULL AND item_id IS NOT NULL AND stranded_incident_id IS NULL) OR
+                (species_id IS NULL AND comment_id IS NULL AND sighting_id IS NULL AND item_id IS NULL AND stranded_incident_id IS NOT NULL)
             )
     ');
     }

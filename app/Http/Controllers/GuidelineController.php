@@ -37,12 +37,14 @@ class GuidelineController extends Controller
         ]);
     }
 
-    public function createPage()
+    public function createPage($user_role)
     {
-        return Inertia::render('manage-guideline/Create');
+        return Inertia::render('manage-guideline/Create', [
+            'user_role' => $user_role,
+        ]);
     }
 
-    public function create(Request $request)
+    public function create(Request $request, $user_role)
     {
         $request->validate([
             'title' => 'string|required|max:100',
@@ -60,6 +62,7 @@ class GuidelineController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'user_role' => $request->user_role,
+            'category' => $request->category,
             'is_active' => true
         ]);
 
@@ -70,8 +73,9 @@ class GuidelineController extends Controller
                 'guideline_id' => $guideline->id,
             ]);
 
-            if ($request->hasFile('mediaFiles')) {
-                foreach ($request->file('mediaFiles') as $mediaFile) {
+            // Check if mediaFiles exist for the current item
+            if (isset($item['mediaFiles'])) {
+                foreach ($item['mediaFiles'] as $mediaFile) {
                     $path = $mediaFile->store('item', 'public');
 
                     MediaFile::create([
@@ -85,7 +89,9 @@ class GuidelineController extends Controller
             }
         }
 
-        return redirect()->route('guideline.index')->with('success', 'Guideline created successfully');
+        return redirect()->route('manage.guideline.index', [
+            'user_role' => $user_role
+            ])->with('success', 'Guideline created successfully');
     }
 
     public function updatePage($id)

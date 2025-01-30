@@ -19,7 +19,7 @@ class MediaFile extends Model
         'species_id',
         'comment_id',
         'sighting_id',
-        'guideline_id',
+        'item_id',
         'stranded_incident_id'
     ];
 
@@ -51,14 +51,6 @@ class MediaFile extends Model
     }
 
     /**
-     * A media file belongs to a guideline.
-     */
-    public function guideline()
-    {
-        return $this->belongsTo(Guideline::class);
-    }
-
-    /**
      * A media file belongs to a stranded incident.
      */
     public function strandedIncident()
@@ -81,7 +73,7 @@ class MediaFile extends Model
                 $mediaFile->species_id,
                 $mediaFile->comment_id,
                 $mediaFile->sighting_id,
-                $mediaFile->guideline_id,
+                $mediaFile->item_id,
                 $mediaFile->stranded_incident_id,
             ];
 
