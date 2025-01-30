@@ -14,28 +14,26 @@ use Inertia\Inertia;
 class GuidelineController extends Controller
 {
     //
-    public function index()
+    public function index($user_role)
     {
-        Auth::user();
-
-        switch(Auth::user()->user_role ){
-            case 'bpemo_admin':
-                 $guidelines = Guideline::where('is_active' , true)->get(); break;
+        $guidelines = '';
+        switch($user_role){
             case 'lgu_responder':
                 $guidelines = Guideline::where('user_role', 'lgu_responder')
-                ->where('is_active' , true)->get();
+                ->where('is_active' , true)->get(); break;
             case 'barangay_official':
                 $guidelines = Guideline::where('user_role', 'barangay_official')
-                ->where('is_active' , true)->get();
+                ->where('is_active' , true)->get(); break;
             case 'public_user':
                 $guidelines = Guideline::where('user_role', 'public_user')
-                ->where('is_active' , true)->get();
+                ->where('is_active' , true)->get();break;
             default: abort(403, 'Unauthorized action.');
         }
 
         return Inertia::render('manage-guideline/index', [
             'guidelines' => $guidelines,
             'success' => session('success'),
+            'user_role' => $user_role,
         ]);
     }
 

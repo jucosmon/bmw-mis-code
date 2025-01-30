@@ -6,6 +6,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ManageAccount\BpemoAdminManageAccountsController;
 use App\Http\Controllers\ManageAccount\LguResponderManageAccountController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GuidelineController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -148,6 +149,30 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->name('sighting.unverify');
         Route::get('/finished', [SightingController::class, 'indexFinishedSightings'])
             ->name('sighting.finished.index');
+    });
+
+    Route::prefix('manage-guideline')->group(function (){
+        Route::get('/{user_role}', [GuidelineController::class, 'index'])
+        ->name('manage.guideline.index');
+        //creating another guideline
+        Route::get('/{user_role}/create-page', [GuidelineController::class, 'createPage'])
+            ->name('manage.guideline.create.page');
+        Route::post('{user_role}/create', [GuidelineController::class, 'create'])
+            ->name('manage.guideline.create');
+        //viewing another guideline
+        Route::get('/view/{id}', [GuidelineController::class, 'view'])
+            ->name('manage.guideline.view');
+        //updating another guideline
+        Route::get('/update-page/{id}', [GuidelineController::class, 'updatePage'])
+            ->name('manage.guideline.update.page');
+        Route::post('/update/{id}', [GuidelineController::class, 'update'])
+            ->name('manage.guideline.update');
+        //archiving another guideline
+        Route::patch('/{user_role}/archive/{id}', [GuidelineController::class, 'archive'])
+            ->name('manage.guideline.archive');
+        //unarchiving another guideline
+        Route::patch('/{user_role}/unarchive/{id}', [GuidelineController::class, 'unarchive'])
+            ->name('manage.guideline.unarchive');
     });
 
     //bpemo admin
