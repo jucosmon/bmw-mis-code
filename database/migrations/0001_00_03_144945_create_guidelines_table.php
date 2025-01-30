@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('guidelines', function (Blueprint $table) {
             $table->id();
-            $table->string('label');
-            $table->mediumText('content');
-            $table->string('type',50)->nullable();
+            $table->string('title');
+            $table->text('description');
             $table->enum('category',['marine_mammals', 'marine_turtles', 'sharks_rays']);
             $table->enum('user_role', ['public_user', 'barangay_official', 'lgu_responder', 'bpemo_staff', 'bpemo_admin']);
             $table->boolean('is_active')->default(true);

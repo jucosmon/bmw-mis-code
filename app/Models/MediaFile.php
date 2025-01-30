@@ -66,6 +66,11 @@ class MediaFile extends Model
         return $this->belongsTo(StrandedIncident::class);
     }
 
+    public function item()
+    {
+        return $this->belongsTo(Item::class);
+    }
+
     /**
      * Boot method to validate that only one foreign key is set.
      */
