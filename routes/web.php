@@ -164,14 +164,14 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->name('manage.guideline.view');
         //updating another guideline
         Route::get('/update-page/{id}', [GuidelineController::class, 'updatePage'])
-            ->name('manage.guideline.update.page');
+            ->name('manage.guideline.updatePage');
         Route::post('/update/{id}', [GuidelineController::class, 'update'])
             ->name('manage.guideline.update');
         //archiving another guideline
         Route::patch('/{user_role}/archive/{id}', [GuidelineController::class, 'archive'])
             ->name('manage.guideline.archive');
         //unarchiving another guideline
-        Route::patch('/{user_role}/unarchive/{id}', [GuidelineController::class, 'unarchive'])
+        Route::patch('/unarchive/{id}', [GuidelineController::class, 'unarchive'])
             ->name('manage.guideline.unarchive');
     });
 
