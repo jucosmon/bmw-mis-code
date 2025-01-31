@@ -77,6 +77,11 @@ const archive = ()=> {
         });
     }
 }
+
+// update
+const updateButton = () => {
+    return Inertia.get(route('manage.guideline.updatePage', { id: props.guideline.id }));
+};
 </script>
 
 <template>
@@ -160,7 +165,7 @@ const archive = ()=> {
                             </div>
                         </div>
                     </Modal>
-                <PrimaryButton v-if="props.guideline.is_active" @click="route('manage.guideline.updatePage', {id: props.guideline.id})">Update</PrimaryButton>
+                <PrimaryButton v-if="props.guideline.is_active" @click="updateButton">Update</PrimaryButton>
             </div>
         </div>
 
