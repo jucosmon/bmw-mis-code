@@ -7,6 +7,7 @@ use App\Models\Item;
 use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -14,26 +15,36 @@ use Inertia\Inertia;
 class GuidelineController extends Controller
 {
     //
-    public function index($user_role)
+    public function index($user_role, $archived)
     {
-        $guidelines = '';
-        switch($user_role){
+        $archived = filter_var($archived, FILTER_VALIDATE_BOOLEAN);
+        $guidelines = [];
+
+        switch ($user_role) {
             case 'lgu_responder':
                 $guidelines = Guideline::where('user_role', 'lgu_responder')
-                ->where('is_active' , true)->get(); break;
+                    ->where('is_active', !$archived) // Adjusted to handle archived
+                    ->get();
+                break;
             case 'barangay_official':
                 $guidelines = Guideline::where('user_role', 'barangay_official')
-                ->where('is_active' , true)->get(); break;
+                    ->where('is_active', !$archived)
+                    ->get();
+                break;
             case 'public_user':
                 $guidelines = Guideline::where('user_role', 'public_user')
-                ->where('is_active' , true)->get();break;
-            default: abort(403, 'Unauthorized action.');
+                    ->where('is_active', !$archived)
+                    ->get();
+                break;
+            default:
+                abort(403, 'hakdog.');
         }
 
         return Inertia::render('manage-guideline/index', [
             'guidelines' => $guidelines,
             'success' => session('success'),
             'user_role' => $user_role,
+            'archived' => $archived,
         ]);
     }
 
@@ -42,6 +53,7 @@ class GuidelineController extends Controller
         return Inertia::render('manage-guideline/Create', [
             'user_role' => $user_role,
         ]);
+
     }
 
     public function create(Request $request, $user_role)
@@ -90,7 +102,8 @@ class GuidelineController extends Controller
         }
 
         return redirect()->route('manage.guideline.index', [
-            'user_role' => $user_role
+            'user_role' => $user_role,
+            'archived' => 'false',
             ])->with('success', 'Guideline created successfully');
     }
 
@@ -209,21 +222,48 @@ class GuidelineController extends Controller
             }
         }
 
-        return redirect()->route('guideline.index')->with('success', 'Guideline updated successfully');
+        return redirect()->route('manage.guideline.index', [
+            'user_role' => $guideline->user_role,
+            'archived' => 'false',
+        ])->with('success', 'Guideline updated successfully');
     }
 
-    public function archive($user_role, $id)
+    public function archive(Request $request, $id)
     {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
         $guideline = Guideline::findOrFail($id);
         $guideline->is_active = false;
         $guideline->save();
 
-        return redirect()->route('manage.guideline.index', ['user_role' => $user_role])
-        ->with('success', 'Guideline archived successfully');
+        return redirect()->route('manage.guideline.index', [
+            'user_role' => $guideline->user_role,
+            'archived' => 'false',
+        ])->with('success', 'Guideline archived successfully');
     }
 
-    public function unarchive($id)
+    public function unarchive(Request $request, $id)
     {
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
+        if (!Hash::check($request->password, $currentUser->password)) {
+            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        }
+
         $guideline = Guideline::findOrFail($id);
         $guideline->is_active = true;
         $guideline->save();

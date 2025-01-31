@@ -95,7 +95,7 @@ const resolvedIncidentsButton = () => {
                             <path fill="#1A237E" d="M26.679999999999996 1.3049395833333333H2.32c-1.1211520833333333 0 -2.03 0.9089083333333332 -2.03 2.03v1.015c0 1.1212125 0.9088479166666666 2.03 2.03 2.03h24.36c1.1211520833333333
                             0 2.03 -0.9087875 2.03 -2.03v-1.015c0 -1.1210916666666666 -0.9088479166666666 -2.03 -2.03 -2.03Z" stroke-width="1"></path>
                         </svg>
-                    </button>'
+                    </button>
                     <select
                         v-model="filterStatus"
                         class=" border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"

@@ -330,21 +330,21 @@ console.log(user);
             >
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('manage.guideline.index', {user_role: 'lgu_responder'})"
+                :href="route('manage.guideline.index', {user_role: 'lgu_responder', archived: false})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">LGU Responder</span>
               </Link>
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('manage.guideline.index', {user_role: 'barangay_official'})"
+                :href="route('manage.guideline.index', {user_role: 'barangay_official', archived: false})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Barangay Official</span>
               </Link>
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('manage.guideline.index', {user_role: 'public_user'})"
+                :href="route('manage.guideline.index', {user_role: 'public_user', archived: false})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Public User</span>

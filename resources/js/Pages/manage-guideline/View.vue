@@ -2,18 +2,30 @@
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
-const page = usePage();
 const props = defineProps({
     guideline: { type: Object, required: true },
     success: String,
 });
+const form = useForm({
+    is_active: true,
+    password: '',
+});
 
-const backRoute = computed(() => route('manage.guideline.index', { user_role: props.guideline.user_role }));
+const backRoute = () => {
+    if (props.guideline.is_active) {
+        // Navigate to the active guidelines
+        Inertia.get(route('manage.guideline.index', { user_role: props.guideline.user_role, archived: false}));
+    } else {
+        // Navigate to the archived guidelines
+        Inertia.get(route('manage.guideline.index', { user_role: props.guideline.user_role, archived: true}));
+    }
+};
 
 // open file modal
 const showFileModal = ref(false);
@@ -29,38 +41,42 @@ const closeFileModal = () => {
     currentMediaFile.value = null;
 };
 
-// archive
-const archiveButton = () => {
-    return Inertia.patch(route('manage.guideline.archive', { user_role: props.guideline.user_role, id: props.guideline.id }));
 
-};
 
-// archive modal
-const showArchiveModal = ref(false);
+// archive/unarchive
+const archiveModal = ref(false);
 
-const archiveModal = () => {
-    showArchiveModal.value = true;
+const showArchiveModal = () => {
+    archiveModal.value = true;
 };
 
 const closeArchiveModal = () => {
-    showArchiveModal.value = false;
+    archiveModal.value = false;
 };
 
-// unarchive
-const unarchiveButton = () => {
-    return Inertia.patch(route('manage.guideline.unarchive', { id: props.guideline.id }));
-};
-
-// unarchive modal
-const showUnarchiveModal = ref(false);
-
-const unarchiveModal = () => {
-    showUnarchiveModal.value = true;
-};
-
-const closeUnrchiveModal = () => {
-    showUnarchiveModal.value = false;
-};
+const archive = ()=> {
+    if(props.guideline.is_active){
+        form.patch(route('manage.guideline.archive', { id: props.guideline.id }), {
+            onSuccess: () => {
+                closeArchiveModal();
+                form.reset('password');
+            },
+            onError: (errors) => {
+                console.error(errors);
+            },
+        });
+    }else{
+        form.patch(route('manage.guideline.unarchive', { id: props.guideline.id }), {
+            onSuccess: () => {
+                closeArchiveModal();
+                form.reset('password');
+            },
+            onError: (errors) => {
+                console.error(errors);
+            },
+        });
+    }
+}
 </script>
 
 <template>
@@ -68,9 +84,9 @@ const closeUnrchiveModal = () => {
     <Sidebar>
         <template #header>
             <div class="flex justify-between items-center">
-                <button class="text-indigo-700 border border-indigo-700 rounded-lg px-4 py-2 hover:bg-indigo-700 hover:text-white transition">
-                    <Link :href="backRoute">Back</Link>
-                </button>
+                <SecondaryButton @click="backRoute">
+                    Back
+                </SecondaryButton>
             </div>
         </template>
 
@@ -91,7 +107,6 @@ const closeUnrchiveModal = () => {
                         {{ props.guideline.is_active ? 'Active' : 'Inactive' }}
                     </p>
                 </div>
-
             </div>
 
             <div class="mt-6">
@@ -114,9 +129,38 @@ const closeUnrchiveModal = () => {
                 </div>
             </div>
             <div class="space-x-2 flex mt-4 justify-end items-end">
-                <DangerButton v-if="props.guideline.is_active" @click="archiveButton()">Archive</DangerButton>
-                <DangerButton v-else @click="unarchiveButton()">Unarchive</DangerButton>
-                <PrimaryButton @click="route('manage.guideline.updatePage', {id: props.guideline.id})">Update</PrimaryButton>
+                <DangerButton v-if="props.guideline.is_active" @click="showArchiveModal()">Archive</DangerButton>
+                <DangerButton v-else @click="showArchiveModal()">Unarchive</DangerButton>
+                <Modal :show="archiveModal" @close="closeArchiveModal">
+                        <div class="p-6">
+                            <h2 class="text-lg font-semibold text-slate-800">
+                                {{ props.guideline.is_active ? 'Are you sure you want to archive this guideline?' : 'Are you sure you want to unarchive this guideline?' }}
+                            </h2>
+
+                            <!-- Password Input -->
+                            <div class="mt-4">
+                                <label for="admin-password" class="text-sm text-gray-500 mt-2">
+                                    Please confirm by entering your password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="admin-password"
+                                    v-model="form.password"
+                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    placeholder="Enter your password"
+                                />
+                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                                    {{ form.errors.password }}
+                                </p>
+                            </div>
+                            <!-- Actions -->
+                            <div class="mt-6 space-x-4 flex justify-end">
+                                <SecondaryButton @click="closeArchiveModal">Cancel</SecondaryButton>
+                                <DangerButton @click="archive()">Confirm</DangerButton>
+                            </div>
+                        </div>
+                    </Modal>
+                <PrimaryButton v-if="props.guideline.is_active" @click="route('manage.guideline.updatePage', {id: props.guideline.id})">Update</PrimaryButton>
             </div>
         </div>
 

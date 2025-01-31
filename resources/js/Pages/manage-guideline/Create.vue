@@ -17,7 +17,7 @@ const props = defineProps({
     },
 });
 
-const backRoute = computed(() => route('manage.guideline.index', { user_role: props.user_role }));
+const backRoute = computed(() => route('manage.guideline.index', { user_role: props.user_role, archived: false }));
 const createRoute = computed(() => route('manage.guideline.create', { user_role: props.user_role }));
 
 const form = useForm({
