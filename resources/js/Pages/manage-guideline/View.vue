@@ -99,40 +99,6 @@ const updateButton = () => {
             <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded">
                 <strong>Success! </strong> {{ props?.success }}
             </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-lg mb-6 ">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ props.guideline.title }}</h1>
-                    <p class="text-gray-600 mt-2">{{ props.guideline.description }}</p>
-                    <div class="text-sm text-gray-500 mt-2 ">
-                        <span class="mr-4">Category: {{ props.guideline.category }}</span>
-                        <span> User Role: {{ props.guideline.user_role }}</span>
-                    </div>
-                    <p class="mt-2 text-sm font-semibold" :class="{'text-green-600': props.guideline.is_active, 'text-red-600': !props.guideline.is_active}">
-                        {{ props.guideline.is_active ? 'Active' : 'Inactive' }}
-                    </p>
-                </div>
-            </div>
-
-            <div class="mt-6">
-                <h2 class="text-xl font-bold text-gray-800">Guidelines</h2>
-                <div v-for="(item, index) in props.guideline.items" :key="item.id" class="bg-gray-50 p-4 rounded-lg shadow-sm mt-4">
-                    <h3 class="text-lg font-semibold">• {{ item.text }}</h3>
-                    <div v-if="item.mediaFiles.length > 0" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div v-for="mediaFile in item.mediaFiles" :key="mediaFile.id" class="cursor-pointer" @click="openFileModal(mediaFile)">
-                            <template v-if="mediaFile.type.startsWith('image/')">
-                                <img :src="`/storage/${mediaFile.path}`" alt="Media" class="w-full h-32 object-cover rounded-lg shadow-md" />
-                            </template>
-                            <template v-else>
-                                <div class="flex items-center justify-center h-32 bg-gray-200 rounded-lg shadow-md">
-                                    <span class="text-gray-600">{{ mediaFile.type.includes('video') ? '🎥 Video' : '📄 Document' }}</span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                    <p v-else class="text-gray-500 mt-2">No media files available.</p>
-                </div>
-            </div>
             <div class="space-x-2 flex mt-4 justify-end items-end">
                 <DangerButton v-if="props.guideline.is_active" @click="showArchiveModal()">Archive</DangerButton>
                 <DangerButton v-else @click="showArchiveModal()">Unarchive</DangerButton>
@@ -167,6 +133,42 @@ const updateButton = () => {
                     </Modal>
                 <PrimaryButton v-if="props.guideline.is_active" @click="updateButton">Update</PrimaryButton>
             </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-6 ">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ props.guideline.title }}</h1>
+                    <p class="text-gray-600 mt-2">{{ props.guideline.description }}</p>
+                    <div class="text-sm text-gray-500 mt-2 ">
+                        <span class="mr-4">Category: {{ props.guideline.category }}</span>
+                        <span> User Role: {{ props.guideline.user_role }}</span>
+                    </div>
+                    <p class="mt-2 text-sm font-semibold" :class="{'text-green-600': props.guideline.is_active, 'text-red-600': !props.guideline.is_active}">
+                        {{ props.guideline.is_active ? 'Active' : 'Inactive' }}
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-xl font-bold text-gray-800">Guidelines</h2>
+                <div v-for="(item, index) in props.guideline.items" :key="item.id" class="bg-gray-50 p-4 rounded-lg shadow-sm mt-4">
+                    <h3 class="text-lg font-semibold">• {{ item.text }}</h3>
+                    <div v-if="item.mediaFiles.length > 0" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div v-for="mediaFile in item.mediaFiles" :key="mediaFile.id" class="cursor-pointer" @click="openFileModal(mediaFile)">
+                            <template v-if="mediaFile.type.startsWith('image/')">
+                                <img :src="`/storage/${mediaFile.path}`" alt="Media" class="w-full h-32 object-cover rounded-lg shadow-md" />
+                            </template>
+                            <template v-else>
+                                <div class="flex items-center justify-center h-32 bg-gray-200 rounded-lg shadow-md">
+                                    <span class="text-gray-600">{{ mediaFile.type.includes('video') ? '🎥 Video' : '📄 Document' }}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    <p v-else class="text-gray-500 mt-2">No media files available.</p>
+                </div>
+            </div>
+
         </div>
 
         <Modal :show="showFileModal" @close="closeFileModal">
