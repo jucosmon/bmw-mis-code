@@ -34,7 +34,7 @@ const form = useForm({
         mediaFiles: item.mediaFiles || [], // Existing media files
         previewFiles: item.mediaFiles ? item.mediaFiles.map(file => URL.createObjectURL(file)) : [],
         deletedFiles: [], // Track files marked for deletion
-    })),
+    })).sort((a, b) => a.count - b.count), // Sort initially
     deletedItems: [], // Initialize deletedItems for the form
 });
 
@@ -58,31 +58,34 @@ const removeImage = (itemIndex, imageIndex) => {
     form.items[itemIndex].previewFiles.splice(imageIndex, 1);
     form.items[itemIndex].mediaFiles.splice(imageIndex, 1);
 };
+const sortItems = () => {
+    form.items.sort((a, b) => a.count - b.count); // Sort by count
+    form.items.forEach((item, idx) => {
+        item.count = idx + 1; // Update count to be in ascending order
+    });
+};
+// Add new item form
 
 // Add new item form
 const addItemEntry = () => {
-    form.items.push({
-        id: null, // New items will have no ID
+    const newItem = {
+        id: null,
         count: form.items.length + 1, // Set count based on current length
         text: '',
         guideline_id: '',
         mediaFiles: [],
         previewFiles: [],
-        deletedFiles: [], // Initialize deletedFiles for new item
-    });
+        deletedFiles: [],
+    };
+
+    form.items.push(newItem);
+    sortItems(); // Sort items after adding
 };
 
+// Remove item entry
 const removeItemEntry = (index) => {
-    const item = form.items[index];
-    if (item.id) {
-        if (!form.deletedItems.includes(item.id)) {
-            form.deletedItems.push(item.id); // Track deleted item ID
-        }
-    }
     form.items.splice(index, 1);
-    form.items.forEach((item, idx) => {
-        item.count = idx + 1; // Reassign counts based on the new index
-    });
+    sortItems(); // Sort items after removing
 };
 
 // Check for changes in items

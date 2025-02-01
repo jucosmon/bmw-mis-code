@@ -6,7 +6,7 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     guideline: { type: Object, required: true },
@@ -15,6 +15,10 @@ const props = defineProps({
 const form = useForm({
     is_active: true,
     password: '',
+});
+// Sort items by count when the component is initialized
+const sortedItems = computed(() => {
+    return [...props.guideline.items].sort((a, b) => a.count - b.count);
 });
 
 const backRoute = () => {
@@ -151,7 +155,7 @@ const updateButton = () => {
 
             <div class="mt-6">
                 <h2 class="text-xl font-bold text-gray-800">Guidelines</h2>
-                <div v-for="(item, index) in props.guideline.items" :key="item.id" class="bg-gray-50 p-4 rounded-lg shadow-sm mt-4">
+                <div v-for="(item, index) in sortedItems" :key="item.id" class="bg-gray-50 p-4 rounded-lg shadow-sm mt-4">
                     <h3 class="text-lg font-semibold">• {{ item.text }}</h3>
                     <div v-if="item.mediaFiles.length > 0" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div v-for="mediaFile in item.mediaFiles" :key="mediaFile.id" class="cursor-pointer" @click="openFileModal(mediaFile)">

@@ -112,7 +112,6 @@ class GuidelineController extends Controller
         // Fetch the guideline with its items
         $guideline = Guideline::with(['items'])->findOrFail($id);
 
-        // Loop through each item and retrieve its associated media files
         foreach ($guideline->items as $item) {
             $item->mediaFiles = MediaFile::where('item_id', $item->id)->get();
         }
@@ -123,6 +122,7 @@ class GuidelineController extends Controller
             'success' => session('success'),
         ]);
     }
+
     public function updatePage($id)
     {
         // Eager load items and their mediaFiles
@@ -133,102 +133,116 @@ class GuidelineController extends Controller
         ]);
     }
     public function update(Request $request, $id)
-{
-    $validated = $request->validate([
-        'title' => 'string|required|max:100',
-        'description' => 'string|required',
-        'user_role' => 'required|in:lgu_responder,barangay_official,public_user',
-        'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
-        'items' => 'required|array|min:1',
-        'items.*.count' => 'required|integer|min:1',
-        'items.*.text' => 'required|string',
-        'items.*.id' => 'nullable|integer', // Ensure ID is validated
-        'deletedItems' => 'nullable|array',
-        'deletedMediaIds' => 'nullable|array',
-    ]);
+    {
+        $validated = $request->validate([
+            'title' => 'string|required|max:100',
+            'description' => 'string|required',
+            'user_role' => 'required|in:lgu_responder,barangay_official,public_user',
+            'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
+            'items' => 'required|array|min:1',
+            'items.*.count' => 'required|integer|min:1',
+            'items.*.text' => 'required|string',
+            'items.*.id' => 'nullable|integer',
+            'items.*.deletedFiles' => 'nullable|array',
+            'items.*.mediaFiles' => 'nullable|array',
+            'deletedItems' => 'nullable|array',
+        ]);
 
-    $guideline = Guideline::findOrFail($id);
-    $guideline->update($validated);
+        // Handle deleted Items
+        if ($request->has('deletedItems') && !empty($request->input('deletedItems'))) {
+            foreach ($request->input('deletedItems') as $deletedItemsId) {
+                $item = Item::find($deletedItemsId);
+                if ($item) {
+                    // Delete associated media files for the item in the storage
+                    if ($item->mediaFiles) {
+                        foreach ($item->mediaFiles as $mediaFile) {
+                            Storage::disk('public')->delete($mediaFile->path);
+                            $mediaFile->delete();
+                            Log::info('Deleted media file with path: ' . $mediaFile->path);
+                        }
+                    }
 
-    // Handle deleted Items
-    if ($request->has('deletedItems') && !empty($request->input('deletedItems'))) {
-        foreach ($request->input('deletedItems') as $deletedItemsId) {
-            $item = Item::find($deletedItemsId);
-            if ($item) {
-                $item->delete();
-                Log::info('Deleted item with ID: ' . $deletedItemsId);
+                    // Delete the item itself
+                    $item->delete();
+                    Log::info('Deleted item with ID: ' . $deletedItemsId);
+                } else {
+                    Log::error('Item not found for ID: ' . $deletedItemsId);
+                }
+            }
+        }
+
+        $guideline = Guideline::findOrFail($id);
+        $guideline->update($validated);
+
+        // Handle updated Items
+        foreach ($validated['items'] as $item) {
+            if (isset($item['id']) && !is_null($item['id'])) {
+                // Update existing item
+                Log::info('Updating item with ID: ' . $item['id']);
+                $itemModel = Item::findOrFail($item['id']);
+                $itemModel->update($item);
+
+                // Handle media file deletion
+                if (isset($item['deletedFiles']) && !empty($item['deletedFiles'])) {
+                    foreach ($item['deletedFiles'] as $deletedMediaId) {
+                        $media = MediaFile::findOrFail($deletedMediaId);
+                        Storage::disk('public')->delete($media->path);
+                        $media->delete();
+                        Log::info('Deleted media file with ID: ' . $deletedMediaId);
+                    }
+                }
+
+                // Handle new media files upload for the existing item
+                if (isset($item['mediaFiles']) && $request->hasFile("items.{$item['id']}.mediaFiles")) {
+                    foreach ($request->file("items.{$item['id']}.mediaFiles") as $file) {
+                        if ($file->isValid()) {
+                            $path = $file->store('item', 'public');
+                            $itemModel->mediaFiles()->create([
+                                'path' => $path,
+                                'name' => $file->getClientOriginalName(),
+                                'file_for' => 'item',
+                                'type' => $file->getClientMimeType(),
+                                'item_id' => $itemModel->id,
+                            ]);
+                            Log::info('Added new media file for item ID: ' . $itemModel->id);
+                        }
+                    }
+                }
             } else {
-                Log::error('Item not found for ID: ' . $deletedItemsId);
-            }
-        }
-    }
+                // Create new item
+                Log::info('Creating a new item');
+                $createdItem = $guideline->items()->create([
+                    'count' => $item['count'],
+                    'text' => $item['text'],
+                    'guideline_id' => $guideline->id,
+                ]);
 
-    // Handle updated Items
-    foreach ($validated['items'] as $item) {
-        if (isset($item['id']) && !is_null($item['id'])) {
-            // Update existing item
-            Log::info('Updating item with ID: ' . $item['id']);
-            $itemModel = Item::findOrFail($item['id']);
-            $itemModel->update($item);
-
-            // Handle media file deletion
-            if ($request->has('deletedMediaIds')) {
-                foreach ($request->input('deletedMediaIds') as $deletedMediaId) {
-                    $media = MediaFile::findOrFail($deletedMediaId);
-                    Storage::disk('public')->delete($media->path);
-                    $media->delete();
-                    Log::info('Deleted media file with ID: ' . $deletedMediaId);
-                }
-            }
-
-            // Handle new media files upload for the existing item
-            if (isset($item['mediaFiles']) && $request->hasFile("items.{$item['id']}.mediaFiles")) {
-                foreach ($request->file("items.{$item['id']}.mediaFiles") as $file) {
-                    if ($file->isValid()) {
-                        $path = $file->store('item', 'public');
-                        $itemModel->mediaFiles()->create([
-                            'path' => $path,
-                            'name' => $file->getClientOriginalName(),
-                            'file_for' => 'item',
-                            'type' => $file->getClientMimeType(),
-                            'item_id' => $itemModel->id,
-                        ]);
-                        Log::info('Added new media file for item ID: ' . $itemModel->id);
-                    }
-                }
-            }
-        } else {
-            // Create new item
-            Log::info('Creating a new item');
-            $createdItem = $guideline->items()->create([
-                'count' => $item['count'],
-                'text' => $item['text'],
-                'guideline_id' => $guideline->id,
-            ]);
-
-            // Handle new media files upload for the new item
-            if (isset($item['mediaFiles']) && $request->hasFile("items.{$createdItem->id}.mediaFiles")) {
-                foreach ($request->file("items.{$createdItem->id}.mediaFiles") as $mediaFile) {
-                    if ($mediaFile->isValid()) {
-                        $path = $mediaFile->store('item', 'public');
-                        MediaFile::create([
-                            'path' => $path,
-                            'name' => $mediaFile->getClientOriginalName(),
-                            'file_for' => 'item',
-                            'type' => $mediaFile->getClientMimeType(),
-                            'item_id' => $createdItem->id,
-                        ]);
-                        Log::info('Added new media file for newly created item ID: ' . $createdItem->id);
+                // Handle new media files upload for the new item
+                if (isset($item['mediaFiles']) && $request->hasFile("items.{$createdItem->id}.mediaFiles")) {
+                    foreach ($request->file("items.{$createdItem->id}.mediaFiles") as $mediaFile) {
+                        if ($mediaFile->isValid()) {
+                            $path = $mediaFile->store('item', 'public');
+                            MediaFile::create([
+                                'path' => $path,
+                                'name' => $mediaFile->getClientOriginalName(),
+                                'file_for' => 'item',
+                                'type' => $mediaFile->getClientMimeType(),
+                                'item_id' => $createdItem->id,
+                            ]);
+                            Log::info('Added new media file for newly created item ID: ' . $createdItem->id);
+                        } else {
+                            Log::error('File upload failed.');
+                        }
                     }
                 }
             }
         }
+
+        return redirect()->route('manage.guideline.view', [
+            'id' => $guideline->id,
+        ])->with('success', 'Guideline updated successfully');
     }
 
-    return redirect()->route('manage.guideline.view', [
-        'id' => $guideline->id,
-    ])->with('success', 'Guideline updated successfully');
-}
 
     public function archive(Request $request, $id)
     {
