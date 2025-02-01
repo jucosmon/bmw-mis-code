@@ -129,8 +129,20 @@ class GuidelineController extends Controller
         // Eager load items and their mediaFiles
         $guideline = Guideline::with(['items.mediaFiles'])->findOrFail($id);
 
+        // Create a separate property for mediaFiles
+        $itemsWithMediaFiles = $guideline->items->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'count' => $item->count,
+                'text' => $item->text,
+                'guideline_id' => $item->guideline_id,
+                'mediaFiles' => $item->mediaFiles,
+            ];
+        });
+
         return Inertia::render('manage-guideline/Update', [
             'guideline' => $guideline,
+            'itemsWithMediaFiles' => $itemsWithMediaFiles,
         ]);
     }
 
