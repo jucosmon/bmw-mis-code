@@ -6,6 +6,7 @@ use App\Models\Guideline;
 use App\Models\Item;
 use App\Models\MediaFile;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -132,6 +133,7 @@ class GuidelineController extends Controller
             'guideline' => $guideline,
         ]);
     }
+
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -193,9 +195,9 @@ class GuidelineController extends Controller
                 }
 
                 // Handle new media files upload for the existing item
-                if (isset($item['mediaFiles']) && $request->hasFile("items.{$item['id']}.mediaFiles")) {
-                    foreach ($request->file("items.{$item['id']}.mediaFiles") as $file) {
-                        if ($file->isValid()) {
+                if (isset($item['mediaFiles']) && is_array($item['mediaFiles'])) {
+                    foreach ($item['mediaFiles'] as $file) {
+                        if ($file instanceof UploadedFile && $file->isValid()) {
                             $path = $file->store('item', 'public');
                             $itemModel->mediaFiles()->create([
                                 'path' => $path,
@@ -205,6 +207,8 @@ class GuidelineController extends Controller
                                 'item_id' => $itemModel->id,
                             ]);
                             Log::info('Added new media file for item ID: ' . $itemModel->id);
+                        } else {
+                            Log::error('Invalid file upload for item ID: ' . $itemModel->id);
                         }
                     }
                 }
@@ -218,9 +222,9 @@ class GuidelineController extends Controller
                 ]);
 
                 // Handle new media files upload for the new item
-                if (isset($item['mediaFiles']) && $request->hasFile("items.{$createdItem->id}.mediaFiles")) {
-                    foreach ($request->file("items.{$createdItem->id}.mediaFiles") as $mediaFile) {
-                        if ($mediaFile->isValid()) {
+                if (isset($item['mediaFiles']) && is_array($item['mediaFiles'])) {
+                    foreach ($item['mediaFiles'] as $mediaFile) {
+                        if ($mediaFile instanceof UploadedFile && $mediaFile->isValid()) {
                             $path = $mediaFile->store('item', 'public');
                             MediaFile::create([
                                 'path' => $path,
@@ -231,7 +235,7 @@ class GuidelineController extends Controller
                             ]);
                             Log::info('Added new media file for newly created item ID: ' . $createdItem->id);
                         } else {
-                            Log::error('File upload failed.');
+                            Log::error('Invalid file upload for newly created item ID: ' . $createdItem->id);
                         }
                     }
                 }
