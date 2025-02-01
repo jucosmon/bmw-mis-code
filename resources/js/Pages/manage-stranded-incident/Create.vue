@@ -17,9 +17,16 @@ const props = defineProps({});
 
 
 onMounted(async () => {
-  const response = await fetch('/municipalities');
-  municipalities.value = await response.json();
+  console.log("Mounting...");
+  try {
+    const response = await fetch('/municipalities');
+    municipalities.value = await response.json();
+    console.log("Municipalities:", municipalities.value);
+  } catch (error) {
+    console.error("Error fetching municipalities:", error);
+  }
 });
+
 
 const fetchBarangays = async (municipalityId) => {
   const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
