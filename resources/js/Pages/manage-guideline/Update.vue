@@ -23,7 +23,7 @@ console.log('Guideline:', props.guideline);
 console.log('Items with Media Files:', props.itemsWithMediaFiles);
 
 // Define routes
-const backRoute = computed(() => route('manage.guideline.index', { user_role: props.guideline.user_role, archived: false }));
+const backRoute = computed(() => route('manage.guideline.view', { id: props.guideline.id }));
 const updateRoute = computed(() => route('manage.guideline.update', { id: props.guideline.id }));
 
 // Initialize form
