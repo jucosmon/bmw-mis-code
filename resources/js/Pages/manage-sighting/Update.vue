@@ -10,6 +10,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
+const page = usePage(); // Ensure page is initialized
+
 const props = defineProps({
     sighting: {
         type: Object,
@@ -21,7 +23,16 @@ const props = defineProps({
     }
 });
 
-const page = usePage();
+// Add defensive check
+if (!page || !page.props) {
+    console.error('Page object is null or undefined');
+}
+
+if (!props.sighting || !props.species) {
+    console.error('sighitng props or species is null');
+    return;
+}
+
 const currentUser = page.props.auth.user.user_role;
 const deletedImages = ref([]);
 const previewNewImages = ref([]);

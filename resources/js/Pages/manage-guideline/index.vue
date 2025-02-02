@@ -2,9 +2,10 @@
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
+const page = usePage();
 const props = defineProps({
     user_role: String,
     guidelines: Array,

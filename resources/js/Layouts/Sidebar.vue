@@ -14,6 +14,8 @@ const state = reactive({
   notificationsDropdownOpen: false,
 });
 
+console.log('Current history state:', window.history.state);
+
 // notifications
 const notifications = ref([]);
 const displayedNotifications = ref([]);
@@ -166,7 +168,13 @@ onBeforeUnmount(() => {
 });
 
 const page = usePage();
-const user = computed(() => page.props.auth.user);
+const user = computed(() => {
+    if (!page || !page.props || !page.props.auth || !page.props.auth.user) {
+        console.error('Page object or user is null');
+        return null;
+    }
+    return page.props.auth.user;
+});
 console.log(user);
 
 </script>

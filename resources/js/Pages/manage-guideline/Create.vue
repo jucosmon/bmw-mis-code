@@ -4,18 +4,20 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import 'leaflet/dist/leaflet.css';
 import { computed, ref } from 'vue';
 
-const formErrors = ref(null);
-const previewFiles = ref([]);
+const page = usePage();
 const props = defineProps({
     user_role: {
         type: String,
         required: true,
     },
 });
+const formErrors = ref(null);
+const previewFiles = ref([]);
+
 
 const backRoute = computed(() => route('manage.guideline.index', { user_role: props.user_role, archived: false }));
 const createRoute = computed(() => route('manage.guideline.create', { user_role: props.user_role }));

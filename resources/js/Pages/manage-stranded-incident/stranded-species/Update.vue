@@ -4,12 +4,14 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const formErrors = ref(null);
+const page = usePage(); // Ensure page is initialized
+
 const props = defineProps({
     strandedSpecies: {
         type: Object,
@@ -21,6 +23,10 @@ const props = defineProps({
     }
 });
 
+// Add defensive check
+if (!page || !page.props) {
+    console.error('Page object is null or undefined');
+}
 
 const backRoute = computed(() => route('stranded.species.view', { id: props.strandedSpecies.id }));
 const updateRoute = computed(() => route('stranded.species.update', { id: props.strandedSpecies.id }));

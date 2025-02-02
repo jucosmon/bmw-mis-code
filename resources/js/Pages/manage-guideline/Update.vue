@@ -4,8 +4,10 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+
+const page = usePage(); // Ensure page is initialized
 
 const formErrors = ref(null);
 const deletedItems = ref([]); // Track deleted items
@@ -19,6 +21,12 @@ const props = defineProps({
         required: true,
     },
 });
+
+// Add defensive check
+if (!page || !page.props) {
+    console.error('Page object is null or undefined');
+}
+
 console.log('Guideline:', props.guideline);
 console.log('Items with Media Files:', props.itemsWithMediaFiles);
 

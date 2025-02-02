@@ -9,7 +9,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-
 const page = usePage();
 const props = defineProps({
     strandedIncident: {
@@ -36,11 +35,11 @@ const comments = ref(props.strandedIncident.comments || []);
 const editingCommentId = ref(null);
 const newCommentText = ref('');
 const respondActions = ref(props.respondActions || []); // wala magamit
-const isPublicUser  = computed(() => page.props.auth.user.user_role === 'public_user');
-const isBpemoAdmin = computed(() => page.props.auth.user.user_role === 'bpemo_admin');
-const isBpemoStaff = computed(() => page.props.auth.user.user_role === 'bpemo_staff');
-const isLguResponder = computed(() => page.props.auth.user.user_role === 'lgu_responder');
-const isBarangayOfficial = computed(() => page.props.auth.user.user_role === 'barangay_official');
+const isPublicUser  = computed(() => page && page.props.auth.user && page.props.auth.user.user_role === 'public_user');
+const isBpemoAdmin = computed(() => page && page.props.auth.user && page.props.auth.user.user_role === 'bpemo_admin');
+const isBpemoStaff = computed(() => page && page.props.auth.user && page.props.auth.user.user_role === 'bpemo_staff');
+const isLguResponder = computed(() => page && page.props.auth.user && page.props.auth.user.user_role === 'lgu_responder');
+const isBarangayOfficial = computed(() => page && page.props.auth.user && page.props.auth.user.user_role === 'barangay_official');
 
 // form defaults
 const form = useForm({
@@ -57,9 +56,9 @@ const activeStrandedSpecies = computed(() => {
 
 //routes
 const backRoute = computed(() => {
-    if( props.strandedIncident.report_status === 'resolved' || props.strandedIncident.report_status === 'false'){
+    if (props.strandedIncident.report_status === 'resolved' || props.strandedIncident.report_status === 'false') {
         return route('resolved.incidents.index');
-    }else{
+    } else {
         return route('stranded.incident.index');
     }
 });
@@ -88,6 +87,7 @@ const archiveRoute = computed(() => {
         category: props.strandedIncident.category,
     });
 });
+
 const unarchiveRoute = computed(() => {
     return route('stranded.incident.unarchive', {
         id: props.strandedIncident.id
@@ -463,11 +463,13 @@ onMounted(() => {
     <Head title="View Stranded Incident" />
     <Sidebar>
         <template #header>
-            <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-700 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
+            <div>
+                <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
                 <Link :href="backRoute" class="flex items-center">
                     Back
                 </Link>
-            </button>
+                </button>
+            </div>
         </template>
 
         <div class="container mx-auto px-6 pb-6 max-w-5xl">

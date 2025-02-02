@@ -10,6 +10,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+const page = usePage();
+
 const props = defineProps({
     strandedIncident:  {
         type: Object,
@@ -22,7 +24,6 @@ const props = defineProps({
     }
 });
 
-const page = usePage();
 const currentUserRole = page.props.auth.user.user_role;
 const deletedImages = ref([]);
 const previewNewImages = ref([]);

@@ -7,6 +7,8 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
+const page = usePage(); // Ensure page is initialized
+
 const municipalities = ref([]);
 const barangays = ref([]);
 const props = defineProps({
@@ -15,6 +17,11 @@ const props = defineProps({
         required: true
     }
 });
+
+// Add defensive check
+if (!page || !page.props) {
+    console.error('Page object is null or undefined');
+}
 
 onMounted(async () => {
     const response = await fetch('/municipalities');
@@ -33,8 +40,6 @@ const fetchBarangays = async (municipalityId = props.user.municipality_id) => {
     barangays.value = await response.json();
 };
 
-
-const page = usePage();
 
 const userRole = computed(() => {
     if(page.props.auth.user.user_role ==='lgu_responder'){

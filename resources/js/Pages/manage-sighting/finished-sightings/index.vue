@@ -1,10 +1,10 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-
+const page = usePage();
 const props = defineProps({
     sightings: Array,
     success: String,

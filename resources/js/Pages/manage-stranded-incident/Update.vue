@@ -4,10 +4,12 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, route, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
+
+const page = usePage(); // Ensure page is initialized
 
 const props = defineProps({
     strandedIncident:  {
@@ -16,10 +18,21 @@ const props = defineProps({
     }
 });
 
+// Add defensive check
+if (!page || !page.props) {
+    console.error('Page object is null or undefined');
+}
+
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const municipalities = ref([]);
 const barangays = ref([]);
+
+const fetchBarangays = async (municipalityId = props.strandedIncident.municipality_id) => {
+    if (!municipalityId) return;
+    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
+    barangays.value = await response.json();
+};
 
 onMounted(async () => {
     const response = await fetch('/municipalities');
@@ -30,16 +43,11 @@ onMounted(async () => {
     }
 });
 
-const fetchBarangays = async (municipalityId = props.strandedIncident.municipality_id) => {
-    if (!municipalityId) return;
-    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
-    barangays.value = await response.json();
-};
 
 const existingImages = ref(props.strandedIncident.mediaFiles ? props.strandedIncident.mediaFiles : []);
 
 const backRoute = computed(() => {
-    return route('stranded.incident.view', {id: props.strandedIncident.id});
+    return route('stranded.incident.view', { id: props.strandedIncident.id });
 });
 
 const updateRoute = computed(() => {
@@ -144,6 +152,10 @@ const marker = ref(null);
 // Initialize Leaflet map
 onMounted(() => {
   nextTick(() => {
+    if (!form) {
+      console.error('Form object is null');
+      return;
+    }
     console.log('Form object:', form); // Debugging line
     map.value = L.map('map').setView([form.latitude, form.longitude], 13);
 

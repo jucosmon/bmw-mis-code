@@ -79,7 +79,7 @@ const viewSpecies = (id) => {
                 <span class="block sm:inline">{{ props?.success}}</span>
             </div>
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-center">{{ speciesCatagory }} List</h2>
+                <h2 class="text-xl font-semibold text-center">{{ speciesCategory }} List</h2>
                 <div class="flex mx-10 gap-4">
                     <select
                             v-model="filterStatus"

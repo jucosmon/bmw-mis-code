@@ -4,18 +4,16 @@ import { Inertia } from '@inertiajs/inertia';
 import { Head, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
+// Ensure usePage is not null
 const page = usePage();
-const props = defineProps({
-    strandedIncidents: Array,
-    notifications: {
-        type: Array,
-        default: []
-    },
-    success: String,
-});
+const props = page ? page.props : {
+    strandedIncidents: [],
+    notifications: [],
+    success: '',
+};
 
 // Determine if the user is a public_user or not
-const isPublicUser = computed(() => page.props.auth.user.user_role === 'public_user');
+const isPublicUser = computed(() => page && page.props.auth.user.user_role === 'public_user');
 
 const filterStatus = ref('all'); // Default filter is "all"
 

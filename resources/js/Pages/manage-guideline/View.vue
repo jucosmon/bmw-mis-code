@@ -5,9 +5,10 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
+const page = usePage();
 const props = defineProps({
     guideline: { type: Object, required: true },
     success: String,

@@ -8,6 +8,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 
+const page = usePage();
 const props = defineProps({
     user: {
         type: Object,
@@ -15,8 +16,6 @@ const props = defineProps({
     },
     success: String,
 });
-
-const page = usePage();
 
 // Defined routes based on the current user's role
 const backRoute = computed(() => {
