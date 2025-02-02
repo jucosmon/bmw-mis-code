@@ -41,7 +41,7 @@ const form = useForm({
   date: new Date().toISOString().split('T')[0],
   time: new Date().toTimeString().split(' ')[0],
   species_involved: '',
-  quantity: null,
+  quantity: 1,
   condition: '',
   latitude: 9.57849189779755,
   longitude: 123.74536514282228,
@@ -70,14 +70,18 @@ const removeImage = (index) => {
 };
 
 const submit = () => {
-  form.post(createRoute.value, {
-    onSuccess: () => {
-      formErrors.value = null; // Clear errors on successful submission
-    },
-    onError: (errors) => {
-      formErrors.value = errors; // Set errors on failed submission
-    },
-  });
+  if (createRoute.value) {
+    form.post(createRoute.value, {
+      onSuccess: () => {
+        formErrors.value = null; // Clear errors on successful submission
+      },
+      onError: (errors) => {
+        formErrors.value = errors; // Set errors on failed submission
+      },
+    });
+  } else {
+    console.error("Create route is undefined");
+  }
 };
 
 // location
