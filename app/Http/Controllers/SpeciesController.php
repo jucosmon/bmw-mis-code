@@ -217,4 +217,26 @@ class SpeciesController extends Controller
         return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])
         ->with('success', 'You have successfully unarchived a species!');
     }
+
+    public function indexExploreSpecies()
+    {
+        // Fetch top 5 species commonly involved in active sightings
+        $topSpecies = Species::withCount(['sightedSpecies' => function ($query) {
+            $query->whereHas('sighting', function ($query) {
+                $query->where('is_active', true);
+            });
+        }])
+        ->orderBy('sighted_species_count', 'desc')
+        ->take(5)
+        ->get();
+
+        // Define categories
+        $categories = ['Marine Turtles', 'Marine Mammals', 'Sharks and Rays'];
+
+        return Inertia::render('manage-species/explore-species/index', [
+            'topSpecies' => $topSpecies,
+            'categories' => $categories,
+            'success' => session('success'),
+        ]);
+    }
 }

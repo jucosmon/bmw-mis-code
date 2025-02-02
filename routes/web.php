@@ -189,6 +189,11 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             });
     });
 
+    Route::prefix('explore-species')->group(function () {
+        Route::get('/', [SpeciesController::class, 'indexExploreSpecies'])
+            ->name('explore.species.index');
+    });
+
     //bpemo admin
     Route::prefix('bpemo-admin')->group(function(){
         Route::middleware('role:bpemo_admin')->group(function () {
