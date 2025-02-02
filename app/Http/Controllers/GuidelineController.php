@@ -15,7 +15,41 @@ use Inertia\Inertia;
 
 class GuidelineController extends Controller
 {
-    //
+    public function indexForBasicUser (){
+        $user = Auth::user();
+
+        $guidelines = Guideline::where('user_role', $user->user_role)
+            ->where('is_active', true)
+            ->get();
+
+        return Inertia::render('manage-guideline/basic-users/index', [
+            'guidelines' => $guidelines,
+        ]);
+    }
+
+    public function viewForBasicUser ($id)
+{
+    $user = Auth::user();
+
+    // Fetch the guideline with its items and media files
+    $guideline = Guideline::with(['items'])->findOrFail($id);
+
+    // Check if the user has access to the guideline
+    if ($guideline->user_role !== $user->user_role) {
+        abort(403, 'You cannot access a guideline for this user type');
+    }
+
+    foreach ($guideline->items as $item) {
+        $item->mediaFiles = MediaFile::where('item_id', $item->id)->get();
+    }
+
+
+    return Inertia::render('manage-guideline/basic-users/view', [
+        'guideline' => $guideline,
+    ]);
+}
+
+    //for bpemo admin
     public function index($user_role, $archived)
     {
         $archived = filter_var($archived, FILTER_VALIDATE_BOOLEAN);
@@ -46,6 +80,22 @@ class GuidelineController extends Controller
             'success' => session('success'),
             'user_role' => $user_role,
             'archived' => $archived,
+        ]);
+    }
+
+    public function view($id)
+    {
+        // Fetch the guideline with its items
+        $guideline = Guideline::with(['items'])->findOrFail($id);
+
+        foreach ($guideline->items as $item) {
+            $item->mediaFiles = MediaFile::where('item_id', $item->id)->get();
+        }
+
+        // Render the view with the guideline data
+        return Inertia::render('manage-guideline/View', [
+            'guideline' => $guideline,
+            'success' => session('success'),
         ]);
     }
 
@@ -106,22 +156,6 @@ class GuidelineController extends Controller
             'user_role' => $user_role,
             'archived' => 'false',
             ])->with('success', 'Guideline created successfully');
-    }
-
-    public function view($id)
-    {
-        // Fetch the guideline with its items
-        $guideline = Guideline::with(['items'])->findOrFail($id);
-
-        foreach ($guideline->items as $item) {
-            $item->mediaFiles = MediaFile::where('item_id', $item->id)->get();
-        }
-
-        // Render the view with the guideline data
-        return Inertia::render('manage-guideline/View', [
-            'guideline' => $guideline,
-            'success' => session('success'),
-        ]);
     }
 
     public function updatePage($id)

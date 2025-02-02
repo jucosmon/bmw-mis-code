@@ -151,29 +151,42 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->name('sighting.finished.index');
     });
 
-    Route::middleware(['role:bpemo_admin'])->prefix('guideline')->group(function (){
-        //creating another guideline
-        Route::get('/{user_role}/create-page', [GuidelineController::class, 'createPage'])
-            ->name('manage.guideline.createPage');
-        Route::post('{user_role}/create', [GuidelineController::class, 'create'])
-            ->name('manage.guideline.create');
-        //viewing another guideline
-        Route::get('/view/{id}', [GuidelineController::class, 'view'])
-            ->name('manage.guideline.view');
-        //updating another guideline
-        Route::get('/update-page/{id}', [GuidelineController::class, 'updatePage'])
-            ->name('manage.guideline.updatePage');
-        Route::post('/update/{id}', [GuidelineController::class, 'update'])
-            ->name('manage.guideline.update');
-        //archiving another guideline
-        Route::patch('/archive/{id}', [GuidelineController::class, 'archive'])
-            ->name('manage.guideline.archive');
-        //unarchiving another guideline
-        Route::patch('/unarchive/{id}', [GuidelineController::class, 'unarchive'])
-            ->name('manage.guideline.unarchive');
-        // Index route should be last
-        Route::get('/{user_role}/{archived}', [GuidelineController::class, 'index'])
-            ->name('manage.guideline.index');
+    Route::prefix('guideline')->group(function (){
+
+        // VIEW GUIDELINES FOR THE CORRESPONDING ROLES
+        Route::prefix('user')->middleware(['role:lgu_responder,barangay_official,public_user'])->group(function () {
+            //viewing another guideline
+            Route::get('/view/{id}', [GuidelineController::class, 'viewForBasicUser'])
+                ->name('guideline.view');
+            Route::get('/', [GuidelineController::class, 'indexForBasicUser'])
+                ->name('guideline.index');
+        });
+
+        // MANAGING GUIDELINES MAINLY BY BPEMO ADMIN
+        Route::middleware(['role:bpemo_admin'])->group(function () {
+            //creating another guideline
+            Route::get('/{user_role}/create-page', [GuidelineController::class, 'createPage'])
+                ->name('manage.guideline.createPage');
+            Route::post('{user_role}/create', [GuidelineController::class, 'create'])
+                ->name('manage.guideline.create');
+            //viewing another guideline
+            Route::get('/view/{id}', [GuidelineController::class, 'view'])
+                ->name('manage.guideline.view');
+            //updating another guideline
+            Route::get('/update-page/{id}', [GuidelineController::class, 'updatePage'])
+                ->name('manage.guideline.updatePage');
+            Route::post('/update/{id}', [GuidelineController::class, 'update'])
+                ->name('manage.guideline.update');
+            //archiving another guideline
+            Route::patch('/archive/{id}', [GuidelineController::class, 'archive'])
+                ->name('manage.guideline.archive');
+            //unarchiving another guideline
+            Route::patch('/unarchive/{id}', [GuidelineController::class, 'unarchive'])
+                ->name('manage.guideline.unarchive');
+            // Index route should be last
+            Route::get('/{user_role}/{archived}', [GuidelineController::class, 'index'])
+                ->name('manage.guideline.index');
+            });
     });
 
     //bpemo admin
