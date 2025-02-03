@@ -8,6 +8,16 @@ import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage(); // Ensure page is initialized
+const props = defineProps({
+    species:  {
+        type: Object,
+        required: true
+    },
+    colors: {
+        type: Array,
+        required: true
+    }
+});
 
 // Add defensive check
 if (!page || !page.props) {
@@ -16,14 +26,10 @@ if (!page || !page.props) {
 
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
+const existingColors = ref(props.species.speciesColors.map(sc => sc.color.name));
+const selectedColors = ref([...existingColors.value]);
 
-const props = defineProps({
-    species:  {
-        type: Object,
-        required: true
-    },
-    colors: Array, // Add colors to props
-});
+
 const existingImages = ref(props.species.mediaFiles ? props.species.mediaFiles : []);
 
 
@@ -63,7 +69,8 @@ const form = useForm({
     is_dangerous: typeof props.species.is_dangerous === 'boolean' ? props.species.is_dangerous : false,
     mediaFiles: [], // This will hold the new files to upload
     deletedImages: [], // Initialize as an empty array
-    colors: props.species.colors.map(color => color.id) || [], // Add colors to the form
+    colors: existingColors.value ? [...existingColors.value] : [],
+    deletedColors: [],
 });
 
 const formErrors = ref(null);
@@ -79,7 +86,7 @@ const hasChanges = computed(() => {
         }
 
         // Ignore mediaFiles and deletedImages here as they're checked separately
-        if (key === 'mediaFiles' || key === 'deletedImages') {
+        if (key === 'mediaFiles' || key === 'deletedImages' || key === 'deletedColors' || key === 'colors') {
             return false;
         }
 
@@ -92,10 +99,17 @@ const hasChanges = computed(() => {
     // Check if existing images were deleted
     const deletedImagesChanged = deletedImages.value.length > 0;
 
-    // Return true if any condition indicates changes
-    return dataChanged || mediaFilesChanged || deletedImagesChanged;
-});
+    // Check for color changes
+    const existingColors = props.species.speciesColors.map(sc => sc.color.name);
+    const addedColors = selectedColors.value.filter(color => !existingColors.includes(color));
+    const deletedColors = existingColors.filter(color => !selectedColors.value.includes(color));
 
+    // Check if there are any added or deleted colors
+    const colorsChanged = addedColors.length > 0 || deletedColors.length > 0;
+    console.log('Data Changed:', dataChanged, ', Media Files Changed',mediaFilesChanged, ',deletedIMageschanged:', mediaFilesChanged, 'colors changed:', colorsChanged )
+    // Return true if any condition indicates changes
+    return dataChanged || mediaFilesChanged || deletedImagesChanged || colorsChanged;
+});
 
 const handleNewFileChange = (event) => {
     const files = event.target.files;
@@ -120,9 +134,31 @@ const removeExistingImage = (index) => {
     deletedImages.value.push(imageToDelete.id); // Assuming each image has an `id`
     existingImages.value.splice(index, 1);
 };
+
+
+
+const addColor = (event) => {
+    const selectedColor = event.target.value;
+    if (selectedColor && !selectedColors.value.includes(selectedColor)) {
+        selectedColors.value.push(selectedColor);
+        form.colors.push(selectedColor);
+        document.getElementById("colors").value = "";
+    }
+};
+
+const removeColor = (color) => {
+    selectedColors.value = selectedColors.value.filter(c => c !== color);
+    form.colors = form.colors.filter(c => c !== color);
+    if (existingColors.value.includes(color)) {
+        form.deletedColors.push(color);
+    }
+
+};
+
 const submit = () => {
     if (hasChanges.value) {
         form.deletedImages = deletedImages.value;
+        form.colors = selectedColors.value;
 
         // Submit the form via Inertia
         form.post(updateRoute.value, {
@@ -201,6 +237,22 @@ const submit = () => {
                             ></textarea>
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
                         </div>
+                        <div class="sm:col-span-2 col-span-1">
+                            <InputLabel for="colors" value="Select Colors" />
+                            <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled selected>Choose a color</option>
+                                <option v-for="color in props.colors" :key="color.name" :value="color.name">
+                                    {{ color.name }}
+                                </option>
+                            </select>
+                            <div v-if="selectedColors.length" class="flex flex-wrap gap-2 mt-3">
+                                <div v-for="color in selectedColors" :key="color" class="flex items-center space-x-2 bg-gray-200 px-3 py-1 rounded-lg">
+                                    <div :style="{ backgroundColor: color }" class="w-6 h-6 rounded-full"></div>
+                                    <span>{{ color }}</span>
+                                    <button @click="removeColor(color)" class="text-red-600 hover:text-red-800 font-bold">X</button>
+                                </div>
+                            </div>
+                        </div>
                         <div>
                             <InputLabel for="category" value="Marine Wildlife Category" />
                             <select id="category" v-model="form.category" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -262,14 +314,6 @@ const submit = () => {
                                 placeholder="Enter the maximum size"
                             />
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.max_size" />
-                        </div>
-                        <div>
-                            <InputLabel for="colors" value="Colors" />
-                            <select id="colors" v-model="form.colors" multiple class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select colors</option>
-                                <option v-for="color in props.colors" :key="color.id" :value="color.id">{{ color.name }}</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.colors" />
                         </div>
                          <!-- Existing Image Previews -->
                          <div class="mt-4 sm:col-span-2 col-span-1">
