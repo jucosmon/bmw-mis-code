@@ -21,7 +21,8 @@ const props = defineProps({
     species:  {
         type: Object,
         required: true
-    }
+    },
+    colors: Array, // Add colors to props
 });
 const existingImages = ref(props.species.mediaFiles ? props.species.mediaFiles : []);
 
@@ -62,6 +63,7 @@ const form = useForm({
     is_dangerous: typeof props.species.is_dangerous === 'boolean' ? props.species.is_dangerous : false,
     mediaFiles: [], // This will hold the new files to upload
     deletedImages: [], // Initialize as an empty array
+    colors: props.species.colors.map(color => color.id) || [], // Add colors to the form
 });
 
 const formErrors = ref(null);
@@ -260,6 +262,14 @@ const submit = () => {
                                 placeholder="Enter the maximum size"
                             />
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.max_size" />
+                        </div>
+                        <div>
+                            <InputLabel for="colors" value="Colors" />
+                            <select id="colors" v-model="form.colors" multiple class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled>Select colors</option>
+                                <option v-for="color in props.colors" :key="color.id" :value="color.id">{{ color.name }}</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.colors" />
                         </div>
                          <!-- Existing Image Previews -->
                          <div class="mt-4 sm:col-span-2 col-span-1">

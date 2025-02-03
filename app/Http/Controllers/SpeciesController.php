@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Color;
 use App\Models\MediaFile;
 use App\Models\Species;
+use App\Models\SpeciesColor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -34,8 +36,10 @@ class SpeciesController extends Controller
     }
     public function createPage($category)
     {
-        return Inertia::render('manage-species/Create',
-        ['category' => $category]);
+        return Inertia::render('manage-species/Create', [
+            'category' => $category,
+            'colors' => Color::all(), // Pass all colors to the view
+        ]);
     }
 
     public function create(Request $request, $category)
@@ -52,6 +56,8 @@ class SpeciesController extends Controller
             'is_dangerous' => 'nullable|boolean',
             'mediaFiles' => 'nullable|array',
             'mediaFiles.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+            'colors' => 'nullable|array',
+            'colors.*' => 'string|exists:colors,name',
         ]);
 
         // Create the species
@@ -69,7 +75,16 @@ class SpeciesController extends Controller
             'is_active' => true,
         ]);
 
-        // Handle file uploads
+        if ($request->has('colors')) {
+            foreach ($request->colors as $colorName) {
+                $color = Color::where('name', $colorName)->firstOrFail();
+                SpeciesColor::create([
+                    'species_id' => $species->id,
+                    'color_id' => $color->id,
+                ]);
+            }
+        }
+
         if ($request->hasFile('mediaFiles')) {
             foreach ($request->file('mediaFiles') as $mediaFile) {
                 $path = $mediaFile->store('species', 'public');
@@ -90,13 +105,13 @@ class SpeciesController extends Controller
 
     public function view($id)
     {
-        $species = Species::with('mediaFiles')->findOrFail($id);
+        $species = Species::with(['mediaFiles', 'speciesColors.color'])->findOrFail($id);
 
-            // Map media files to include public URLs
-            $species->mediaFiles = $species->mediaFiles->map(function ($file) {
-                $file->url = asset('storage/' . $file->path);
-                return $file;
-            });
+        // Map media files to include public URLs
+        $species->mediaFiles = $species->mediaFiles->map(function ($file) {
+            $file->url = asset('storage/' . $file->path);
+            return $file;
+        });
 
         return Inertia::render('manage-species/View', [
             'species' => $species,
@@ -106,7 +121,7 @@ class SpeciesController extends Controller
 
     public function updatePage($id)
     {
-        $species = Species::findOrFail($id);
+        $species = Species::with('speciesColors.color')->findOrFail($id);
 
         // Load media files and include public URLs
         $species->load('mediaFiles');
@@ -114,7 +129,11 @@ class SpeciesController extends Controller
         $file->url = asset('storage/' . $file->path);
             return $file;
         });
-        return Inertia::render('manage-species/Update', ['species' => $species]);
+
+        return Inertia::render('manage-species/Update', [
+            'species' => $species,
+            'colors' => Color::all(), // Pass all colors to the view
+        ]);
     }
         public function update(Request $request, $id)
         {
@@ -133,11 +152,27 @@ class SpeciesController extends Controller
                 'mediaFiles' => 'nullable|array',
                 'mediaFiles.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'deletedImages' => 'nullable|array', // Ensure this matches the Vue component
+                'colors' => 'nullable|array',
+                'colors.*' => 'exists:colors,id',
             ]);
 
             // Find species to update
             $species = Species::findOrFail($id);
             $species->update($validated);
+
+            // Sync SpeciesColor entries
+            if ($request->has('colors')) {
+                // Delete existing SpeciesColor entries
+                SpeciesColor::where('species_id', $species->id)->delete();
+
+                // Create new SpeciesColor entries
+                foreach ($request->colors as $colorId) {
+                    SpeciesColor::create([
+                        'species_id' => $species->id,
+                        'color_id' => $colorId,
+                    ]);
+                }
+            }
 
             // Handle media file deletion
             if ($request->has('deletedImages')) {
@@ -232,10 +267,12 @@ class SpeciesController extends Controller
 
         // Define categories
         $categories = ['Marine Turtles', 'Marine Mammals', 'Sharks and Rays'];
+        $colors = Color::get();
 
         return Inertia::render('manage-species/explore-species/index', [
             'topSpecies' => $topSpecies,
             'categories' => $categories,
+            'colors' => $colors,
             'success' => session('success'),
         ]);
     }

@@ -14,6 +14,7 @@ const previewImages = ref([]); // Store preview images
 
 const props = defineProps({
     category: String,
+    colors: Array, // Add colors to props
 });
 
 const speciesCatagory = computed(() => {
@@ -49,6 +50,7 @@ const form = useForm({
     shape: '',
     is_dangerous: '',
     mediaFiles: [],
+    colors: [], // Add colors to the form
 });
 
 const handleFileChange = (event) => {
@@ -67,14 +69,32 @@ const removeImage = (index) => {
     form.mediaFiles.splice(index, 1);
 };
 
+const selectedColors = ref([]);
+
+const addColor = (event) => {
+    const selectedColor = event.target.value;
+    if (selectedColor && !selectedColors.value.includes(selectedColor)) {
+        selectedColors.value.push(selectedColor);
+        form.colors.push(selectedColor);
+        document.getElementById("colors").value = "";
+    }
+};
+
+const removeColor = (color) => {
+    selectedColors.value = selectedColors.value.filter(c => c !== color);
+    form.colors = form.colors.filter(c => c !== color); // Remove from form data
+};
+
 
 const submit = () => {
+    form.colors = selectedColors.value;
+    console.log('Submitting colors:', form.colors);
     form.post(createRoute.value, {
         onSuccess: () => {
-            formErrors.value = null; // Clear errors on successful submission
+            formErrors.value = null;
         },
         onError: (errors) => {
-            formErrors.value = errors; // Set errors on failed submission
+            formErrors.value = errors;
         },
     });
 };
@@ -141,6 +161,23 @@ const submit = () => {
                             ></textarea>
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
                         </div>
+                        <div class="sm:col-span-2 col-span-1">
+                            <InputLabel for="colors" value="Select Colors" />
+                            <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled selected>Choose a color</option>
+                                <option v-for="color in props.colors" :key="color.name" :value="color.name">
+                                    {{ color.name }}
+                                </option>
+                            </select>
+                            <div v-if="selectedColors.length" class="flex flex-wrap gap-2 mt-3">
+                                <div v-for="color in selectedColors" :key="color" class="flex items-center space-x-2 bg-gray-200 px-3 py-1 rounded-lg">
+                                    <div :style="{ backgroundColor: color }" class="w-6 h-6 rounded-full"></div>
+                                    <span>{{ color }}</span>
+                                    <button @click="removeColor(color)" class="text-red-600 hover:text-red-800 font-bold">X</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <InputLabel for="max_size" value="Maximum Size (in centimeters)" />
                             <input

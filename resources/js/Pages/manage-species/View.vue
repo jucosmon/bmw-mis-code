@@ -135,6 +135,12 @@ const archiveSpecies = () => {
                         <p><strong>Shape:</strong> {{ props.species.shape }} </p>
                         <p><strong>Dangerous:</strong> {{ props.species.is_dangerous ? 'Yes' : 'No' }}</p>
                         <p><strong>Status:</strong> {{ props.species.is_active ? 'Active' : 'Inactive' }}</p>
+                        <div v-if="species.speciesColors">
+                            <h3 class="text-lg font-semibold">Colors</h3>
+                            <ul>
+                                <li v-for="color in species.speciesColors" :key="color.id">{{ color.color.name }}</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-white shadow-lg rounded-xl p-6 relative z-10">

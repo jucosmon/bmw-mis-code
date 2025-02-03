@@ -34,4 +34,9 @@ class Species extends Model
         return $this->hasMany(SightedSpecies::class);
     }
 
+    public function speciesColors()
+    {
+        return $this->hasMany(SpeciesColor::class);
+    }
+
 }
