@@ -135,12 +135,19 @@ const archiveSpecies = () => {
                         <p><strong>Shape:</strong> {{ props.species.shape }} </p>
                         <p><strong>Dangerous:</strong> {{ props.species.is_dangerous ? 'Yes' : 'No' }}</p>
                         <p><strong>Status:</strong> {{ props.species.is_active ? 'Active' : 'Inactive' }}</p>
-                        <div v-if="species.speciesColors">
-                            <h3 class="text-lg font-semibold">Colors</h3>
-                            <ul>
-                                <li v-for="color in species.speciesColors" :key="color.id">{{ color.color.name }}</li>
+                         <!-- Colors Section -->
+                        <div v-if="species.speciesColors.length" class="flex gap-1">
+                            <p><strong>Colors:</strong></p>
+                            <ul class="flex flex-wrap gap-2">
+                                <li
+                                    v-for="color in species.speciesColors"
+                                    :key="color.id"
+                                    :style="{ backgroundColor: color.color.name }"
+                                    class="w-6 h-6 rounded-full border border-gray-400"
+                                ></li>
                             </ul>
                         </div>
+
                     </div>
                 </div>
                 <div class="bg-white shadow-lg rounded-xl p-6 relative z-10">

@@ -113,11 +113,19 @@ class SpeciesController extends Controller
             return $file;
         });
 
+        // Map speciesColors to include color names
+        $species->speciesColors = $species->speciesColors->map(function ($speciesColor) {
+            $color = Color::findOrFail($speciesColor->color_id);
+            $speciesColor->color_name = $color->name;
+            return $speciesColor;
+        });
+
         return Inertia::render('manage-species/View', [
             'species' => $species,
             'success' => session('success'),
         ]);
     }
+
 
     public function updatePage($id)
     {
@@ -128,6 +136,14 @@ class SpeciesController extends Controller
         $species->mediaFiles = $species->mediaFiles->map(function ($file) {
         $file->url = asset('storage/' . $file->path);
             return $file;
+        });
+
+
+        // Map speciesColors to include color names
+        $species->speciesColors = $species->speciesColors->map(function ($speciesColor) {
+            $color = Color::findOrFail($speciesColor->color_id);
+            $speciesColor->color_name = $color->name;
+            return $speciesColor;
         });
 
         return Inertia::render('manage-species/Update', [
