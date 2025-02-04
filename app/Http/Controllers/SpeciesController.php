@@ -276,6 +276,7 @@ class SpeciesController extends Controller
         ->with('success', 'You have successfully unarchived a species!');
     }
 
+    // specifically for explore species functionalities
     public function indexExploreSpecies()
     {
         // Fetch top 5 species commonly involved in active sightings
@@ -298,5 +299,17 @@ class SpeciesController extends Controller
             'colors' => $colors,
             'success' => session('success'),
         ]);
+    }
+
+    public function search(Request $request){
+
+    }
+
+    public function searchByName(){
+
+    }
+
+    public function searchByAttributes(){
+
     }
 }

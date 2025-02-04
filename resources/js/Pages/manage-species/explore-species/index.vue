@@ -9,7 +9,7 @@ const page = usePage();
 const props = defineProps({
     topSpecies: Array,
     categories: Array,
-    colors: Array, // Add colors to props
+    colors: Array,
     success: String,
 });
 
@@ -20,7 +20,7 @@ const selectedCategory = ref(null);
 // State for the Identify Species modal
 const showIdentifyModal = ref(false);
 const identifyForm = ref({
-    color: '',
+    colors: [],
     size: '',
     shape: '',
     dangerToHumans: false,
@@ -48,19 +48,46 @@ const openIdentifyModal = () => {
 
 const closeIdentifyModal = () => {
     showIdentifyModal.value = false;
-    resetIdentifyForm(); // Reset form when closing
+    resetIdentifyForm();
 };
 
 const resetIdentifyForm = () => {
-    identifyForm.value = { color: '', size: '', shape: '', dangerToHumans: false, category: '' }; // Reset form
+    identifyForm.value = { colors: [], size: '', shape: '', dangerToHumans: false, category: '' };
+    selectedColors.value = [];
+};
+
+// colors
+const selectedColors = ref([]);
+
+const addColor = (event) => {
+    const selectedColor = event.target.value;
+    if (selectedColor && !selectedColors.value.includes(selectedColor)) {
+        selectedColors.value.push(selectedColor);
+        identifyForm.value.colors.push(selectedColor); // Corrected reference
+        document.getElementById("colors").value = "";
+    }
+};
+
+const removeColor = (color) => {
+    selectedColors.value = selectedColors.value.filter(c => c !== color);
+    identifyForm.value.colors = identifyForm.value.colors.filter(c => c !== color); // Corrected reference
 };
 
 const submitIdentifyForm = () => {
-    // Handle form submission logic here
+    identifyForm.value.colors = selectedColors.value;
     console.log('Identifying species with attributes:', identifyForm.value);
-    // You can send this data to your backend or handle it as needed
-    // Optionally close the modal after submission
-    // closeIdentifyModal();
+    // Assuming form is an Inertia form helper, which is not defined in the provided code
+    // Assuming createRoute is a route name, which is not defined in the provided code
+    // Assuming formErrors is a ref to store form errors, which is not defined in the provided code
+    // These variables need to be defined or replaced with appropriate logic
+    // form.post(createRoute.value, {
+    //     onSuccess: () => {
+    //         formErrors.value = null;
+    //     },
+    //     onError: (errors) => {
+    //         formErrors.value = errors;
+    //     },
+    // });
 };
 </script>
 
@@ -132,11 +159,20 @@ const submitIdentifyForm = () => {
                 <h2 class="text-lg font-semibold text-gray-800">Identify Species</h2>
                 <form @submit.prevent="submitIdentifyForm" class="mt-4 space-y-4">
                     <div>
-                        <label class="block text-gray-700">Color</label>
-                        <select v-model="identifyForm.color" class="mt-1 block w-full px-3 py-2 border rounded">
-                            <option value="" disabled>Select color</option>
-                            <option v-for="color in props.colors" :key="color" :value="color">{{ color.name }}</option>
+                        <label class="block text-gray-700">Colors</label>
+                        <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="" disabled selected>Choose a color</option>
+                            <option v-for="color in props.colors" :key="color.name" :value="color.name">
+                                {{ color.name }}
+                            </option>
                         </select>
+                        <div v-if="selectedColors.length" class="flex flex-wrap gap-2 mt-3">
+                            <div v-for="color in selectedColors" :key="color" class="flex items-center space-x-2 bg-gray-200 px-3 py-1 rounded-lg">
+                                <div :style="{ backgroundColor: color }" class="w-6 h-6 rounded-full"></div>
+                                <span>{{ color }}</span>
+                                <button @click="removeColor(color)" class="text-red-600 hover:text-red-800 font-bold">X</button>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-gray-700">Size</label>
@@ -176,10 +212,6 @@ const submitIdentifyForm = () => {
         </Modal>
     </Sidebar>
 </template>
-
-<style scoped>
-/* Add any necessary styles here */
-</style>
 
 <style scoped>
 /* Add any necessary styles here */
