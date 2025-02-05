@@ -4,9 +4,10 @@ import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
+const page = usePage();
 const props = defineProps({
     species: {
         type: Object,
@@ -177,7 +178,7 @@ const archiveSpecies = () => {
                 </div>
 
 
-                <div class="flex justify-end space-x-4 mt-8">
+                <div v-if="page.props.auth.user.user_role==='bpemo_admin'" class="flex justify-end space-x-4 mt-8">
                     <button
                         class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
                         @click="confirmArchiveSpecies"

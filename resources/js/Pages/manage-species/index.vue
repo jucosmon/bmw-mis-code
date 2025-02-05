@@ -53,7 +53,6 @@ const searchSpecies = () => {
 
 const selectCategory = (category) => {
     selectedCategory.value = category;
-    Inertia.get(route('species.category', { category }));
 };
 
 // Methods for the Identify Species modal
