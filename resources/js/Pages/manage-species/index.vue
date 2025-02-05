@@ -3,15 +3,19 @@ import Modal from '@/Components/Modal.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 const page = usePage();
 const props = defineProps({
-    species: Array,
+    species: Object,
     categories: Array,
     success: String,
     colors: Array,
     userRole: String,
+});
+
+onMounted(() => {
+    console.log(props.species.map(species => species.colors));
 });
 
 const selectedCategory = ref('all'); // Default filter
@@ -28,8 +32,8 @@ const identifyForm = ref({
     dangerToHumans: false,
     category: '',
 });
-
 const identifiedSpecies = ref([]);
+const identifyStatus = ref(false);
 
 // Filter species based on the selected category, search query, and active/inactive status
 const filteredSpecies = computed(() => {
@@ -43,8 +47,8 @@ const filteredSpecies = computed(() => {
         speciesList = speciesList.filter((species) => species.name.toLowerCase().includes(searchQuery.value.toLowerCase()));
     }
 
-    if (identifiedSpecies.value.length > 0) {
-        speciesList = identifiedSpecies.value;
+    if (identifiedSpecies.value.length > 0 || identifyStatus.value) {
+        speciesList = speciesList.filter(species => identifiedSpecies.value.includes(species));
     }
 
     return speciesList.length > 0 ? speciesList.sort((a, b) => a.name.localeCompare(b.name)) : [];
@@ -52,7 +56,10 @@ const filteredSpecies = computed(() => {
 
 const selectCategory = (category) => {
     selectedCategory.value = category;
-    identifiedSpecies.value = []; // Reset identified species when category changes
+    identifiedSpecies.value = [];
+    identifyStatus.value = false;
+    resetIdentifyForm();
+
 };
 
 // Methods for the Identify Species modal
@@ -69,6 +76,7 @@ const resetIdentifyForm = () => {
     identifyForm.value = { colors: [], shape: '', dangerToHumans: false};
     selectedColors.value = []; // Reset selected colors
     identifiedSpecies.value = []; // Reset identified species when form is reset
+    identifyStatus.value = false;
 };
 
 // colors
@@ -89,25 +97,26 @@ const removeColor = (color) => {
 };
 
 const submitIdentifyForm = () => {
-    // Check if at least one filter is applied
     if (selectedColors.value.length === 0 && !identifyForm.value.shape && !identifyForm.value.dangerToHumans) {
-        identifiedSpecies.value = []; // Reset to empty array if no filters are applied
+        identifiedSpecies.value = []; // Instead of null
         showIdentifyModal.value = false;
+        identifyStatus.value = false;
         return;
     }
 
-    // Filter species based on the selected criteria
-    identifiedSpecies.value = props.species.filter(species => {
+    const matches = props.species.filter(species => {
         const matchesColors = identifyForm.value.colors.length === 0 || (species.colors && identifyForm.value.colors.every(color => species.colors.includes(color)));
         const matchesShape = identifyForm.value.shape === '' || species.shape === identifyForm.value.shape;
         const matchesDangerToHumans = identifyForm.value.dangerToHumans === false || species.is_dangerous === identifyForm.value.dangerToHumans;
 
+        identifyStatus.value = true;
         return matchesColors && matchesShape && matchesDangerToHumans;
     });
 
-    // If no matches found, identifiedSpecies will already be an empty array
+    identifiedSpecies.value = matches.length > 0 ? matches : [];
     showIdentifyModal.value = false;
 };
+
 
 const categoryText = (category) => {
     switch(category){
