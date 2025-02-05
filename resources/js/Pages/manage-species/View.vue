@@ -130,7 +130,6 @@ const archiveSpecies = () => {
                         <p><strong>Local Name:</strong> {{ props.species.local_name }}</p>
                         <p><strong>Description:</strong> {{ props.species.description }}</p>
                         <p><strong>Conservation Status:</strong> {{ props.species.conservation_status }}</p>
-                        <p><strong>Maximum Size:</strong> {{ props.species.max_size }} cm</p>
                         <p><strong>Shape:</strong> {{ props.species.shape }} </p>
                         <p><strong>Dangerous:</strong> {{ props.species.is_dangerous ? 'Yes' : 'No' }}</p>
                         <p><strong>Status:</strong> {{ props.species.is_active ? 'Active' : 'Inactive' }}</p>

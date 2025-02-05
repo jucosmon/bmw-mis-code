@@ -45,7 +45,6 @@ const form = useForm({
     local_name: '',
     description: '',
     conservation_status: '',
-    max_size: null,
     shape: '',
     is_dangerous: '',
     mediaFiles: [],
@@ -161,7 +160,7 @@ const submit = () => {
                             ></textarea>
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
                         </div>
-                        <div>
+                        <div class="sm:col-span-2 col-span-1">
                             <InputLabel for="colors" value="Select Colors" />
                             <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="" disabled selected>Choose a color</option>
@@ -186,19 +185,6 @@ const submit = () => {
                                 <option value="sharks_rays">Sharks and Rays</option>
                             </select>
                             <InputError class="mt-2" :message="form.errors.category" />
-                        </div>
-                        <div>
-                            <InputLabel for="max_size" value="Maximum Size (in centimeters)" />
-                            <input
-                                id="max_size"
-                                type="number"
-                                step="0.1"
-                                v-model="form.max_size"
-                                autocomplete="max_size"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="Enter the maximum size"
-                            />
-                            <InputError class="mt-2 text-sm text-red-600" :message="form.errors.max_size" />
                         </div>
                         <div>
                             <InputLabel for="conservation_status" value="Conservation Status" />

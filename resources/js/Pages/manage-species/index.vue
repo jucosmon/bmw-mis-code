@@ -24,11 +24,12 @@ const searchQuery = ref('');
 const showIdentifyModal = ref(false);
 const identifyForm = ref({
     colors: [],
-    size: '',
     shape: '',
     dangerToHumans: false,
     category: '',
 });
+
+const identifiedSpecies = ref([]);
 
 // Filter species based on the selected category, search query, and active/inactive status
 const filteredSpecies = computed(() => {
@@ -42,11 +43,16 @@ const filteredSpecies = computed(() => {
         speciesList = speciesList.filter((species) => species.name.toLowerCase().includes(searchQuery.value.toLowerCase()));
     }
 
-    return speciesList.sort((a, b) => a.name.localeCompare(b.name));
+    if (identifiedSpecies.value.length > 0) {
+        speciesList = identifiedSpecies.value;
+    }
+
+    return speciesList.length > 0 ? speciesList.sort((a, b) => a.name.localeCompare(b.name)) : [];
 });
 
 const selectCategory = (category) => {
     selectedCategory.value = category;
+    identifiedSpecies.value = []; // Reset identified species when category changes
 };
 
 // Methods for the Identify Species modal
@@ -60,8 +66,9 @@ const closeIdentifyModal = () => {
 };
 
 const resetIdentifyForm = () => {
-    identifyForm.value = { colors: [], size: '', shape: '', dangerToHumans: false, category: '' };
-    selectedColors.value = [];
+    identifyForm.value = { colors: [], shape: '', dangerToHumans: false};
+    selectedColors.value = []; // Reset selected colors
+    identifiedSpecies.value = []; // Reset identified species when form is reset
 };
 
 // colors
@@ -82,9 +89,24 @@ const removeColor = (color) => {
 };
 
 const submitIdentifyForm = () => {
-    if (selectedColors.value.length === 0 && !identifyForm.value.size && !identifyForm.value.shape && !identifyForm.value.dangerToHumans && !identifyForm.value.category) return;
-    identifyForm.value.colors = selectedColors.value;
-    Inertia.get(route('explore.species.search'), { ...identifyForm.value, searchType: 'attributes' });
+    // Check if at least one filter is applied
+    if (selectedColors.value.length === 0 && !identifyForm.value.shape && !identifyForm.value.dangerToHumans) {
+        identifiedSpecies.value = []; // Reset to empty array if no filters are applied
+        showIdentifyModal.value = false;
+        return;
+    }
+
+    // Filter species based on the selected criteria
+    identifiedSpecies.value = props.species.filter(species => {
+        const matchesColors = identifyForm.value.colors.length === 0 || (species.colors && identifyForm.value.colors.every(color => species.colors.includes(color)));
+        const matchesShape = identifyForm.value.shape === '' || species.shape === identifyForm.value.shape;
+        const matchesDangerToHumans = identifyForm.value.dangerToHumans === false || species.is_dangerous === identifyForm.value.dangerToHumans;
+
+        return matchesColors && matchesShape && matchesDangerToHumans;
+    });
+
+    // If no matches found, identifiedSpecies will already be an empty array
+    showIdentifyModal.value = false;
 };
 
 const categoryText = (category) => {
@@ -125,7 +147,6 @@ const toggleActiveInactive = () => {
                 <span class="block sm:inline">{{ props?.success }}</span>
             </div>
             <div>
-
                 <div class="space-y-4 mx-10">
                     <div class="flex justify-between gap-3">
                         <div class="flex flex-wrap gap-3 justify-center">
@@ -181,6 +202,9 @@ const toggleActiveInactive = () => {
                         </button>
                     </div>
                 </div>
+                    <div v-if="filteredSpecies.length === 0" class="p-4 bg-gray-50 rounded-lg shadow-sm">
+                        <p class="text-lg font-semibold text-gray-700">No results</p>
+                    </div>
                     <div v-for="species in filteredSpecies" :key="species.id" class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between">
                         <div>
                             <h4 class="text-lg font-semibold text-gray-700">{{ species.name }}</h4>
@@ -217,10 +241,6 @@ const toggleActiveInactive = () => {
                         </div>
                     </div>
                     <div>
-                        <label class="block text-gray-700">Size</label>
-                        <input v-model="identifyForm.size" type="text" class="mt-1 block w-full px-3 py-2 border rounded" placeholder="Enter size" />
-                    </div>
-                    <div>
                         <label class="block text-gray-700">Shape</label>
                         <select v-model="identifyForm.shape" class="mt-1 block w-full px-3 py-2 border rounded">
                             <option value="" disabled>Select shape</option>
@@ -237,13 +257,6 @@ const toggleActiveInactive = () => {
                             <input v-model="identifyForm.dangerToHumans" type="checkbox" class="mr-2" />
                             Danger to Humans
                         </label>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Category</label>
-                        <select v-model="identifyForm.category" class="mt-1 block w-full px-3 py-2 border rounded">
-                            <option value="" disabled>Select category</option>
-                            <option v-for="category in props.categories" :key="category" :value="category">{{ category }}</option>
-                        </select>
                     </div>
                     <div class="flex justify-between">
                         <button type="button" @click="resetIdentifyForm" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Reset</button>

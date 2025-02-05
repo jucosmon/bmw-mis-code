@@ -17,7 +17,13 @@ class SpeciesController extends Controller
     //
     public function index()
     {
-        $species = Species::get();
+        $species = Species::with('speciesColors.color')->get();
+        // Map speciesColors to include color names
+        $species->each(function ($species) {
+            $species->colors = $species->speciesColors->map(function ($speciesColor) {
+                return $speciesColor->color->name;
+            });
+        });
 
         return Inertia::render('manage-species/index', [
             'species' => $species,
@@ -45,7 +51,6 @@ class SpeciesController extends Controller
             'description' => 'required|string',
             'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
             'conservation_status' => 'required|in:CR,NT,EN,DD,VU,NA,LC',
-            'max_size' => 'nullable|numeric',
             'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
             'is_dangerous' => 'nullable|boolean',
             'mediaFiles' => 'nullable|array',
@@ -62,9 +67,7 @@ class SpeciesController extends Controller
             'local_name' => $request->local_name,
             'category' => $request->category,
             'description' => $request->description,
-            'conservation_status' => $request->conservation_status,
-            'max_size' => $request->max_size,
-            'shape' => $request->shape,
+            'conservation_status' => $request->conservation_status,            'shape' => $request->shape,
             'is_dangerous' => $request->is_dangerous,
             'is_active' => true,
         ]);
@@ -157,7 +160,6 @@ class SpeciesController extends Controller
             'category' => 'required|in:marine_mammals,marine_turtles,sharks_rays',
             'description' => 'required|string',
             'conservation_status' => 'required|in:CR,NT,EN,DD,VU,NA,LC',
-            'max_size' => 'nullable|numeric',
             'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
             'is_dangerous' => 'nullable|boolean',
             'mediaFiles' => 'nullable|array',
@@ -310,7 +312,6 @@ class SpeciesController extends Controller
             $request->validate([
                 'colors' => 'nullable|array',
                 'colors.*' => 'string|exists:colors,name',
-                'size' => 'nullable|numeric',
                 'shape' => 'nullable|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
                 'dangerToHumans' => 'nullable|boolean',
                 'category' => 'nullable|string|in:Marine Turtles,Marine Mammals,Sharks and Rays',
@@ -334,7 +335,6 @@ class SpeciesController extends Controller
     public function searchByAttributes(Request $request)
     {
         $colors = $request->input('colors', []);
-        $size = $request->input('size');
         $shape = $request->input('shape');
         $dangerToHumans = $request->input('dangerToHumans');
         $category = $request->input('category');
@@ -344,9 +344,6 @@ class SpeciesController extends Controller
                 $query->whereHas('speciesColors.color', function ($query) use ($colors) {
                     $query->whereIn('name', $colors);
                 });
-            })
-            ->when($size, function ($query, $size) {
-                $query->where('max_size', $size);
             })
             ->when($shape, function ($query, $shape) {
                 $query->where('shape', $shape);

@@ -20,7 +20,6 @@ return new class extends Migration
             $table->enum('category', ['marine_mammals', 'marine_turtles', 'sharks_rays']); // Category of marine wildlife
             $table->text('description'); // Detailed description of the species
             $table->enum('conservation_status', ['CR', 'NT', 'EN', 'DD', 'VU', 'NA', 'LC']); // Conservation status
-            $table->decimal('max_size', 6, 2)->nullable();
             $table->enum('shape', ['turtle-like', 'shark-like', 'dolphin-like', 'dugong-like', 'whale-like', 'ray-like']); // Shape of the species
             $table->boolean('is_dangerous')->default(false); // Flag for dangerous species
             $table->boolean('is_active')->default(true); // Flag for active status

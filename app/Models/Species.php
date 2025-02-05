@@ -12,7 +12,7 @@ class Species extends Model
 
     protected $fillable = [
         'name', 'scientific_name', 'common_name', 'local_name', 'category',
-        'description', 'conservation_status', 'max_size', 'shape',
+        'description', 'conservation_status', 'shape',
         'is_dangerous', 'is_active'
     ];
 

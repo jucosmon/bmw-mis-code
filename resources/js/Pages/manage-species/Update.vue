@@ -62,7 +62,6 @@ const form = useForm({
     category: props.species.category || '',
     description: props.species.description || '',
     conservation_status: props.species.conservation_status || null,
-    max_size: props.species.max_size || '',
     shape: props.species.shape || '',
     is_dangerous: typeof props.species.is_dangerous === 'boolean' ? props.species.is_dangerous : false,
     mediaFiles: [], // This will hold the new files to upload
@@ -231,7 +230,7 @@ const submit = () => {
                             ></textarea>
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
                         </div>
-                        <div>
+                        <div class="sm:col-span-2 col-span-1">
                             <InputLabel for="colors" value="Select Colors" />
                             <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="" disabled selected>Choose a color</option>
@@ -295,19 +294,6 @@ const submit = () => {
                                 <option :value="false">No, it is not dangerous</option>
                             </select>
                             <InputError class="mt-2" :message="form.errors.is_dangerous" />
-                        </div>
-                        <div>
-                            <InputLabel for="max_size" value="Maximum Size (in centimeters)" />
-                            <TextInput
-                                id="max_size"
-                                type="number"
-                                step="0.01"
-                                v-model="form.max_size"
-                                autocomplete="max_size"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="Enter the maximum size"
-                            />
-                            <InputError class="mt-2 text-sm text-red-600" :message="form.errors.max_size" />
                         </div>
                          <!-- Existing Image Previews -->
                          <div class="mt-4 sm:col-span-2 col-span-1">
