@@ -29,7 +29,8 @@ const identifyForm = ref({
 
 // Methods for navigation and actions
 const searchSpecies = () => {
-    Inertia.get(route('explore.species.search'), { query: searchQuery.value });
+    if (searchQuery.value.trim() === '') return;
+    Inertia.get(route('explore.species.search'), { query: searchQuery.value, searchType: 'name' });
 };
 
 const viewSpecies = (id) => {
@@ -74,21 +75,19 @@ const removeColor = (color) => {
 };
 
 const submitIdentifyForm = () => {
+    if (selectedColors.value.length === 0 && !identifyForm.value.size && !identifyForm.value.shape && !identifyForm.value.dangerToHumans && !identifyForm.value.category) return;
     identifyForm.value.colors = selectedColors.value;
-    console.log('Identifying species with attributes:', identifyForm.value);
-    // Assuming form is an Inertia form helper, which is not defined in the provided code
-    // Assuming createRoute is a route name, which is not defined in the provided code
-    // Assuming formErrors is a ref to store form errors, which is not defined in the provided code
-    // These variables need to be defined or replaced with appropriate logic
-    // form.post(createRoute.value, {
-    //     onSuccess: () => {
-    //         formErrors.value = null;
-    //     },
-    //     onError: (errors) => {
-    //         formErrors.value = errors;
-    //     },
-    // });
+    Inertia.get(route('explore.species.search'), { ...identifyForm.value, searchType: 'attributes' });
 };
+
+const categoryText = (category) => {
+    switch(category){
+        case 'marine_turtles': return 'Marine Turtles';break;
+        case 'marine_mammals': return 'Marine Mammals'; break;
+        case 'sharks_rays': return 'Shark and Rays';break;
+        default: return 'Unknown Category';
+    }
+}
 </script>
 
 <template>
@@ -142,7 +141,10 @@ const submitIdentifyForm = () => {
                 <h3 class="text-lg font-semibold mb-4">Top 5 Species Commonly Involved in Sightings</h3>
                 <div class="space-y-4 mx-10">
                     <div v-for="species in props.topSpecies" :key="species.id" class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between">
-                        <h4 class="text-md font-semibold text-gray-700">{{ species.name }}</h4>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-700">{{ species.name }}</h4>
+                            <p class="text-sm font-bold text-green-700">{{ categoryText(species.category) }}</p>
+                        </div>
                         <button
                             @click="viewSpecies(species.id)"
                             class="mt-2 px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

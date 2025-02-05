@@ -16,7 +16,7 @@ const props = defineProps({
 });
 
 const backRoute = computed(() => {
-    return route('bpemo.admin.manage.species.index', { category: props.species.category });
+    return route('species.index');
 });
 
 const updateRoute = computed(() => {
@@ -26,14 +26,12 @@ const updateRoute = computed(() => {
 const archiveRoute = computed(() => {
     return route('bpemo.admin.manage.species.archive', {
         id: props.species.id,
-        category: props.species.category,
     });
 });
 
 const unarchiveRoute = computed(() => {
     return route('bpemo.admin.manage.species.unarchive', {
         id: props.species.id,
-        category: props.species.category,
     });
 });
 

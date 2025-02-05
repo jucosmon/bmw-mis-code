@@ -254,62 +254,12 @@ console.log(user);
               <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Sightings</span>
           </Link>
 
-          <!-- Explore Marine Wildlife Species -->
-          <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-            :href="route('explore.species.index')">
-              <span class="material-icons text-lg mr-2 leading-none">search</span>
+          <!-- Manage Species Record Dropdown -->
+           <Link v-if="user.user_role==='bpemo_admin'" class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+           :href="route('species.index')">
+              <span class="material-icons text-lg mr-2 leading-none">manage_search</span>
               <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Explore Species</span>
           </Link>
-
-          <!-- Manage Species Record Dropdown -->
-          <div v-if="user.user_role==='bpemo_admin'" class="relative">
-            <button
-              @click="toggleDropdown('manageSpeciesRecord', $event)"
-              class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-            >
-              <span class="material-icons text-lg mr-2 leading-none">manage_search</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Manage Species</span>
-              <svg v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                :class="{ 'rotate-180': state.activeDropdown === 'manageSpeciesRecord', 'rotate-0': state.activeDropdown !== 'manageSpeciesRecord' }"
-                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </button>
-
-            <div
-              v-if="state.activeDropdown === 'manageSpeciesRecord'"
-              class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
-            >
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.species.index', {category: 'marine_turtles'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml- 2">Marine Turtles</span>
-              </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.species.index', {category: 'marine_mammals'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Marine Mammals</span>
-              </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.species.index', {category: 'sharks_rays'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Sharks and Rays</span>
-              </Link>
-            </div>
-          </div>
 
           <!-- Manage Guidelines Dropdown -->
           <div v-if="user.user_role==='bpemo_admin'" class="relative">

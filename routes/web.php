@@ -189,9 +189,17 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             });
     });
 
-    Route::prefix('explore-species')->group(function () {
+    Route::prefix('species')->group(function () {
         Route::get('/', [SpeciesController::class, 'indexExploreSpecies'])
-            ->name('explore.species.index');
+            ->name('');
+        Route::get('/', [SpeciesController::class, 'index'])
+            ->name('species.index');
+        Route::get('/search', [SpeciesController::class, 'search'])
+            ->name('species.search');
+        Route::get('/result', [SpeciesController::class, 'resultPage'])
+            ->name('species.result');
+        Route::get('/view/{id}', [SpeciesController::class, 'view'])
+            ->name('species.view');
     });
 
     //bpemo admin
@@ -223,26 +231,22 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
             // manage species (CRUD Functionality)
             Route::prefix('manage-species')->group(function (){
-                Route::get('/{category}', [SpeciesController::class, 'index'])
-                ->name('bpemo.admin.manage.species.index');
+
                 //creating another species
-                Route::get('/{category}/create-page', [SpeciesController::class, 'createPage'])
+                Route::get('/create-page', [SpeciesController::class, 'createPage'])
                     ->name('bpemo.admin.manage.species.create.page');
-                Route::post('{category}/create', [SpeciesController::class, 'create'])
+                Route::post('/create', [SpeciesController::class, 'create'])
                     ->name('bpemo.admin.manage.species.create');
-                //viewing another species
-                Route::get('/view/{id}', [SpeciesController::class, 'view'])
-                    ->name('bpemo.admin.manage.species.view');
                 //updating another species
                 Route::get('/update-page/{id}', [SpeciesController::class, 'updatePage'])
                     ->name('bpemo.admin.manage.species.update.page');
                 Route::post('/update/{id}', [SpeciesController::class, 'update'])
                     ->name('bpemo.admin.manage.species.update');
                 //archiving another species
-                Route::patch('/{category}/archive/{id}', [SpeciesController::class, 'archive'])
+                Route::patch('/archive/{id}', [SpeciesController::class, 'archive'])
                     ->name('bpemo.admin.manage.species.archive');
                 //unarchiving another species
-                Route::patch('/{category}/unarchive/{id}', [SpeciesController::class, 'unarchive'])
+                Route::patch('/unarchive/{id}', [SpeciesController::class, 'unarchive'])
                     ->name('bpemo.admin.manage.species.unarchive');
             });
         });

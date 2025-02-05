@@ -29,12 +29,10 @@ const previewNewImages = ref([]);
 const existingColors = ref(props.species.speciesColors.map(sc => sc.color.name));
 const selectedColors = ref([...existingColors.value]);
 
-
 const existingImages = ref(props.species.mediaFiles ? props.species.mediaFiles : []);
 
-
-const speciesCategory = computed(() => {
-    switch (props.species.category) {
+const categoryText = (category) => {
+    switch (category) {
         case 'marine_turtles':
             return 'Marine Turtles';
         case 'marine_mammals':
@@ -44,10 +42,10 @@ const speciesCategory = computed(() => {
         default:
             return 'Unknown Category';
     }
-});
+};
 
 const backRoute = computed(() => {
-    return route('bpemo.admin.manage.species.view', {id: props.species.id});
+    return route('species.view', {id: props.species.id});
 });
 
 const updateRoute = computed(() => {
@@ -128,14 +126,11 @@ const removeNewImage = (index) => {
     form.mediaFiles.splice(index, 1);
 };
 
-
 const removeExistingImage = (index) => {
     const imageToDelete = existingImages.value[index];
     deletedImages.value.push(imageToDelete.id); // Assuming each image has an `id`
     existingImages.value.splice(index, 1);
 };
-
-
 
 const addColor = (event) => {
     const selectedColor = event.target.value;
@@ -152,7 +147,6 @@ const removeColor = (color) => {
     if (existingColors.value.includes(color)) {
         form.deletedColors.push(color);
     }
-
 };
 
 const submit = () => {
@@ -191,7 +185,7 @@ const submit = () => {
         </template>
 
         <div class="container mx-auto px-4 py-8">
-            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Species ({{ speciesCategory }})</h2>
+            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Species</h2>
 
             <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
                 <form @submit.prevent="submit" class="space-y-6">
@@ -237,7 +231,7 @@ const submit = () => {
                             ></textarea>
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
                         </div>
-                        <div class="sm:col-span-2 col-span-1">
+                        <div>
                             <InputLabel for="colors" value="Select Colors" />
                             <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="" disabled selected>Choose a color</option>
@@ -302,7 +296,7 @@ const submit = () => {
                             </select>
                             <InputError class="mt-2" :message="form.errors.is_dangerous" />
                         </div>
-                        <div class="sm:col-span-2 col-span-1">
+                        <div>
                             <InputLabel for="max_size" value="Maximum Size (in centimeters)" />
                             <TextInput
                                 id="max_size"

@@ -15,41 +15,35 @@ use Inertia\Inertia;
 class SpeciesController extends Controller
 {
     //
-    public function index($category)
+    public function index()
     {
-        $species = Species::where('category', $category)
-                          ->with('mediaFiles')
-                          ->get();
+        $species = Species::get();
 
-        if ($species->isEmpty()) {
-            return Inertia::render('manage-species/index',
-            ['species' => [],
-            'category' => $category,
-            'message' => 'No species found for this category.']
-        );}
-
-        return Inertia::render('manage-species/index',
-            ['species' => $species,
-            'category'=>$category,
+        return Inertia::render('manage-species/index', [
+            'species' => $species,
+            'categories' => ['marine_turtles', 'marine_mammals', 'sharks_rays'],
             'success' => session('success'),
-            ]);
+            'colors' => Color::all(),
+        ]);
     }
-    public function createPage($category)
+
+    public function createPage()
     {
         return Inertia::render('manage-species/Create', [
-            'category' => $category,
             'colors' => Color::all(), // Pass all colors to the view
         ]);
     }
 
-    public function create(Request $request, $category)
+    public function create(Request $request)
     {
+
         $request->validate([
             'name' => 'required|string|max:100',
             'scientific_name' => 'nullable|string|max:100',
             'common_name' => 'nullable|string|max:100',
             'local_name' => 'nullable|string|max:100',
             'description' => 'required|string',
+            'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
             'conservation_status' => 'required|in:CR,NT,EN,DD,VU,NA,LC',
             'max_size' => 'nullable|numeric',
             'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
@@ -66,7 +60,7 @@ class SpeciesController extends Controller
             'scientific_name' => $request->scientific_name,
             'common_name' => $request->common_name,
             'local_name' => $request->local_name,
-            'category' => $category,
+            'category' => $request->category,
             'description' => $request->description,
             'conservation_status' => $request->conservation_status,
             'max_size' => $request->max_size,
@@ -99,7 +93,7 @@ class SpeciesController extends Controller
             }
         }
 
-        return redirect()->route('bpemo.admin.manage.species.index', [$category])
+        return redirect()->route('species.index')
         ->with('success', 'You have successfully created a species!');
     }
 
@@ -126,18 +120,17 @@ class SpeciesController extends Controller
         ]);
     }
 
-
     public function updatePage($id)
     {
+
         $species = Species::with('speciesColors.color')->findOrFail($id);
 
         // Load media files and include public URLs
         $species->load('mediaFiles');
         $species->mediaFiles = $species->mediaFiles->map(function ($file) {
-        $file->url = asset('storage/' . $file->path);
+            $file->url = asset('storage/' . $file->path);
             return $file;
         });
-
 
         // Map speciesColors to include color names
         $species->speciesColors = $species->speciesColors->map(function ($speciesColor) {
@@ -151,8 +144,10 @@ class SpeciesController extends Controller
             'colors' => Color::get(),
         ]);
     }
+
     public function update(Request $request, $id)
     {
+
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:100',
@@ -230,19 +225,20 @@ class SpeciesController extends Controller
         }
 
         // Redirect to the updated species view with a success message
-        return redirect()->route('bpemo.admin.manage.species.view', $id)
+        return redirect()->route('species.view', $id)
                         ->with('success', 'You have successfully updated a species!');
     }
 
-    public function archive(Request $request, $category, $id)
+    public function archive(Request $request, $id)
     {
+
         // Validate the request, ensuring the password is provided
         $request->validate([
             'password' => 'required|string',
         ]);
 
-            // Check if the provided password matches the authenticated user's password
-            $currentUser = Auth::user();
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
         if (!Hash::check($request->password, $currentUser->password)) {
             return back()->withErrors(['password' => 'The provided password is incorrect.']);
         }
@@ -251,19 +247,20 @@ class SpeciesController extends Controller
         $species->is_active = false;
         $species->save();
 
-        return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])
+        return redirect()->route('species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])
         ->with('success', 'You have successfully archived a species!');
     }
 
-    public function unarchive(Request $request, $category, $id)
-        {
-            // Validate the request, ensuring the password is provided
-            $request->validate([
-                'password' => 'required|string',
-            ]);
+    public function unarchive(Request $request, $id)
+    {
 
-            // Check if the provided password matches the authenticated user's password
-            $currentUser = Auth::user();
+        // Validate the request, ensuring the password is provided
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the authenticated user's password
+        $currentUser = Auth::user();
         if (!Hash::check($request->password, $currentUser->password)) {
             return back()->withErrors(['password' => 'The provided password is incorrect.']);
         }
@@ -272,7 +269,7 @@ class SpeciesController extends Controller
         $species->is_active = true;
         $species->save();
 
-        return redirect()->route('bpemo.admin.manage.species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])
+        return redirect()->route('species.view', ['id' => $id, 'message'=> 'Successfully Archived account'])
         ->with('success', 'You have successfully unarchived a species!');
     }
 
@@ -301,15 +298,77 @@ class SpeciesController extends Controller
         ]);
     }
 
-    public function search(Request $request){
-
+    public function search(Request $request)
+    {
+        $searchType = $request->input('searchType');
+        if ($searchType == 'name') {
+            $request->validate([
+                'query' => 'required|string|max:100',
+            ]);
+            return $this->searchByName($request);
+        } else {
+            $request->validate([
+                'colors' => 'nullable|array',
+                'colors.*' => 'string|exists:colors,name',
+                'size' => 'nullable|numeric',
+                'shape' => 'nullable|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
+                'dangerToHumans' => 'nullable|boolean',
+                'category' => 'nullable|string|in:Marine Turtles,Marine Mammals,Sharks and Rays',
+            ]);
+            return $this->searchByAttributes($request);
+        }
     }
 
-    public function searchByName(){
+    public function searchByName(Request $request)
+    {
+        $query = $request->input('query');
+        $species = Species::where('name', 'like', '%' . $query . '%')->get();
 
+        return Inertia::render('manage-species/explore-species/result', [
+            'species' => $species,
+            'query' => $query,
+            'searchType' => 'name',
+        ]);
     }
 
-    public function searchByAttributes(){
+    public function searchByAttributes(Request $request)
+    {
+        $colors = $request->input('colors', []);
+        $size = $request->input('size');
+        $shape = $request->input('shape');
+        $dangerToHumans = $request->input('dangerToHumans');
+        $category = $request->input('category');
 
+        $species = Species::query()
+            ->when($colors, function ($query, $colors) {
+                $query->whereHas('speciesColors.color', function ($query) use ($colors) {
+                    $query->whereIn('name', $colors);
+                });
+            })
+            ->when($size, function ($query, $size) {
+                $query->where('max_size', $size);
+            })
+            ->when($shape, function ($query, $shape) {
+                $query->where('shape', $shape);
+            })
+            ->when($dangerToHumans, function ($query, $dangerToHumans) {
+                $query->where('is_dangerous', $dangerToHumans);
+            })
+            ->when($category, function ($query, $category) {
+                $query->where('category', $category);
+            })
+            ->get();
+
+        return Inertia::render('manage-species/explore-species/result', [
+            'species' => $species,
+            'searchType' => 'attributes',
+        ]);
+    }
+
+    public function resultPage()
+    {
+        return Inertia::render('manage-species/explore-species/result', [
+            'species' => [],
+        ]);
     }
 }

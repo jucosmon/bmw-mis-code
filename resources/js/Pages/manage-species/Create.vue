@@ -10,15 +10,14 @@ import { computed, ref } from 'vue';
 const page = usePage();
 
 const formErrors = ref(null);
-const previewImages = ref([]); // Store preview images
+const previewImages = ref([]);
 
 const props = defineProps({
-    category: String,
-    colors: Array, // Add colors to props
+    colors: Array,
 });
 
-const speciesCatagory = computed(() => {
-    switch (props.category) {
+const speciesCatagory = (category) => {
+    switch (category) {
         case 'marine_turtles':
             return 'Marine Turtles';
         case 'marine_mammals':
@@ -28,11 +27,11 @@ const speciesCatagory = computed(() => {
         default:
             return 'Unknown Category';
     }
-});
+};
 
 // defined routes for different current user type
 const backRoute = computed(() => {
-    return route('bpemo.admin.manage.species.index', { category: props.category });
+    return route('species.index', { category: props.category });
 });
 
 const createRoute = computed(() => {
@@ -51,6 +50,7 @@ const form = useForm({
     is_dangerous: '',
     mediaFiles: [],
     colors: [], // Add colors to the form
+    category: '', // Add category to the form
 });
 
 const handleFileChange = (event) => {
@@ -115,7 +115,7 @@ const submit = () => {
         </template>
 
         <div class="container mx-auto px-4 py-8">
-            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Create New Species ({{ speciesCatagory }})</h2>
+            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Create New Species</h2>
 
             <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
                 <form @submit.prevent="submit" class="space-y-6">
@@ -161,7 +161,7 @@ const submit = () => {
                             ></textarea>
                             <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
                         </div>
-                        <div class="sm:col-span-2 col-span-1">
+                        <div>
                             <InputLabel for="colors" value="Select Colors" />
                             <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="" disabled selected>Choose a color</option>
@@ -177,7 +177,16 @@ const submit = () => {
                                 </div>
                             </div>
                         </div>
-
+                        <div>
+                            <InputLabel for="category" value="Marine Wildlife Category" />
+                            <select id="category" v-model="form.category" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled>Select an option</option>
+                                <option value="marine_turtles">Marine Turtles</option>
+                                <option value="marine_mammals">Marine Mammals</option>
+                                <option value="sharks_rays">Sharks and Rays</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.category" />
+                        </div>
                         <div>
                             <InputLabel for="max_size" value="Maximum Size (in centimeters)" />
                             <input
