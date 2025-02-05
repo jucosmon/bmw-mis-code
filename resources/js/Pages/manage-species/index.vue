@@ -45,12 +45,6 @@ const filteredSpecies = computed(() => {
     return speciesList.sort((a, b) => a.name.localeCompare(b.name));
 });
 
-// Methods for navigation and actions
-const searchSpecies = () => {
-    if (searchQuery.value.trim() === '') return;
-    Inertia.get(route('species.search'), { query: searchQuery.value, searchType: 'name' });
-};
-
 const selectCategory = (category) => {
     selectedCategory.value = category;
 };
@@ -130,64 +124,63 @@ const toggleActiveInactive = () => {
                 <strong class="font-bold">Success! </strong>
                 <span class="block sm:inline">{{ props?.success }}</span>
             </div>
-
-            <div class="mb-6 flex gap-2">
-                <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Search species..."
-                    class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <button
-                    @click="searchSpecies"
-                    class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                    Search
-                </button>
-                <button
-                    @click="openIdentifyModal"
-                    class="px-4 py-2 bg-green-600 text-sm text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                    Identify Species
-                </button>
-                <button
-                    v-if="page.props.auth.user.user_role === 'bpemo_admin'"
-                    type="button"
-                    @click="createSpecies()"
-                    class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                    Create
-                </button>
-
-            </div>
-
-            <div class="mb-6 flex flex-wrap gap-4 justify-center">
-                <button
-                    @click="selectCategory('all')"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                    All
-                </button>
-                <button
-                    v-for="category in props.categories"
-                    :key="category"
-                    @click="selectCategory(category)"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                    {{ categoryText(category) }}
-                </button>
-                <button
-                    v-if="page.props.auth.user.user_role === 'bpemo_admin'"
-                    type="button"
-                    @click="toggleActiveInactive"
-                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                    {{ showActive ? 'Show Inactive' : 'Show Active' }}
-                </button>
-            </div>
-
             <div>
+
                 <div class="space-y-4 mx-10">
+                    <div class="flex justify-between gap-3">
+                        <div class="flex flex-wrap gap-3 justify-center">
+                        <button
+                            @click="selectCategory('all')"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            All
+                        </button>
+                        <button
+                            v-for="category in props.categories"
+                            :key="category"
+                            @click="selectCategory(category)"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            {{ categoryText(category) }}
+                        </button>
+                    </div>
+                    <div class="flex gap-3">
+                        <div  v-if="page.props.auth.user.user_role === 'bpemo_admin'" class="flex items-center mr-1">
+                            <span class="mr-2">{{ showActive ? 'Active' : 'Inactive' }}</span>
+                            <div
+                                @click="toggleActiveInactive"
+                                class="w-10 h-7 bg-gray-300 rounded-full flex items-center p-1 cursor-pointer"
+                                :class="{ 'bg-green-400': showActive }"
+                            >
+                                <div
+                                    class="bg-white w-10 h-7 rounded-full shadow-md transition-transform duration-300 ease-in-out"
+                                    :class="{ 'translate-x-3': showActive }"
+                                >
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                        @click="openIdentifyModal"
+                        class="px-4 py-2 bg-green-600 text-md text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    >
+                        Identify
+                        </button>
+                            <input
+                            v-model="searchQuery"
+                            type="text"
+                            placeholder=    "Search species..."
+                            class="w-half px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <button
+                        v-if="page.props.auth.user.user_role === 'bpemo_admin'"
+                        type="button"
+                        @click="createSpecies()"
+                        class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
                     <div v-for="species in filteredSpecies" :key="species.id" class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between">
                         <div>
                             <h4 class="text-lg font-semibold text-gray-700">{{ species.name }}</h4>
@@ -263,6 +256,9 @@ const toggleActiveInactive = () => {
 </template>
 
 <style scoped>
+.transition-transform {
+    transition: transform 0.3s ease-in-out;
+}
 /* Ensure the table scrolls horizontally on smaller screens */
 @media (max-width: 640px) {
   .overflow-x-auto {
