@@ -18,15 +18,13 @@ const map = ref(null);
 const markers = ref(null);
 const filters = ref({
     year: '',
-    municipality: '',
     incidentType: ''
 });
 
 
 
 const years = ref([2021, 2022, 2023]);
-const municipalities = ref(['Municipality 1', 'Municipality 2', 'Municipality 3']);
-const incidentTypes = ref(['Stranding', 'Sighting']);
+const types = ref(['stranding', 'sighting']);
 
 onMounted(() => {
     map.value = L.map('map').setView([51.505, -0.09], 13);
@@ -82,14 +80,9 @@ const resetFilters = () => {
                 <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
             </select>
 
-            <label for="municipality">Municipality:</label>
-            <select v-model="filters.municipality" id="municipality">
-                <option v-for="municipality in municipalities" :key="municipality" :value="municipality">{{ municipality }}</option>
-            </select>
-
             <label for="incidentType">Incident Type:</label>
             <select v-model="filters.incidentType" id="incidentType">
-                <option v-for="type in incidentTypes" :key="type" :value="type">{{ type }}</option>
+                <option v-for="type in types" :key="type" :value="type">{{ type }}</option>
             </select>
 
             <button @click="applyFilters">Apply</button>

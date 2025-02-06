@@ -350,42 +350,22 @@ console.log(user);
                 href="#"
               >
                 <span class="material-icons text-lg mr-2 leading-none">map</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Marine Wildlife Cluster Map</span>
+                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Cluster Map</span>
               </Link>
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
                 href="#"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Marine Wildlife Summary Report</span>
+                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Summary Report</span>
               </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                href="#"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Marine Turtle Categorized Report</span>
-              </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                href="#"
-              >
-                <span class="material-icons text-lg mr-2 leading-none ">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Marine Mammal Categorized Report</span>
-              </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                href="#"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Shark and Rays Categorized Report</span>
-              </Link>
+
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
                 href="#"
               >
                 <span class="material-icons text-lg mr-2 leading-none">download</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Download Marine Wildlife Data</span>
+                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Download Data</span>
               </Link>
             </div>
           </div>
