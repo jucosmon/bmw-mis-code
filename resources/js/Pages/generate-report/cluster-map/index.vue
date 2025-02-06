@@ -1,17 +1,11 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
+import { supabase } from '@/supabase';
 import L from 'leaflet';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet/dist/leaflet.css';
-import { defineProps, onMounted, ref } from 'vue';
-
-const props = defineProps({
-    incidents: {
-        type: Array,
-        required: true
-    }
-});
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const map = ref(null);
 const markers = ref(null);
@@ -25,8 +19,10 @@ const years = ref([2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2
 const categories = ref(['Marine Mammals', 'Marine Turtles', 'Shark and Rays']);
 const types = ref(['Stranded', 'Sighted']);
 
+const incidents = ref([]);
+
 onMounted(() => {
-    console.log('Incidents:', props.incidents);
+    console.log('Incidents:', incidents.value);
 
     map.value = L.map('map').setView([9.8500, 124.1833], 10); // Bohol coordinates
 
@@ -34,11 +30,39 @@ onMounted(() => {
         maxZoom: 18,
     }).addTo(map.value);
 
-    markers.value = L.markerClusterGroup();
+    markers.value = L.markerClusterGroup({
+        iconCreateFunction: function (cluster) {
+            const count = cluster.getChildCount();
+            let size = 'small';
+            if (count > 10) {
+                size = 'medium';
+            }
+            if (count > 50) {
+                size = 'large';
+            }
+            return L.divIcon({
+                html: `<div><span>${count}</span></div>`,
+                className: `marker-cluster marker-cluster-${size}`,
+                iconSize: L.point(40, 40, true),
+            });
+        }
+    });
     map.value.addLayer(markers.value);
 
     // Load initial data
-    loadData();
+    fetchData();
+
+    // Subscribe to Supabase Realtime
+    const channel = supabase.channel('public:incidents')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, payload => {
+            console.log('Change received!', payload);
+            fetchData();
+        })
+        .subscribe();
+
+    onBeforeUnmount(() => {
+        supabase.removeChannel(channel);
+    });
 });
 
 const statusText = (status) => {
@@ -58,15 +82,64 @@ const statusText = (status) => {
     }
 };
 
+const fetchData = async () => {
+    const { data: sightings, error: sightingsError } = await supabase
+        .from('sightings')
+        .select('*, sighted_species(*, species(*))')
+        .eq('is_active', true)
+        .eq('report_status', 'verified');
+
+    const { data: strandedIncidents, error: strandedIncidentsError } = await supabase
+        .from('stranded_incidents')
+        .select('*, stranded_species(*, species(*))')
+        .eq('is_active', true)
+        .eq('report_status', 'resolved');
+
+    if (sightingsError || strandedIncidentsError) {
+        console.error('Error fetching data:', sightingsError || strandedIncidentsError);
+    } else {
+        const processedSightings = sightings.flatMap(sighting => {
+            return sighting.sighted_species.map(sighted_species => ({
+                latitude: sighting.latitude,
+                longitude: sighting.longitude,
+                date: sighting.date,
+                type: 'sighting',
+                species_id: sighted_species.species.id,
+                species_name: sighted_species.species.name ?? 'Unknown',
+                category: sighted_species.species.category ?? 'Unknown',
+            }));
+        });
+
+        const processedStrandedIncidents = strandedIncidents.flatMap(incident => {
+            return incident.stranded_species.map(stranded_species => {
+                const status = stranded_species.condition_code == 1 ? 'Alive' : (stranded_species.condition_code >= 2 && stranded_species.condition_code <= 5 ? 'Dead' : 'Unknown');
+                return {
+                    latitude: stranded_species.latitude,
+                    longitude: stranded_species.longitude,
+                    date: incident.date,
+                    type: 'stranded',
+                    status: stranded_species.condition_code,
+                    species_id: stranded_species.species.id,
+                    species_name: stranded_species.species.name ?? 'Unknown',
+                    category: stranded_species.species.category ?? 'Unknown',
+                };
+            });
+        });
+
+        incidents.value = [...processedSightings, ...processedStrandedIncidents];
+        loadData();
+    }
+};
+
 const loadData = () => {
     markers.value.clearLayers();
 
-    props.incidents.forEach(incident => {
+    incidents.value.forEach(incident => {
         // Apply filters
         if (filters.value.year && new Date(incident.date).getFullYear() !== parseInt(filters.value.year)) {
             return;
         }
-        if (filters.value.category && !incident.species.some(s => s.category === filters.value.category)) {
+        if (filters.value.category && incident.category !== filters.value.category) {
             return;
         }
         if (filters.value.incidentType && incident.type.toLowerCase() !== filters.value.incidentType.toLowerCase()) {
@@ -84,8 +157,7 @@ const loadData = () => {
         });
 
         const marker = L.marker([incident.latitude, incident.longitude], { icon: markerIcon });
-        const speciesInfo = incident.species ? incident.species.map(s => s.species_name).join(', ') : 'Unknown';
-        let popupContent = `Date: ${incident.date}<br>Species: ${speciesInfo}<br>Type: ${incident.type}`;
+        let popupContent = `Date: ${incident.date}<br>Species: ${incident.species_name}<br>Type: ${incident.type}`;
         if (incident.type.toLowerCase() === 'stranded') { // Ensure case insensitivity
             popupContent += `<br>Status: ${statusText(incident.status)}`;
         }
@@ -129,16 +201,16 @@ const resetFilters = () => {
                 <label for="category" class="font-medium">Category:</label>
                 <select v-model="filters.category" id="category" class="border rounded px-2 py-1">
                     <option value="">All</option>
-                    <option value="marine_turtles">Marine Turtles</option>
-                    <option value="marine_mammals">Marine Mammals</option>
-                    <option value="sharks_rays">Shark and Rays</option>
+                    <option value="Marine Mammals">Marine Mammals</option>
+                    <option value="Marine Turtles">Marine Turtles</option>
+                    <option value="Shark and Rays">Shark and Rays</option>
                 </select>
 
                 <label for="incidentType" class="font-medium">Incident Type:</label>
                 <select v-model="filters.incidentType" id="incidentType" class="border rounded px-2 py-1">
                     <option value="">All</option>
-                    <option value="sighting">Sighting</option>
-                    <option value="stranded">Stranded</option>
+                    <option value="Sighting">Sighting</option>
+                    <option value="Stranded">Stranded</option>
                 </select>
 
                 <button @click="applyFilters" class="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
@@ -159,9 +231,30 @@ const resetFilters = () => {
     align-items: center;
     gap: 10px;
 }
-.custom-marker {
+.marker-cluster-small {
+    background-color: rgba(181, 226, 140, 0.6);
+    color: #006400;
+}
+.marker-cluster-medium {
+    background-color: rgba(241, 211, 87, 0.6);
+    color: #8B4513;
+}
+.marker-cluster-large {
+    background-color: rgba(253, 156, 115, 0.6);
+    color: #8B0000;
+}
+.marker-cluster div {
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 2px solid #fff;
+}
+.marker-cluster span {
+    font-size: 12px;
+    font-weight: bold;
 }
 </style>

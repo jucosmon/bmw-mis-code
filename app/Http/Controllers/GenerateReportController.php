@@ -11,6 +11,15 @@ class GenerateReportController extends Controller
 {
     public function clusterMapIndex()
     {
+        return Inertia::render('generate-report/cluster-map/index');
+    }
+
+    public function summaryReportIndex()
+    {
+        return Inertia::render('generate-report/summary-report/index');
+    }
+
+    public function preprocesseddata(){
         $sightings = Sighting::with('sightedSpecies.species')->where('is_active', true)
             ->where('report_status', 'verified')->get();
         $strandedIncidents = StrandedIncident::with('strandedSpecies.species')->where('is_active', true)
@@ -48,75 +57,5 @@ class GenerateReportController extends Controller
 
         $combinedData = $processedSightings->merge($processedStrandedIncidents);
 
-        return Inertia::render('generate-report/cluster-map/index', [
-            'incidents' => $combinedData,
-        ]);
-    }
-
-    public function summaryReportIndex()
-    {
-        $sightings = Sighting::with('sightedSpecies')->get();
-        $strandedIncidents = StrandedIncident::with('strandedSpecies')->get();
-
-        // Process data for analytics
-        $analyticsData = $this->processAnalyticsData($sightings, $strandedIncidents);
-
-        return Inertia::render('generate-report/summary-report/index', [
-            'analyticsData' => $analyticsData,
-        ]);
-    }
-
-    private function processAnalyticsData($sightings, $strandedIncidents)
-    {
-        // Initialize analytics data
-        $analyticsData = [
-            'yearlyTrends' => [
-                'labels' => [],
-                'datasets' => [
-                    [
-                        'label' => 'Incidents',
-                        'data' => [],
-                    ],
-                ],
-            ],
-            'municipalityDistribution' => [
-                'labels' => [],
-                'datasets' => [
-                    [
-                        'label' => 'Distribution',
-                        'data' => [],
-                    ],
-                ],
-            ],
-            'conditionsFrequency' => [
-                'labels' => [],
-                'datasets' => [
-                    [
-                        'label' => 'Frequency',
-                        'data' => [],
-                    ],
-                ],
-            ],
-            'totalIncidents' => 0,
-            'totalSpeciesInvolved' => 0,
-            'topCommonSpecies' => [],
-            'totalFalseReports' => 0,
-        ];
-
-        // Process sightings and stranded incidents data
-        foreach ($sightings as $sighting) {
-            // Process each sighting
-            // ... (add logic to update analyticsData based on sighting)
-        }
-
-        foreach ($strandedIncidents as $incident) {
-            // Process each stranded incident
-            // ... (add logic to update analyticsData based on incident)
-        }
-
-        // Calculate top 5 common species
-        // ... (add logic to calculate top 5 common species)
-
-        return $analyticsData;
     }
 }
