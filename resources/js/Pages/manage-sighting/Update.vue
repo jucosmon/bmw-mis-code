@@ -23,17 +23,8 @@ const props = defineProps({
     }
 });
 
-// Add defensive check
-if (!page || !page.props) {
-    console.error('Page object is null or undefined');
-}
-
-if (!props.sighting || !props.species) {
-    console.error('sighitng props or species is null');
-    return;
-}
-
-const currentUser = page.props.auth.user.user_role;
+// Define variables outside of onMounted
+const currentUser = ref(null);
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const deletedSightedSpecies = ref([]);
@@ -41,6 +32,19 @@ const municipalities = ref([]);
 const barangays = ref([]);
 
 onMounted(async () => {
+    // Add defensive check
+    if (!page || !page.props) {
+        console.error('Page object is null or undefined');
+        return;
+    }
+
+    if (!props.sighting || !props.species) {
+        console.error('sighitng props or species is null');
+        return;
+    }
+
+    currentUser.value = page.props.auth.user.user_role;
+
     console.log('Component mounted'); // Debugging: Check if the component is mounted
     console.log('The Props:', props.sighting); // Log the entire props object
 
@@ -266,7 +270,7 @@ const setLocationFromMap = () => {
 
 const buttonStatus = computed(() => {
     return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') &&
-    (currentUser!== 'lgu_responder'  && currentUser!== 'barangay_official' && currentUser!== 'public_user');
+    (currentUser.value !== 'lgu_responder'  && currentUser.value !== 'barangay_official' && currentUser.value !== 'public_user');
 });
 
 const falseIncident = () => {

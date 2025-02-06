@@ -347,14 +347,14 @@ console.log(user);
             >
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                href="#"
+                :href="route('generate.report.cluster.map')"
               >
                 <span class="material-icons text-lg mr-2 leading-none">map</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Cluster Map</span>
               </Link>
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                href="#"
+                :href="route('generate.report.summary.report')"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Summary Report</span>

@@ -11,7 +11,6 @@ class StrandedIncident extends Model
 
     protected $table = 'stranded_incidents';
 
-    // Define the fillable attributes for mass assignment
     protected $fillable = [
         'certainty_level',
         'date',
@@ -40,40 +39,26 @@ class StrandedIncident extends Model
         'report_status' => 'string',
     ];
 
-    // Define relationships
-
-    /**
-     * Get the user that owns the stranded incident.
-     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Get the municipality associated with the stranded incident.
-     */
     public function municipality()
     {
         return $this->belongsTo(Municipality::class, 'municipality_id');
     }
 
-    /**
-     * Get the barangay associated with the stranded incident.
-     */
     public function barangay()
     {
         return $this->belongsTo(Barangay::class, 'barangay_id');
     }
 
-    /**
-     * Get all the user actions related to the stranded incident.
-     */
-    // In StrandedIncident model
     public function respondActions()
     {
         return $this->hasMany(RespondAction::class);
     }
+
     public function reportActions()
     {
         return $this->hasMany(ReportAction::class);
@@ -93,20 +78,14 @@ class StrandedIncident extends Model
     {
         return $this->hasMany(StrandedSpecies::class);
     }
-    /**
-     * Scope to filter incidents by report status.
-     */
+
     public function scopeWithReportStatus($query, $status)
     {
         return $query->where('report_status', $status);
     }
 
-    /**
-     * Scope to filter active incidents.
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
-
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ManageAccount\BpemoAdminManageAccountsController;
 use App\Http\Controllers\ManageAccount\LguResponderManageAccountController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GenerateReportController;
 use App\Http\Controllers\GuidelineController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\NotificationController;
@@ -190,8 +191,6 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     });
 
     Route::prefix('species')->group(function () {
-        Route::get('/', [SpeciesController::class, 'indexExploreSpecies'])
-            ->name('');
         Route::get('/', [SpeciesController::class, 'index'])
             ->name('species.index');
         Route::get('/search', [SpeciesController::class, 'search'])
@@ -200,6 +199,13 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->name('species.result');
         Route::get('/view/{id}', [SpeciesController::class, 'view'])
             ->name('species.view');
+    });
+
+    Route::prefix('generate-report')->group(function () {
+        Route::get('/cluster-map', [GenerateReportController::class, 'clusterMapIndex'])
+            ->name('generate.report.cluster.map');
+        Route::get('/summary-report', [GenerateReportController::class, 'summaryReportIndex'])
+            ->name('generate.report.summary.report');
     });
 
     //bpemo admin
