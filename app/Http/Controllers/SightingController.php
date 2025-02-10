@@ -324,10 +324,6 @@ class SightingController extends Controller
         // Store the old report status to check for changes
         $oldReportStatus = $sighting->report_status;
 
-        if($validated['report_status'] === 'false'){
-            $validated['is_active'] = false;
-        }
-
         $sighting->update($validated);
 
         // Check if the report status has changed

@@ -22,6 +22,10 @@ return new class extends Migration
             $table->date('birthdate')->nullable();
             $table->enum('sex', ['male', 'female', 'other'])->nullable();
             $table->string('position', 100)->nullable();
+            $table->tinyInteger('false_report_count')->default(0);
+            $table->boolean('is_restricted')->default(false);
+            $table->timestamp('restriction_start')->nullable();
+            $table->timestamp('restriction_end')->nullable();
             $table->boolean('is_active')->default(true);
             $table->enum('user_role', ['public_user', 'barangay_official', 'lgu_responder', 'bpemo_staff', 'bpemo_admin'])->default('public_user');
             $table->unsignedInteger('municipality_id')->nullable();

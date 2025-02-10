@@ -58,4 +58,5 @@ class GenerateReportController extends Controller
         $combinedData = $processedSightings->merge($processedStrandedIncidents);
 
     }
+
 }
