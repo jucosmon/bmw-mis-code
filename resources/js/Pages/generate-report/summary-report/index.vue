@@ -51,6 +51,7 @@ const fetchData = async () => {
                 longitude: sighting.longitude,
                 date: sighting.date,
                 type: 'sighting',
+                sighting_id: sighting.id,
                 species_id: sighted_species.species.id,
                 species_name: sighted_species.species.name ?? 'Unknown',
                 category: sighted_species.species.category ?? 'Unknown',
@@ -67,6 +68,7 @@ const fetchData = async () => {
                     longitude: stranded_species.longitude,
                     date: incident.date,
                     type: 'stranded',
+                    stranded_incident_id: incident.id,
                     status: stranded_species.condition_code,
                     species_id: stranded_species.species.id,
                     species_name: stranded_species.species.name ?? 'Unknown',
@@ -133,11 +135,11 @@ const fetchData = async () => {
         console.log('Filtered Data:', filteredData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
         console.log('Combined Data:', combinedData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
 
-        const verifiedSightings = sightings.filter(
+        const verifiedSightings = processedSightings.filter(
             (item) => item.report_status === "verified"
         );
 
-        const resolvedStrandedIncidents = strandedIncidents.filter(
+        const resolvedStrandedIncidents = processedStrandedIncidents.filter(
             (item) => item.report_status === "resolved"
         );
 
@@ -190,9 +192,9 @@ const fetchData = async () => {
         const verifiedAndResolvedData = [...filteredVerifiedSightings, ...filteredResolvedStrandedIncidents];
 
         updateSummaryData(
-            filteredData,
+            verifiedAndResolvedData,
             falseReportsData,
-            filteredData
+            filteredData,
         );
     }
 };
@@ -203,7 +205,9 @@ const updateSummaryData = (
     filteredData
 ) => {
     // Process and update summaryData
-    summaryData.value.totalEvents = verifiedAndResolvedData.length;
+    const uniqueEvents = new Set(filteredData.map(item => `${item.type}-${item.type === 'sighting' ? item.sighting_id : item.stranded_incident_id}`));
+    console.log('Unique Events:', Array.from(uniqueEvents));
+    summaryData.value.totalEvents = uniqueEvents.size;
     summaryData.value.totalSpecies = filteredData.length;
     summaryData.value.topCommonSpecies = getTopCommonSpecies(filteredData);
     summaryData.value.falseReports = falseReportsData.length;
