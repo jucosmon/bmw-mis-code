@@ -153,7 +153,7 @@ const fetchData = async () => {
                 item.municipality_id === parseInt(filters.value.municipality);
             const categoryMatch =
                 !filters.value.category ||
-                item.sighted_species.some(s => s.species.category === filters.value.category);
+                item.category === filters.value.category;
             const eventTypeMatch =
                 !filters.value.eventType ||
                 (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
@@ -176,7 +176,7 @@ const fetchData = async () => {
                 item.municipality_id === parseInt(filters.value.municipality);
             const categoryMatch =
                 !filters.value.category ||
-                item.stranded_species.some(s => s.species.category === filters.value.category);
+                item.category === filters.value.category;
             const eventTypeMatch =
                 !filters.value.eventType ||
                 (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
