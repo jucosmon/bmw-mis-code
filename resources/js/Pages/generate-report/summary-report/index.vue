@@ -41,6 +41,7 @@ const fetchData = async () => {
         .select('*, stranded_species(*, species(*))')
         .eq('is_active', true);
 
+
     if (sightingsError || strandedIncidentsError) {
         console.error('Error fetching data:', sightingsError || strandedIncidentsError);
     } else {
@@ -91,7 +92,69 @@ const fetchData = async () => {
                 item.category === filters.value.category;
             const eventTypeMatch =
                 !filters.value.eventType ||
-                item.type.toLowerCase() === filters.value.eventType.toLowerCase();
+                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
+            const statusMatch =
+                (item.type === 'sighting' && item.report_status === 'verified') ||
+                (item.type === 'stranded' && item.report_status === 'resolved');
+
+            return (
+                yearMatch &&
+                municipalityMatch &&
+                categoryMatch &&
+                eventTypeMatch &&
+                statusMatch
+            );
+        });
+
+        const falseReportsData = combinedData.filter((item) => {
+            const yearMatch =
+                !filters.value.year ||
+                new Date(item.date).getFullYear() ===
+                    parseInt(filters.value.year);
+            const municipalityMatch =
+                !filters.value.municipality ||
+                item.municipality_id === parseInt(filters.value.municipality);
+            const categoryMatch =
+                !filters.value.category ||
+                item.category === filters.value.category;
+            const eventTypeMatch =
+                !filters.value.eventType ||
+                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
+
+            return (
+                yearMatch &&
+                municipalityMatch &&
+                categoryMatch &&
+                eventTypeMatch &&
+                item.report_status === "false"
+            );
+        });
+
+        console.log('Filtered Data:', filteredData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
+        console.log('Combined Data:', combinedData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
+
+        const verifiedSightings = sightings.filter(
+            (item) => item.report_status === "verified"
+        );
+
+        const resolvedStrandedIncidents = strandedIncidents.filter(
+            (item) => item.report_status === "resolved"
+        );
+
+        const filteredVerifiedSightings = verifiedSightings.filter((item) => {
+            const yearMatch =
+                !filters.value.year ||
+                new Date(item.date).getFullYear() ===
+                    parseInt(filters.value.year);
+            const municipalityMatch =
+                !filters.value.municipality ||
+                item.municipality_id === parseInt(filters.value.municipality);
+            const categoryMatch =
+                !filters.value.category ||
+                item.sighted_species.some(s => s.species.category === filters.value.category);
+            const eventTypeMatch =
+                !filters.value.eventType ||
+                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
 
             return (
                 yearMatch &&
@@ -101,44 +164,49 @@ const fetchData = async () => {
             );
         });
 
-        console.log('Filtered Data:', filteredData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
-        console.log('Combined Data:', combinedData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
+        const filteredResolvedStrandedIncidents = resolvedStrandedIncidents.filter((item) => {
+            const yearMatch =
+                !filters.value.year ||
+                new Date(item.date).getFullYear() ===
+                    parseInt(filters.value.year);
+            const municipalityMatch =
+                !filters.value.municipality ||
+                item.municipality_id === parseInt(filters.value.municipality);
+            const categoryMatch =
+                !filters.value.category ||
+                item.stranded_species.some(s => s.species.category === filters.value.category);
+            const eventTypeMatch =
+                !filters.value.eventType ||
+                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
 
-        const verifiedAndResolvedData = filteredData.filter(
-            (item) =>
-                (item.type === "sighting" &&
-                    item.report_status === "verified") ||
-                (item.type === "stranded" && item.report_status === "resolved")
-        );
+            return (
+                yearMatch &&
+                municipalityMatch &&
+                categoryMatch &&
+                eventTypeMatch
+            );
+        });
+
+        const verifiedAndResolvedData = [...filteredVerifiedSightings, ...filteredResolvedStrandedIncidents];
 
         updateSummaryData(
-            verifiedAndResolvedData,
-            combinedData,
-            sightings,
-            strandedIncidents
+            filteredData,
+            falseReportsData,
+            filteredData
         );
     }
 };
 
 const updateSummaryData = (
-    filteredData,
-    combinedData,
-    sightings,
-    strandedIncidents
+    verifiedAndResolvedData,
+    falseReportsData,
+    filteredData
 ) => {
     // Process and update summaryData
-    summaryData.value.totalEvents = filteredData.filter(
-        (item) =>
-            item.report_status === "verified" ||
-            item.report_status === "resolved"
-    ).length;
-    summaryData.value.totalSpecies = new Set(
-        filteredData.map((item) => item.species_id)
-    ).size;
+    summaryData.value.totalEvents = verifiedAndResolvedData.length;
+    summaryData.value.totalSpecies = filteredData.length;
     summaryData.value.topCommonSpecies = getTopCommonSpecies(filteredData);
-    summaryData.value.falseReports = combinedData.filter(
-        (item) => item.report_status === "false"
-    ).length;
+    summaryData.value.falseReports = falseReportsData.length;
 
     // Further processing for charts and distributions
     summaryData.value.yearlyTrends = getYearlyTrends(filteredData);
