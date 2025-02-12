@@ -262,7 +262,16 @@ const getConditionFrequency = (data) => {
         return acc;
     }, {});
 
-    return Object.entries(frequency).map(([status, count]) => ({ status, count }));
+    const statusDescriptions = {
+        1: 'Alive',
+        2: 'Freshly Dead',
+        3: 'Decomposed, but organs are intact ',
+        4: 'Advanced Decomposition',
+        5: 'Skeletal/Cartiginous Remains',
+        6: 'Destroyed'
+    };
+
+    return Object.entries(frequency).map(([status, count]) => ({ status: statusDescriptions[status] || 'Unknown', count }));
 };
 
 const getTopCommonSpecies = (data) => {
