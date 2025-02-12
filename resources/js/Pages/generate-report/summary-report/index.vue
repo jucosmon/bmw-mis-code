@@ -1,8 +1,8 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { Chart, LineController, BarController, PieController, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler } from 'chart.js';
+import { ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale, LineController, LineElement, PieController, PointElement, Tooltip } from 'chart.js';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 // Register Chart.js components
 Chart.register(LineController, BarController, PieController, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler);
@@ -15,8 +15,6 @@ const filters = ref({
 });
 
 const years = ref([2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]);
-const categories = ref(['Marine Mammals', 'Marine Turtles', 'Shark and Rays']);
-const eventTypes = ref(['Stranded', 'Sighting']);
 const municipalities = ref([]);
 
 const summaryData = ref({
@@ -79,25 +77,75 @@ const fetchData = async () => {
         });
 
         const combinedData = [...processedSightings, ...processedStrandedIncidents];
-        const filteredData = combinedData.filter(item =>
-            (item.type === 'sighting' && item.report_status === 'verified') ||
-            (item.type === 'stranded' && item.report_status === 'resolved')
+
+        const filteredData = combinedData.filter((item) => {
+            const yearMatch =
+                !filters.value.year ||
+                new Date(item.date).getFullYear() ===
+                    parseInt(filters.value.year);
+            const municipalityMatch =
+                !filters.value.municipality ||
+                item.municipality_id === parseInt(filters.value.municipality);
+            const categoryMatch =
+                !filters.value.category ||
+                item.category === filters.value.category;
+            const eventTypeMatch =
+                !filters.value.eventType ||
+                item.type.toLowerCase() === filters.value.eventType.toLowerCase();
+
+            return (
+                yearMatch &&
+                municipalityMatch &&
+                categoryMatch &&
+                eventTypeMatch
+            );
+        });
+
+        console.log('Filtered Data:', filteredData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
+        console.log('Combined Data:', combinedData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
+
+        const verifiedAndResolvedData = filteredData.filter(
+            (item) =>
+                (item.type === "sighting" &&
+                    item.report_status === "verified") ||
+                (item.type === "stranded" && item.report_status === "resolved")
         );
-        updateSummaryData(filteredData, combinedData);
+
+        updateSummaryData(
+            verifiedAndResolvedData,
+            combinedData,
+            sightings,
+            strandedIncidents
+        );
     }
 };
 
-const updateSummaryData = (filteredData, combinedData) => {
+const updateSummaryData = (
+    filteredData,
+    combinedData,
+    sightings,
+    strandedIncidents
+) => {
     // Process and update summaryData
-    summaryData.value.totalEvents = filteredData.length;
-    summaryData.value.totalSpecies = new Set(filteredData.map(item => item.species_id)).size;
+    summaryData.value.totalEvents = filteredData.filter(
+        (item) =>
+            item.report_status === "verified" ||
+            item.report_status === "resolved"
+    ).length;
+    summaryData.value.totalSpecies = new Set(
+        filteredData.map((item) => item.species_id)
+    ).size;
     summaryData.value.topCommonSpecies = getTopCommonSpecies(filteredData);
-    summaryData.value.falseReports = combinedData.filter(item => item.report_status === 'false').length; // Check for false reports
+    summaryData.value.falseReports = combinedData.filter(
+        (item) => item.report_status === "false"
+    ).length;
 
     // Further processing for charts and distributions
     summaryData.value.yearlyTrends = getYearlyTrends(filteredData);
-    summaryData.value.categoryDistribution = getCategoryDistribution(filteredData);
-    summaryData.value.municipalityDistribution = getMunicipalityDistribution(filteredData);
+    summaryData.value.categoryDistribution =
+        getCategoryDistribution(filteredData);
+    summaryData.value.municipalityDistribution =
+        getMunicipalityDistribution(filteredData);
     summaryData.value.conditionFrequency = getConditionFrequency(filteredData);
 
     renderCharts();
@@ -310,13 +358,16 @@ const exportData = () => {
                 <label for="category" class="font-medium">Category:</label>
                 <select v-model="filters.category" id="category" class="border rounded px-2 py-1">
                     <option value="">All</option>
-                    <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
+                    <option value="marine_mammals">Marine Mammals</option>
+                    <option value="marine_turtles">Marine Turtles</option>
+                    <option value="sharks_rays">Shark and Rays</option>
                 </select>
 
                 <label for="eventType" class="font-medium">Event Type:</label>
                 <select v-model="filters.eventType" id="eventType" class="border rounded px-2 py-1">
                     <option value="">All</option>
-                    <option v-for="eventType in eventTypes" :key="eventType" :value="eventType">{{ eventType }}</option>
+                    <option value="Sighting">Sighting</option>
+                    <option value="Stranded">Stranded</option>
                 </select>
 
                 <button @click="applyFilters" class="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
@@ -328,11 +379,11 @@ const exportData = () => {
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                 <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg font-semibold">Total Events</h3>
+                    <h3 class="text-lg font-semibold">Total Reports</h3>
                     <p class="text-2xl">{{ summaryData.totalEvents }}</p>
                 </div>
                 <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg font-semibold">Total Species Involved</h3>
+                    <h3 class="text-lg font-semibold">Total No. of Species Involved</h3>
                     <p class="text-2xl">{{ summaryData.totalSpecies }}</p>
                 </div>
                 <div class="bg-white p-4 rounded shadow">

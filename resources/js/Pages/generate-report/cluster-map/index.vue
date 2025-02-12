@@ -12,12 +12,10 @@ const markers = ref(null);
 const filters = ref({
     year: '',
     category: '',
-    incidentType: ''
+    eventType: ''
 });
 
 const years = ref([2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]);
-const categories = ref(['Marine Mammals', 'Marine Turtles', 'Shark and Rays']);
-const types = ref(['Stranded', 'Sighted']);
 
 const incidents = ref([]);
 
@@ -142,7 +140,7 @@ const loadData = () => {
         if (filters.value.category && incident.category !== filters.value.category) {
             return;
         }
-        if (filters.value.incidentType && incident.type.toLowerCase() !== filters.value.incidentType.toLowerCase()) {
+        if (filters.value.eventType && incident.type.toLowerCase() !== filters.value.eventType.toLowerCase()) {
             return;
         }
 
@@ -174,7 +172,7 @@ const resetFilters = () => {
     filters.value = {
         year: '',
         category: '',
-        incidentType: ''
+        eventType: ''
     };
     loadData();
 };
@@ -201,13 +199,13 @@ const resetFilters = () => {
                 <label for="category" class="font-medium">Category:</label>
                 <select v-model="filters.category" id="category" class="border rounded px-2 py-1">
                     <option value="">All</option>
-                    <option value="Marine Mammals">Marine Mammals</option>
-                    <option value="Marine Turtles">Marine Turtles</option>
-                    <option value="Shark and Rays">Shark and Rays</option>
+                    <option value="marine_mammals">Marine Mammals</option>
+                    <option value="marine_turtles">Marine Turtles</option>
+                    <option value="sharks_rays">Shark and Rays</option>
                 </select>
 
-                <label for="incidentType" class="font-medium">Incident Type:</label>
-                <select v-model="filters.incidentType" id="incidentType" class="border rounded px-2 py-1">
+                <label for="eventType" class="font-medium">Incident Type:</label>
+                <select v-model="filters.eventType" id="eventType" class="border rounded px-2 py-1">
                     <option value="">All</option>
                     <option value="Sighting">Sighting</option>
                     <option value="Stranded">Stranded</option>
