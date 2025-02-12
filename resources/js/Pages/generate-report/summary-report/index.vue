@@ -2,10 +2,11 @@
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
 import { ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale, LineController, LineElement, PieController, PointElement, Tooltip } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
-// Register Chart.js components
-Chart.register(LineController, BarController, PieController, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler);
+// Register Chart.js components and plugins
+Chart.register(LineController, BarController, PieController, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler, ChartDataLabels);
 
 const filters = ref({
     year: '',
@@ -287,10 +288,22 @@ const getTopCommonSpecies = (data) => {
 };
 
 const renderCharts = () => {
-    if (yearlyTrendsChart) yearlyTrendsChart.destroy();
-    if (categoryTrendsChart) categoryTrendsChart.destroy();
-    if (municipalityDistributionChart) municipalityDistributionChart.destroy();
-    if (conditionFrequencyChart) conditionFrequencyChart.destroy();
+    if (yearlyTrendsChart) {
+        yearlyTrendsChart.destroy();
+        yearlyTrendsChart = null;
+    }
+    if (categoryTrendsChart) {
+        categoryTrendsChart.destroy();
+        categoryTrendsChart = null;
+    }
+    if (municipalityDistributionChart) {
+        municipalityDistributionChart.destroy();
+        municipalityDistributionChart = null;
+    }
+    if (conditionFrequencyChart) {
+        conditionFrequencyChart.destroy();
+        conditionFrequencyChart = null;
+    }
 
     yearlyTrendsChart = new Chart(document.getElementById('yearlyTrendsChart'), {
         type: 'line',
@@ -303,6 +316,38 @@ const renderCharts = () => {
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 fill: true
             }]
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    display: true,
+                    color: 'black',
+                    align: 'top',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    formatter: (value) => value
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: 'black',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: 'black',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
         }
     });
 
@@ -317,6 +362,38 @@ const renderCharts = () => {
                 borderColor: 'rgba(153, 102, 255, 1)',
                 borderWidth: 1
             }]
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    display: true,
+                    color: 'black',
+                    align: 'top',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    formatter: (value) => value
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: 'black',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: 'black',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
         }
     });
 
@@ -347,7 +424,18 @@ const renderCharts = () => {
             }]
         },
         options: {
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: {
+                datalabels: {
+                    display: true,
+                    color: 'black',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    formatter: (value) => value
+                }
+            }
         }
     });
 
@@ -362,6 +450,38 @@ const renderCharts = () => {
                 borderColor: 'rgba(255, 159, 64, 1)',
                 borderWidth: 1
             }]
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    display: true,
+                    color: 'black',
+                    align: 'top',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    formatter: (value) => value
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: 'black',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: 'black',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
         }
     });
 };
@@ -514,5 +634,10 @@ const exportData = () => {
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto;
 }
 </style>
