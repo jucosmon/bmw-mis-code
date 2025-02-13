@@ -359,14 +359,6 @@ console.log(user);
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
                 <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Summary Report</span>
               </Link>
-
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                href="#"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">download</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Download Data</span>
-              </Link>
             </div>
           </div>
 
