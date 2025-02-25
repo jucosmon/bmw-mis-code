@@ -53,9 +53,9 @@ const fetchData = async () => {
                 date: sighting.date,
                 type: 'sighting',
                 sighting_id: sighting.id,
-                species_id: sighted_species.species.id,
-                species_name: sighted_species.species.name ?? 'Unknown',
-                category: sighted_species.species.category ?? 'Unknown',
+                species_id: sighted_species.species?.id ?? null,
+                species_name: sighted_species.species?.name ?? 'Unknown',
+                category: sighted_species.species?.category ?? 'Unknown',
                 municipality_id: sighting.municipality_id,
                 report_status: sighting.report_status
             }));
@@ -63,7 +63,8 @@ const fetchData = async () => {
 
         const processedStrandedIncidents = strandedIncidents.flatMap(incident => {
             return incident.stranded_species.map(stranded_species => {
-                const status = stranded_species.condition_code == 1 ? 'Alive' : (stranded_species.condition_code >= 2 && stranded_species.condition_code <= 5 ? 'Dead' : 'Unknown');
+                const status = stranded_species.condition_code == 1 ? 'Alive' :
+                    (stranded_species.condition_code >= 2 && stranded_species.condition_code <= 5 ? 'Dead' : 'Unknown');
                 return {
                     latitude: stranded_species.latitude,
                     longitude: stranded_species.longitude,
@@ -71,9 +72,9 @@ const fetchData = async () => {
                     type: 'stranded',
                     stranded_incident_id: incident.id,
                     status: stranded_species.condition_code,
-                    species_id: stranded_species.species.id,
-                    species_name: stranded_species.species.name ?? 'Unknown',
-                    category: stranded_species.species.category ?? 'Unknown',
+                    species_id: stranded_species.species?.id ?? null,
+                    species_name: stranded_species.species?.name ?? 'Unknown',
+                    category: stranded_species.species?.category ?? 'Unknown',
                     municipality_id: incident.municipality_id,
                     report_status: incident.report_status
                 };

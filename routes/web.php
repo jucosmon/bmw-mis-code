@@ -157,7 +157,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         // VIEW GUIDELINES FOR THE CORRESPONDING ROLES
         Route::prefix('user')->middleware(['role:lgu_responder,barangay_official,public_user'])->group(function () {
             //viewing another guideline
-            Route::get('/view/{id}', [GuidelineController::class, 'viewForBasicUser'])
+            Route::get('/view/{id}', action: [GuidelineController::class, 'viewForBasicUser'])
                 ->name('guideline.view');
             Route::get('/', [GuidelineController::class, 'indexForBasicUser'])
                 ->name('guideline.index');
