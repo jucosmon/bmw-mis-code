@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet/dist/leaflet.css';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const map = ref(null);
 const markers = ref(null);
@@ -164,9 +164,9 @@ const loadData = () => {
     });
 };
 
-const applyFilters = () => {
+watch(filters, () => {
     loadData();
-};
+}, { deep: true });
 
 const resetFilters = () => {
     filters.value = {
@@ -211,7 +211,6 @@ const resetFilters = () => {
                     <option value="Stranded">Stranded</option>
                 </select>
 
-                <button @click="applyFilters" class="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
                 <button @click="resetFilters" class="bg-gray-300 px-4 py-2 rounded">Reset</button>
             </div>
             <div id="map" style="height: 500px;"></div>

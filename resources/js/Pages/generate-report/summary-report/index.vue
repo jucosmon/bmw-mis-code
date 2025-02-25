@@ -3,7 +3,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
 import { ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale, LineController, LineElement, PieController, PointElement, Tooltip } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 // Register Chart.js components and plugins
 Chart.register(LineController, BarController, PieController, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler, ChartDataLabels);
@@ -507,10 +507,9 @@ onMounted(async () => {
     fetchData();
 });
 
-
-const applyFilters = () => {
+watch(filters, () => {
     fetchData();
-};
+}, { deep: true });
 
 const resetFilters = () => {
     filters.value = {
@@ -572,7 +571,6 @@ const exportData = () => {
                     <option value="Stranded">Stranded</option>
                 </select>
 
-                <button @click="applyFilters" class="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
                 <button @click="resetFilters" class="bg-gray-300 px-4 py-2 rounded">Reset</button>
                 <button @click="downloadPDF" class="bg-green-500 text-white px-4 py-2 rounded">Download</button>
                 <button @click="exportData" class="bg-yellow-500 text-white px-4 py-2 rounded">Export</button>
