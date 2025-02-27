@@ -2,6 +2,8 @@
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
 import { Head } from '@inertiajs/vue3';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import L from 'leaflet';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -19,6 +21,8 @@ const filters = ref({
 const years = ref([2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]);
 
 const incidents = ref([]);
+const showDownloadModal = ref(false);
+const isDownloading = ref(false);
 
 onMounted(() => {
     console.log('Incidents:', incidents.value);
@@ -177,6 +181,108 @@ const resetFilters = () => {
     };
     loadData();
 };
+
+// Show download confirmation modal
+const showDownloadConfirmation = () => {
+    showDownloadModal.value = true;
+};
+
+// Download PDF implementation
+const downloadPDF = async () => {
+    // if (!isMapLoaded.value) {
+    //     alert('Map is still loading. Please wait.');
+    //     return;
+    // }
+
+    try {
+        isDownloading.value = true;
+        showDownloadModal.value = false;
+
+        // Get the map content
+        const mapElement = document.getElementById('map');
+
+        // Temporarily hide the modal to capture the map correctly
+        const modalElement = document.querySelector('.fixed.inset-0');
+        if (modalElement) {
+            modalElement.style.display = 'none';
+        }
+
+        // Create a canvas from the map element
+        const canvas = await html2canvas(mapElement, {
+            scale: 2, // Higher scale for better quality
+            useCORS: true, // Enable CORS for images
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+
+        // Restore the modal display
+        if (modalElement) {
+            modalElement.style.display = '';
+        }
+
+        // Create PDF
+        const pdf = new jsPDF('p', 'mm', 'a4');
+
+        // Get the dimensions
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Add title
+        const title = `Marine Wildlife Incident Cluster Map`;
+        const subtitle = `Generated on ${new Date().toLocaleDateString()}`;
+
+        pdf.setFontSize(18);
+        pdf.text(title, 105, 20, { align: 'center' });
+        pdf.setFontSize(12);
+        pdf.text(subtitle, 105, 30, { align: 'center' });
+
+        // Add filter information
+        let filterText = 'Filters: ';
+        filterText += filters.value.year ? `Year: ${filters.value.year}, ` : 'All Years, ';
+        filterText += filters.value.category ? `Category: ${filters.value.category}, ` : 'All Categories, ';
+        filterText += filters.value.eventType ? `Event Type: ${filters.value.eventType}` : 'All Event Types';
+
+        pdf.setFontSize(10);
+        const splitFilterText = pdf.splitTextToSize(filterText, 190); // Split text if it's too long
+
+        const y = 40; // You can change this value to adjust the vertical position
+
+        // Add the text to the PDF
+        pdf.text(splitFilterText, 105, y, { align: 'center' });
+
+        // Add the image to the PDF
+        const imgData = canvas.toDataURL('image/png');
+        // Calculate the height of the filter text
+        const filterTextHeight = pdf.getTextDimensions(splitFilterText).h; // Get the height of the filter text
+
+        // Set the position for the image, reducing the space
+        let position = y + filterTextHeight + 1; // Add a small margin (5 mm) below the filter text
+
+        // Split the image across multiple pages if needed
+        let heightLeft = imgHeight;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth - 20, imgHeight);
+        heightLeft -= (pageHeight - position);
+
+        // Add more pages if the content is longer than one page
+        while (heightLeft > 0) {
+            position = 0;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth - 20, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        // Save the PDF
+        pdf.save(`marine-wildlife-cluster-map-${new Date().toISOString().slice(0, 10)}.pdf`);
+
+        isDownloading.value = false;
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        isDownloading.value = false;
+        alert('Error generating PDF. Please try again.');
+    }
+};
 </script>
 
 <template>
@@ -214,15 +320,38 @@ const resetFilters = () => {
                 </select>
 
                 <button @click="resetFilters" class="bg-gray-300 px-4 py-2 rounded">Reset</button>
+                <button @click="showDownloadConfirmation" class="bg-green-500 text-white px-4 py-2 rounded">Download</button>
             </div>
-            <div id="map" style="height: 500px;"></div>
+            <div id="map" style="height: 500px; z-index: 0;"></div>
         </div>
     </Sidebar>
+
+    <!-- Download Confirmation Modal -->
+    <div v-if="showDownloadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 class="text-lg font-semibold mb-4">Download Map</h3>
+            <p class="mb-6">Are you sure you want to download the current map as a PDF?</p>
+            <div class="flex justify-end space-x-3">
+                <button
+                    @click="showDownloadModal = false"
+                    class="px-4 py-2 bg-gray-300 rounded">
+                    Cancel
+                </button>
+                <button
+                    @click="downloadPDF"
+                    class="px-4 py-2 bg-green-500 text-white rounded"
+                    :disabled="isDownloading">
+                    {{ isDownloading ? 'Downloading...' : 'Download' }}
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style>
 #map {
     height: 500px;
+    z-index: 0;
 }
 .filters {
     display: flex;
