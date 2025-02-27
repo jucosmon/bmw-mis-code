@@ -4,15 +4,14 @@ import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Inertia } from '@inertiajs/inertia';
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
 const state = reactive({
   sidebarOpen: false,
   activeDropdown: null,
-  sidebarLargeScreenOpen: true,
   profileDropdownOpen: false,
   notificationsDropdownOpen: false,
-  isMobileView: false, // Add this new state
+  isMobileView: false,
 });
 
 console.log('Current history state:', window.history.state);
@@ -122,33 +121,11 @@ onMounted(() => {
   if (savedSidebarState !== null) {
     state.sidebarOpen = JSON.parse(savedSidebarState);
   }
-
-  const savedSidebarLargeScreenState = localStorage.getItem('sidebarLargeScreenOpen');
-  if (savedSidebarLargeScreenState !== null) {
-    state.sidebarLargeScreenOpen = JSON.parse(savedSidebarLargeScreenState);
-  }
 });
 
 // Watch for changes to sidebarOpen and save to local storage
 watch(() => state.sidebarOpen, (newValue) => {
   localStorage.setItem('sidebarOpen', JSON.stringify(newValue));
-  if (!newValue && state.isMobileView) {
-    const elements = document.querySelectorAll('.sidebar-text');
-    elements.forEach(el => el.style.display = 'none');
-  }
-});
-
-// Watch for changes to sidebarLargeScreenOpen and save to local storage
-watch(() => state.sidebarLargeScreenOpen, (newValue) => {
-  localStorage.setItem('sidebarLargeScreenOpen', JSON.stringify(newValue));
-
-  // Ensure proper text visibility when toggling sidebar
-  nextTick(() => {
-    const elements = document.querySelectorAll('.sidebar-text');
-    elements.forEach(el => {
-      el.style.display = newValue ? 'inline' : 'none';
-    });
-  });
 });
 
 // Additional dropdown and close logic remains unchanged
@@ -194,10 +171,6 @@ console.log(user);
 onMounted(() => {
   const handleResize = () => {
     state.isMobileView = window.innerWidth < 768;
-    if (!state.isMobileView && !state.sidebarLargeScreenOpen) {
-      const elements = document.querySelectorAll('.sidebar-text');
-      elements.forEach(el => el.style.display = 'none');
-    }
   };
 
   window.addEventListener('resize', handleResize);
@@ -209,440 +182,353 @@ onMounted(() => {
   });
 });
 
+// Replace toggleSidebar with separate open/close functions
+const openSidebar = () => {
+  state.sidebarOpen = true;
+};
+
+const closeSidebar = () => {
+  state.sidebarOpen = false;
+};
+
+// Replace open/close functions with a single toggle function
+const toggleSidebar = () => {
+  state.sidebarOpen = !state.sidebarOpen;
+};
+
+// Add navigation close handler
+const handleNavigation = () => {
+  if (state.isMobileView) {
+    state.sidebarOpen = false;
+  }
+};
+
 </script>
 
 <template>
-    <div class="flex-col w-full md:flex md:flex-row md:min-h-screen">
-      <!-- Sidebar -->
-      <div class="flex flex-col flex-shrink-0 w-full text-indigo-700 bg-white dark:text-indigo-200 dark:bg-indigo-900"
-           :class="{
-               'md:w-fit': !state.sidebarLargeScreenOpen,
-               'md:w-64': state.sidebarLargeScreenOpen
-           }">
-        <div class="flex flex-row items-center justify-between flex-shrink-0 px-8 py-4">
-          <Link
-              v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
-              href="#"
-              class="text-lg font-semibold tracking-widest text-indigo-900 uppercase rounded-lg dark:text-white focus:outline-none focus:shadow-outline sidebar-text"
-              :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-          >
-            BMW-MIS
-          </Link>
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div
+      class="flex flex-col flex-shrink-0 text-indigo-700 bg-white dark:text-indigo-200 dark:bg-indigo-900 h-screen fixed md:sticky top-0"
+      :class="{
+        'w-64': state.sidebarOpen,
+        'w-0': !state.sidebarOpen,
+        'translate-x-0': state.sidebarOpen,
+        '-translate-x-full md:translate-x-0': !state.sidebarOpen
+      }"
+    >
+      <!-- Sidebar header with close button -->
+      <div class="flex items-center justify-between p-4">
+        <Link
+          href="#"
+          class="text-lg font-semibold tracking-widest text-indigo-900 uppercase dark:text-white"
+          :class="{ 'hidden': !state.sidebarOpen }"
+        >
+          BMW-MIS
+        </Link>
+        <!-- Close button -->
+        <button
+          class="rounded-lg focus:outline-none focus:shadow-outline"
+          :class="{ 'hidden': !state.sidebarOpen }"
+          @click="closeSidebar"
+        >
+          <span class="material-icons text-2xl">close</span>
+        </button>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-grow px-4 pb-4 overflow-y-auto">
+        <!-- Dashboard -->
+        <Link :href="route('dashboard')"
+            class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline">
+            <span class="material-icons text-lg mr-2 leading-none">home</span>
+            <span class="ml-2">Dashboard</span>
+        </Link>
+        <!-- Manage Stranded Incident -->
+        <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+        :href="route('stranded.incident.index')">
+            <span class="material-icons text-lg mr-2 leading-none">medication</span>
+            <span class="ml-2">Stranded Incident</span>
+        </Link>
+
+        <!-- Manage Sightings -->
+        <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+          :href="route('sighting.index')">
+            <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+            <span class="ml-2">Sightings</span>
+        </Link>
+
+        <!-- Manage Species  -->
+         <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+         :href="route('species.index')">
+            <span class="material-icons text-lg mr-2 leading-none">manage_search</span>
+            <span class="ml-2">Explore Species</span>
+        </Link>
+
+        <!-- Manage Guidelines Dropdown -->
+        <div v-if="user.user_role==='bpemo_admin'" class="relative">
           <button
-            class="rounded-lg md:hidden focus:outline-none focus:shadow-outline"
-            @click="state.sidebarOpen = !state.sidebarOpen"
+            @click="toggleDropdown('manageGuidelines', $event)"
+            class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
           >
-            <svg fill="currentColor" viewBox="0 0 20 20" class="w-6 h-6">
+            <span class="material-icons text-lg mr-2 leading-none">article</span>
+            <span class="ml-2">Manage Guidelines</span>
+            <svg v-show="state.sidebarOpen"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              :class="{ 'rotate-180': state.activeDropdown === 'manageGuidelines', 'rotate-0': state.activeDropdown !== 'manageGuidelines' }"
+              class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform"
+            >
               <path
-                v-if="!state.sidebarOpen"
                 fill-rule="evenodd"
-                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM9 15a1 1 0 011-1h6a1 1 0 110 2h-6a1 1 0 01-1-1z"
-                clip-rule="evenodd"
-              />
-              <path
-                v-else
-                fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                 clip-rule="evenodd"
               />
             </svg>
           </button>
-          <button
-              class="rounded-lg md:block hidden focus:outline-none focus:shadow-outline"
-              @click="state.sidebarLargeScreenOpen = !state.sidebarLargeScreenOpen"
+
+          <div
+            v-if="state.activeDropdown === 'manageGuidelines'"
+            class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
           >
-              <span v-if="!state.sidebarLargeScreenOpen"
-                  class="material-icons w-6 h-6 text-white">
-                  keyboard_double_arrow_right
-              </span>
-              <span v-else class="material-icons w-6 h-6 text-white">
-                  keyboard_double_arrow_left
-              </span>
-          </button>
+            <Link
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('manage.guideline.index', {user_role: 'lgu_responder', archived: false})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">LGU Responder</span>
+            </Link>
+            <Link
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('manage.guideline.index', {user_role: 'barangay_official', archived: false})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">Barangay Official</span>
+            </Link>
+            <Link
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('manage.guideline.index', {user_role: 'public_user', archived: false})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">Public User</span>
+            </Link>
+          </div>
         </div>
 
-        <!-- Navigation -->
-        <nav
-          :class="{ 'block': state.sidebarOpen, 'hidden': !state.sidebarOpen }"
-          class="flex-grow px-4 pb-4 md:block md:pb-0 md:overflow-y-auto"
-        >
-          <!-- Dashboard -->
-          <Link :href="route('dashboard')"
-              class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline">
-              <span class="material-icons text-lg mr-2 leading-none">home</span>
-              <span
-                class="sidebar-text ml-2"
-                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-              >
-                Dashboard
-              </span>
-          </Link>
+        <!-- View guidelines for specific user roles -->
+        <Link
+          v-if="user.user_role==='lgu_responder' || user.user_role==='barangay_official' || user.user_role==='public_user'"
+          class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+          :href="route('guideline.index')">
+          <span class="material-icons text-lg mr-2 leading-none">article</span>
+          <span class="ml-2">Guidelines</span>
+        </Link>
 
-          <!-- Manage Stranded Incident -->
-          <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-          :href="route('stranded.incident.index')">
-              <span class="material-icons text-lg mr-2 leading-none">medication</span>
-              <span
-                class="sidebar-text ml-2"
-                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-              >
-                Stranded Incident
-              </span>
-          </Link>
-
-          <!-- Manage Sightings -->
-          <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-            :href="route('sighting.index')">
+        <!-- Generate Report Dropdown -->
+        <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff'" class="relative">
+          <button
+            @click="toggleDropdown('generateReport', $event)"
+            class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+          >
+            <span class="material-icons text-lg mr-2 leading-none">assessment</span>
+            <span class="ml-2">Generate Report</span>
+            <svg v-show="state.sidebarOpen"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              :class="{ 'rotate-180': state.activeDropdown === 'generateReport', 'rotate-0': state.activeDropdown !== 'generateReport' }"
+              class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            v-if="state.activeDropdown === 'generateReport'"
+            class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
+          >
+            <Link
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('generate.report.cluster.map')"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">map</span>
+              <span class="ml-2">Cluster Map</span>
+            </Link>
+            <Link
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('generate.report.summary.report')"
+            >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-              <span
-                class="sidebar-text ml-2"
-                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-              >
-                Sightings
-              </span>
-          </Link>
+              <span class="ml-2">Summary Report</span>
+            </Link>
+          </div>
+        </div>
 
-          <!-- Manage Species  -->
-           <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-           :href="route('species.index')">
-              <span class="material-icons text-lg mr-2 leading-none">manage_search</span>
-              <span
-                class="sidebar-text ml-2"
-                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-              >
-                Explore Species
-              </span>
-          </Link>
+        <!-- Manage Account Dropdown -->
+        <div class="relative" v-if="user.user_role==='bpemo_admin' || user.user_role==='lgu_responder'">
+          <button
+            @click="toggleDropdown('manageAccount', $event)"
+            class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+          >
+            <span class="material-icons text-lg mr-2 leading-none">manage_accounts</span>
+            <span class="ml-2">Manage Account</span>
+            <svg v-show="state.sidebarOpen"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              :class="{ 'rotate-180': state.activeDropdown === 'manageAccount', 'rotate-0': state.activeDropdown !== 'manageAccount' }"
+              class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
 
-          <!-- Manage Guidelines Dropdown -->
-          <div v-if="user.user_role==='bpemo_admin'" class="relative">
+          <div
+            v-if="state.activeDropdown === 'manageAccount'"
+            class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
+          >
+            <DropdownLink
+              v-if="user.user_role === 'bpemo_admin'"
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_admin'})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">BPEMO Administrator</span>
+            </DropdownLink>
+            <DropdownLink
+              v-if="user.user_role === 'bpemo_admin'"
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_staff'})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">BPEMO Staff</span>
+            </DropdownLink>
+            <DropdownLink
+              v-if="user.user_role === 'bpemo_admin'"
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', { type: 'lgu_responder'})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">LGU Responder</span>
+            </DropdownLink>
+            <DropdownLink
+              v-if="user.user_role === 'bpemo_admin'"
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'barangay_official'})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">Barangay Official</span>
+            </DropdownLink>
+            <DropdownLink
+              v-if="user.user_role === 'bpemo_admin'"
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('bpemo.admin.manage.account.index', {type: 'public_user'})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">Public User</span>
+            </DropdownLink>
+
+            <!-- Manage Barangay Official Accounts for LGU Responder user -->
+            <DropdownLink
+              v-if="user.user_role === 'lgu_responder'"
+              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              :href="route('lgu.responder.manage.account.index', {type: 'barangay_official'})"
+            >
+              <span class="material-icons text-lg mr-2 leading-none">visibility</span>
+              <span class="ml-2">Barangay Official</span>
+            </DropdownLink>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen w-full">
+      <!-- Header with hamburger button -->
+      <header class="sticky top-0 bg-white shadow-md z-30">
+        <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div class="flex items-center gap-5">
+            <!-- Hamburger button -->
             <button
-              @click="toggleDropdown('manageGuidelines', $event)"
-              class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+              v-if="!state.sidebarOpen"
+              class="rounded-lg focus:outline-none focus:shadow-outline hover:bg-gray-100"
+              @click="openSidebar"
             >
-              <span class="material-icons text-lg mr-2 leading-none">article</span>
-              <span
-                class="sidebar-text ml-2"
-                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-              >
-                Manage Guidelines
-              </span>
-              <svg v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                :class="{ 'rotate-180': state.activeDropdown === 'manageGuidelines', 'rotate-0': state.activeDropdown !== 'manageGuidelines', 'hidden': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform sidebar-text"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
+              <span class="material-icons text-2xl">menu</span>
             </button>
-
-            <div
-              v-if="state.activeDropdown === 'manageGuidelines'"
-              class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
-            >
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('manage.guideline.index', {user_role: 'lgu_responder', archived: false})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  LGU Responder
-                </span>
-              </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('manage.guideline.index', {user_role: 'barangay_official', archived: false})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  Barangay Official
-                </span>
-              </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('manage.guideline.index', {user_role: 'public_user', archived: false})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  Public User
-                </span>
-              </Link>
-            </div>
+            <slot name="header" />
           </div>
 
-          <!-- View guidelines for specific user roles -->
-          <Link
-            v-if="user.user_role==='lgu_responder' || user.user_role==='barangay_official' || user.user_role==='public_user'"
-            class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-            :href="route('guideline.index')">
-            <span class="material-icons text-lg mr-2 leading-none">article</span>
-            <span
-              class="sidebar-text ml-2"
-              :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-            >
-              Guidelines
-            </span>
-          </Link>
-
-          <!-- Generate Report Dropdown -->
-          <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff'" class="relative">
-            <button
-              @click="toggleDropdown('generateReport', $event)"
-              class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-            >
-              <span class="material-icons text-lg mr-2 leading-none">assessment</span>
-              <span
-                class="sidebar-text ml-2"
-                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-              >
-                Generate Report
-              </span>
-              <svg v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                :class="{ 'rotate-180': state.activeDropdown === 'generateReport', 'rotate-0': state.activeDropdown !== 'generateReport', 'hidden': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform sidebar-text"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </button>
-            <div
-              v-if="state.activeDropdown === 'generateReport'"
-              class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
-            >
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('generate.report.cluster.map')"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">map</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  Cluster Map
-                </span>
-              </Link>
-              <Link
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('generate.report.summary.report')"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  Summary Report
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          <!-- Manage Account Dropdown -->
-          <div class="relative" v-if="user.user_role==='bpemo_admin' || user.user_role==='lgu_responder'">
-            <button
-              @click="toggleDropdown('manageAccount', $event)"
-              class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-            >
-              <span class="material-icons text-lg mr-2 leading-none">manage_accounts</span>
-              <span
-                class="sidebar-text ml-2"
-                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-              >
-                Manage Account
-              </span>
-              <svg v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                :class="{ 'rotate-180': state.activeDropdown === 'manageAccount', 'rotate-0': state.activeDropdown !== 'manageAccount', 'hidden': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform sidebar-text"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </button>
-
-            <div
-              v-if="state.activeDropdown === 'manageAccount'"
-              class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
-            >
-              <DropdownLink
-                v-if="user.user_role === 'bpemo_admin'"
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_admin'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  BPEMO Administrator
-                </span>
-              </DropdownLink>
-              <DropdownLink
-                v-if="user.user_role === 'bpemo_admin'"
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_staff'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  BPEMO Staff
-                </span>
-              </DropdownLink>
-              <DropdownLink
-                v-if="user.user_role === 'bpemo_admin'"
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.account.index', { type: 'lgu_responder'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  LGU Responder
-                </span>
-              </DropdownLink>
-              <DropdownLink
-                v-if="user.user_role === 'bpemo_admin'"
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.account.index', {type: 'barangay_official'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  Barangay Official
-                </span>
-              </DropdownLink>
-              <DropdownLink
-                v-if="user.user_role === 'bpemo_admin'"
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('bpemo.admin.manage.account.index', {type: 'public_user'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  Public User
-                </span>
-              </DropdownLink>
-
-              <!-- Manage Barangay Official Accounts for LGU Responder user -->
-              <DropdownLink
-                v-if="user.user_role === 'lgu_responder'"
-                class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
-                :href="route('lgu.responder.manage.account.index', {type: 'barangay_official'})"
-              >
-                <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span
-                  class="sidebar-text ml-2"
-                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
-                >
-                  Barangay Official
-                </span>
-              </DropdownLink>
-            </div>
-          </div>
-        </nav>
-      </div>
-
-      <!-- Page Content -->
-      <div class="flex-grow overflow-y-auto">
-        <header class="shadow-md mb-5">
-          <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between">
-            <div class="flex gap-5">
-              <slot name="header" />
-            </div>
-            <div class="flex gap-5 items-center">
-              <!-- Notifications Button -->
-              <button @click="toggleNotificationsDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
-                <span class="material-icons text-indigo-900">notifications</span>
-                <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 mt-2 md:w-80 bg-white rounded-md shadow-lg z-20">
-                    <div class="py-2">
-                        <div class="flex justify-between px-4 ">
-                            <select v-model="filterType" @change="updateFilterType(filterType)" class="text-sm w-full text-center" @click.stop>
-                                <option value="all">All Notifications</option>
-                                <option value="stranding">Stranding</option>
-                                <option value="sighting">Sightings</option>
-                            </select>
-                        </div>
-                        <div class="max-h-60 overflow-y-auto">
-                            <template v-if="displayedNotifications.length > 0">
-                                <div v-for="notification in displayedNotifications" :key="notification.id" class="block px-4 py-2 text-sm text-left text-gray-800 hover:bg-gray-100" @click="openNotification(notification)" @click.stop>
-                                    {{ notification.content }}
-                                </div>
-                            </template>
-                            <template v-else>
-                                <div class="px-4 py-2 text-sm text-gray-500">No notifications available.</div>
-                            </template>
-                        </div>
-                        <div class="px-4 py-2">
-                            <button v-if="hasMoreNotifications" @click="showMoreNotifications" class="text-blue-500 text-sm" @click.stop>Show More</button>
-                        </div>
-                    </div>
-                </div>
-            </button>
-
-                <!-- Profile Button -->
-              <button @click="toggleProfileDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
-                <span class="material-icons text-indigo-900">account_circle</span>
-                <div v-if="state.profileDropdownOpen" class="dropdown-container absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 text-center">
+          <div class="flex gap-5 items-center">
+            <!-- Notifications Button -->
+            <button @click="toggleNotificationsDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
+              <span class="material-icons text-indigo-900">notifications</span>
+              <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 mt-2 md:w-80 bg-white rounded-md shadow-lg z-20">
                   <div class="py-2">
-                    <DropdownLink class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" :href="route('profile.view')">
-                      Profile
-                    </DropdownLink>
-                    <DropdownLink class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" :href="route('logout')" method="post" as="button">
-                      Logout
-                    </DropdownLink>
+                      <div class="flex justify-between px-4 ">
+                          <select v-model="filterType" @change="updateFilterType(filterType)" class="text-sm w-full text-center" @click.stop>
+                              <option value="all">All Notifications</option>
+                              <option value="stranding">Stranding</option>
+                              <option value="sighting">Sightings</option>
+                          </select>
+                      </div>
+                      <div class="max-h-60 overflow-y-auto">
+                          <template v-if="displayedNotifications.length > 0">
+                              <div v-for="notification in displayedNotifications" :key="notification.id" class="block px-4 py-2 text-sm text-left text-gray-800 hover:bg-gray-100" @click="openNotification(notification)" @click.stop>
+                                  {{ notification.content }}
+                              </div>
+                          </template>
+                          <template v-else>
+                              <div class="px-4 py-2 text-sm text-gray-500">No notifications available.</div>
+                          </template>
+                      </div>
+                      <div class="px-4 py-2">
+                          <button v-if="hasMoreNotifications" @click="showMoreNotifications" class="text-blue-500 text-sm" @click.stop>Show More</button>
+                      </div>
                   </div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </header>
-        <main>
+              </div>
+          </button>
 
-          <slot />
-          <Modal v-if="isFalseNotificationModalOpen" :show="isFalseNotificationModalOpen" @close="closeFalseNotificationModal" class="fixed inset-0 z-50 flex items-center justify-center">
-                <div class="p-6 bg-white rounded shadow-lg">
-                    <h2 class="text-lg font-semibold text-slate-800">
-                        Notification Details
-                    </h2>
-                    <p>{{ modalContent }}</p>
-                    <div class="mt-6 space-x-4 flex justify-end">
-                        <PrimaryButton @click="closeFalseNotificationModal">Ok</PrimaryButton>
-                    </div>
+              <!-- Profile Button -->
+            <button @click="toggleProfileDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
+              <span class="material-icons text-indigo-900">account_circle</span>
+              <div v-if="state.profileDropdownOpen" class="dropdown-container absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 text-center">
+                <div class="py-2">
+                  <DropdownLink class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" :href="route('profile.view')">
+                    Profile
+                  </DropdownLink>
+                  <DropdownLink class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" :href="route('logout')" method="post" as="button">
+                    Logout
+                  </DropdownLink>
                 </div>
-            </Modal>
-        </main>
+              </div>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto">
+        <slot />
+        <Modal v-if="isFalseNotificationModalOpen" :show="isFalseNotificationModalOpen" @close="closeFalseNotificationModal" class="fixed inset-0 z-50 flex items-center justify-center">
+              <div class="p-6 bg-white rounded shadow-lg">
+                  <h2 class="text-lg font-semibold text-slate-800">
+                      Notification Details
+                  </h2>
+                  <p>{{ modalContent }}</p>
+                  <div class="mt-6 space-x-4 flex justify-end">
+                      <PrimaryButton @click="closeFalseNotificationModal">Ok</PrimaryButton>
+                  </div>
+              </div>
+          </Modal>
+      </main>
     </div>
-    </div>
-  </template>
+  </div>
+</template>
 
 <style scoped>
 /* Add these styles to ensure smooth transitions */
@@ -669,5 +555,70 @@ onMounted(() => {
   .dropdown-menu-text.hidden {
     display: none !important;
   }
+}
+
+/* Update styles to handle fixed positioning and scrolling */
+.sidebar-text {
+  transition: opacity 0.3s ease;
+}
+
+/* Ensure proper z-index for fixed sidebar */
+.fixed {
+  z-index: 40;
+}
+
+/* Handle mobile view */
+@media (max-width: 768px) {
+  .sidebar-text {
+    display: inline !important;
+  }
+
+  .hidden.sidebar-text {
+    display: none !important;
+  }
+
+  /* Adjust sidebar for mobile */
+  .fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+  }
+}
+
+/* Handle dropdown positioning */
+.dropdown-container {
+  position: absolute;
+  z-index: 60;
+}
+
+/* Add transition for sidebar */
+.fixed, .sticky {
+  transition: all 0.3s ease;
+}
+
+.fixed {
+  z-index: 40;
+  transition: transform 0.3s ease;
+}
+
+/* Simplified mobile styles */
+@media (max-width: 768px) {
+  .w-0 {
+    width: 0;
+    visibility: hidden;
+  }
+
+  .w-64 {
+    width: 16rem;
+    visibility: visible;
+  }
+}
+
+/* Ensure dropdowns stay on top */
+.dropdown-container {
+  z-index: 50;
 }
 </style>
