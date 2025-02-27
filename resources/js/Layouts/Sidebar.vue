@@ -248,7 +248,7 @@ onMounted(() => {
             </svg>
           </button>
           <button
-              class="rounded-lg lg:block hidden focus:outline-none focus:shadow-outline"
+              class="rounded-lg md:block hidden focus:outline-none focus:shadow-outline"
               @click="state.sidebarLargeScreenOpen = !state.sidebarLargeScreenOpen"
           >
               <span v-if="!state.sidebarLargeScreenOpen"
@@ -656,6 +656,17 @@ onMounted(() => {
   }
 
   .hidden.sidebar-text {
+    display: none !important;
+  }
+}
+
+/* Add this to ensure dropdown text behaves correctly */
+.dropdown-menu-text {
+  transition: opacity 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .dropdown-menu-text.hidden {
     display: none !important;
   }
 }
