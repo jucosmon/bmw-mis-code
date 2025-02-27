@@ -29,21 +29,25 @@ class HandleInertiaRequests extends Middleware
      * @return array<string, mixed>
      */
     public function share(Request $request): array
-    {
-        $sharedProps = array_merge(parent::share($request), [
-            // Synchronously...
-            'appName' => config('app.name'),
+{
+    $sharedProps = array_merge(parent::share($request), [
+        // Application name
+        'appName' => config('app.name'),
 
-            // Lazily...
-            'auth.user' => fn () => $request->user(),
+        // Current authenticated user
+        'auth.user' => fn () => $request->user(),
 
-            'currentRoute' => $request->route() ? $request->route()->getName() : null,
+        // Current route name
+        'currentRoute' => $request->route() ? $request->route()->getName() : null,
 
-        ]);
+        // CSRF token for Inertia requests
+        'csrf_token' => csrf_token(),
+    ]);
 
-        // Debugging: Log the shared props
-        Log::info('Shared props:', $sharedProps);
+    // Debugging: Log the shared props
+    Log::info('Shared props:', $sharedProps);
 
-        return $sharedProps;
-    }
+    return $sharedProps;
+}
+
 }

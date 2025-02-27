@@ -6,9 +6,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
-
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -20,10 +18,9 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(ZiggyVue, Ziggy) // Ensure Ziggy is initialized properly
+            .use(ZiggyVue, Ziggy)
             .mount(el);
 
-        // ✅ Move history state fix inside `setup()`
         if (!window.history.state) {
             router.replace(window.location.pathname);
         }
@@ -31,6 +28,9 @@ createInertiaApp({
         return vueApp;
     },
     progress: {
+        // Progress bar configuration
         color: '#4B5563',
+        showSpinner: true,
+        delay: 250,
     },
 });

@@ -22,6 +22,37 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => \App\Http\Middleware\CheckIfUserIsActive::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            // Stranded Incident routes
+            '/stranded-incident/*',
+
+            // Comments routes
+            '/stranded-incident/comments/*',
+
+            // Stranded Species routes
+            '/stranded-incident/stranded-species/*',
+
+            // Sighting routes
+            '/sighting/*',
+
+            // Guideline routes
+            '/guideline/*',
+
+            // Species management
+            '/bpemo-admin/manage-species/*',
+
+            // Account management routes
+            '/bpemo-admin/manage-account/*',
+            '/lgu-responder/manage-account/*',
+
+            // Notifications
+            '/notifications/*',
+
+            // Profile and password routes
+            '/profile/*',
+            '/validate-password'
+        ]);
+
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -4,7 +4,7 @@ import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Inertia } from '@inertiajs/inertia';
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
 const state = reactive({
   sidebarOpen: false,
@@ -12,6 +12,7 @@ const state = reactive({
   sidebarLargeScreenOpen: true,
   profileDropdownOpen: false,
   notificationsDropdownOpen: false,
+  isMobileView: false, // Add this new state
 });
 
 console.log('Current history state:', window.history.state);
@@ -131,11 +132,23 @@ onMounted(() => {
 // Watch for changes to sidebarOpen and save to local storage
 watch(() => state.sidebarOpen, (newValue) => {
   localStorage.setItem('sidebarOpen', JSON.stringify(newValue));
+  if (!newValue && state.isMobileView) {
+    const elements = document.querySelectorAll('.sidebar-text');
+    elements.forEach(el => el.style.display = 'none');
+  }
 });
 
 // Watch for changes to sidebarLargeScreenOpen and save to local storage
 watch(() => state.sidebarLargeScreenOpen, (newValue) => {
   localStorage.setItem('sidebarLargeScreenOpen', JSON.stringify(newValue));
+
+  // Ensure proper text visibility when toggling sidebar
+  nextTick(() => {
+    const elements = document.querySelectorAll('.sidebar-text');
+    elements.forEach(el => {
+      el.style.display = newValue ? 'inline' : 'none';
+    });
+  });
 });
 
 // Additional dropdown and close logic remains unchanged
@@ -177,6 +190,25 @@ const user = computed(() => {
 });
 console.log(user);
 
+// Add window resize handler
+onMounted(() => {
+  const handleResize = () => {
+    state.isMobileView = window.innerWidth < 768;
+    if (!state.isMobileView && !state.sidebarLargeScreenOpen) {
+      const elements = document.querySelectorAll('.sidebar-text');
+      elements.forEach(el => el.style.display = 'none');
+    }
+  };
+
+  window.addEventListener('resize', handleResize);
+  handleResize(); // Initial check
+
+  // Clean up
+  onBeforeUnmount(() => {
+    window.removeEventListener('resize', handleResize);
+  });
+});
+
 </script>
 
 <template>
@@ -191,7 +223,8 @@ console.log(user);
           <Link
               v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
               href="#"
-              class="text-lg font-semibold tracking-widest text-indigo-900 uppercase rounded-lg dark:text-white focus:outline-none focus:shadow-outline"
+              class="text-lg font-semibold tracking-widest text-indigo-900 uppercase rounded-lg dark:text-white focus:outline-none focus:shadow-outline sidebar-text"
+              :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
           >
             BMW-MIS
           </Link>
@@ -237,28 +270,48 @@ console.log(user);
           <Link :href="route('dashboard')"
               class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline">
               <span class="material-icons text-lg mr-2 leading-none">home</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Dashboard</span>
+              <span
+                class="sidebar-text ml-2"
+                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+              >
+                Dashboard
+              </span>
           </Link>
 
           <!-- Manage Stranded Incident -->
           <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
           :href="route('stranded.incident.index')">
               <span class="material-icons text-lg mr-2 leading-none">medication</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Stranded Incident</span>
+              <span
+                class="sidebar-text ml-2"
+                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+              >
+                Stranded Incident
+              </span>
           </Link>
 
           <!-- Manage Sightings -->
           <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
             :href="route('sighting.index')">
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Sightings</span>
+              <span
+                class="sidebar-text ml-2"
+                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+              >
+                Sightings
+              </span>
           </Link>
 
           <!-- Manage Species  -->
            <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
            :href="route('species.index')">
               <span class="material-icons text-lg mr-2 leading-none">manage_search</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Explore Species</span>
+              <span
+                class="sidebar-text ml-2"
+                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+              >
+                Explore Species
+              </span>
           </Link>
 
           <!-- Manage Guidelines Dropdown -->
@@ -268,12 +321,17 @@ console.log(user);
               class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
             >
               <span class="material-icons text-lg mr-2 leading-none">article</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Manage Guidelines</span>
+              <span
+                class="sidebar-text ml-2"
+                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+              >
+                Manage Guidelines
+              </span>
               <svg v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
                 fill="currentColor"
                 viewBox="0 0 20 20"
-                :class="{ 'rotate-180': state.activeDropdown === 'manageGuidelines', 'rotate-0': state.activeDropdown !== 'manageGuidelines' }"
-                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform"
+                :class="{ 'rotate-180': state.activeDropdown === 'manageGuidelines', 'rotate-0': state.activeDropdown !== 'manageGuidelines', 'hidden': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform sidebar-text"
               >
                 <path
                   fill-rule="evenodd"
@@ -292,21 +350,36 @@ console.log(user);
                 :href="route('manage.guideline.index', {user_role: 'lgu_responder', archived: false})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">LGU Responder</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  LGU Responder
+                </span>
               </Link>
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
                 :href="route('manage.guideline.index', {user_role: 'barangay_official', archived: false})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Barangay Official</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  Barangay Official
+                </span>
               </Link>
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
                 :href="route('manage.guideline.index', {user_role: 'public_user', archived: false})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Public User</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  Public User
+                </span>
               </Link>
             </div>
           </div>
@@ -317,7 +390,12 @@ console.log(user);
             class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
             :href="route('guideline.index')">
             <span class="material-icons text-lg mr-2 leading-none">article</span>
-            <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Guidelines</span>
+            <span
+              class="sidebar-text ml-2"
+              :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+            >
+              Guidelines
+            </span>
           </Link>
 
           <!-- Generate Report Dropdown -->
@@ -327,12 +405,17 @@ console.log(user);
               class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
             >
               <span class="material-icons text-lg mr-2 leading-none">assessment</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Generate Report</span>
+              <span
+                class="sidebar-text ml-2"
+                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+              >
+                Generate Report
+              </span>
               <svg v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
                 fill="currentColor"
                 viewBox="0 0 20 20"
-                :class="{ 'rotate-180': state.activeDropdown === 'generateReport', 'rotate-0': state.activeDropdown !== 'generateReport' }"
-                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform"
+                :class="{ 'rotate-180': state.activeDropdown === 'generateReport', 'rotate-0': state.activeDropdown !== 'generateReport', 'hidden': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform sidebar-text"
               >
                 <path
                   fill-rule="evenodd"
@@ -350,14 +433,24 @@ console.log(user);
                 :href="route('generate.report.cluster.map')"
               >
                 <span class="material-icons text-lg mr-2 leading-none">map</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Cluster Map</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  Cluster Map
+                </span>
               </Link>
               <Link
                 class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
                 :href="route('generate.report.summary.report')"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Summary Report</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  Summary Report
+                </span>
               </Link>
             </div>
           </div>
@@ -369,12 +462,17 @@ console.log(user);
               class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
             >
               <span class="material-icons text-lg mr-2 leading-none">manage_accounts</span>
-              <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Manage Account</span>
+              <span
+                class="sidebar-text ml-2"
+                :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+              >
+                Manage Account
+              </span>
               <svg v-show="state.sidebarLargeScreenOpen || state.sidebarOpen"
                 fill="currentColor"
                 viewBox="0 0 20 20"
-                :class="{ 'rotate-180': state.activeDropdown === 'manageAccount', 'rotate-0': state.activeDropdown !== 'manageAccount' }"
-                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform"
+                :class="{ 'rotate-180': state.activeDropdown === 'manageAccount', 'rotate-0': state.activeDropdown !== 'manageAccount', 'hidden': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform sidebar-text"
               >
                 <path
                   fill-rule="evenodd"
@@ -394,7 +492,12 @@ console.log(user);
                 :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_admin'})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">BPEMO Administrator</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  BPEMO Administrator
+                </span>
               </DropdownLink>
               <DropdownLink
                 v-if="user.user_role === 'bpemo_admin'"
@@ -402,7 +505,12 @@ console.log(user);
                 :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_staff'})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">BPEMO Staff</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  BPEMO Staff
+                </span>
               </DropdownLink>
               <DropdownLink
                 v-if="user.user_role === 'bpemo_admin'"
@@ -410,7 +518,12 @@ console.log(user);
                 :href="route('bpemo.admin.manage.account.index', { type: 'lgu_responder'})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">LGU Responder</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  LGU Responder
+                </span>
               </DropdownLink>
               <DropdownLink
                 v-if="user.user_role === 'bpemo_admin'"
@@ -418,7 +531,12 @@ console.log(user);
                 :href="route('bpemo.admin.manage.account.index', {type: 'barangay_official'})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Barangay Official</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  Barangay Official
+                </span>
               </DropdownLink>
               <DropdownLink
                 v-if="user.user_role === 'bpemo_admin'"
@@ -426,7 +544,12 @@ console.log(user);
                 :href="route('bpemo.admin.manage.account.index', {type: 'public_user'})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Public User</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  Public User
+                </span>
               </DropdownLink>
 
               <!-- Manage Barangay Official Accounts for LGU Responder user -->
@@ -436,7 +559,12 @@ console.log(user);
                 :href="route('lgu.responder.manage.account.index', {type: 'barangay_official'})"
               >
                 <span class="material-icons text-lg mr-2 leading-none">visibility</span>
-                <span v-show="state.sidebarLargeScreenOpen || state.sidebarOpen" class="ml-2">Barangay Official</span>
+                <span
+                  class="sidebar-text ml-2"
+                  :class="{ 'hidden md:inline': !state.sidebarOpen && !state.sidebarLargeScreenOpen }"
+                >
+                  Barangay Official
+                </span>
               </DropdownLink>
             </div>
           </div>
@@ -450,9 +578,9 @@ console.log(user);
             <div class="flex gap-5">
               <slot name="header" />
             </div>
-            <div class="flex gap-5">
+            <div class="flex gap-5 items-center">
               <!-- Notifications Button -->
-              <button @click="toggleNotificationsDropdown($event)" class="relative rounded-lg lg:block hidden focus:outline-none focus:shadow-outline">
+              <button @click="toggleNotificationsDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
                 <span class="material-icons text-indigo-900">notifications</span>
                 <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 mt-2 md:w-80 bg-white rounded-md shadow-lg z-20">
                     <div class="py-2">
@@ -481,7 +609,7 @@ console.log(user);
             </button>
 
                 <!-- Profile Button -->
-              <button @click="toggleProfileDropdown($event)" class="relative rounded-lg lg:block hidden focus:outline-none focus:shadow-outline">
+              <button @click="toggleProfileDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
                 <span class="material-icons text-indigo-900">account_circle</span>
                 <div v-if="state.profileDropdownOpen" class="dropdown-container absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 text-center">
                   <div class="py-2">
@@ -515,3 +643,20 @@ console.log(user);
     </div>
     </div>
   </template>
+
+<style scoped>
+/* Add these styles to ensure smooth transitions */
+.sidebar-text {
+  transition: opacity 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .sidebar-text {
+    display: inline !important; /* Force show text on mobile when menu is open */
+  }
+
+  .hidden.sidebar-text {
+    display: none !important;
+  }
+}
+</style>
