@@ -149,14 +149,6 @@ const closeSidebarDropdown = (event) => {
   }
 };
 
-onMounted(() => {
-  document.addEventListener('click', closeSidebarDropdown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', closeSidebarDropdown);
-});
-
 const page = usePage();
 const user = computed(() => {
     if (!page || !page.props || !page.props.auth || !page.props.auth.user) {
@@ -167,41 +159,54 @@ const user = computed(() => {
 });
 console.log(user);
 
-// Add window resize handler
-onMounted(() => {
-  const handleResize = () => {
-    state.isMobileView = window.innerWidth < 768;
-  };
+// Sidebar and resize handling
+const handleResize = () => {
+  state.isMobileView = window.innerWidth < 768;
+};
 
-  window.addEventListener('resize', handleResize);
-  handleResize(); // Initial check
-
-  // Clean up
-  onBeforeUnmount(() => {
-    window.removeEventListener('resize', handleResize);
-  });
-});
-
-// Replace toggleSidebar with separate open/close functions
-const openSidebar = () => {
-  state.sidebarOpen = true;
+const toggleSidebar = (event) => {
+  if (event) {
+    event.stopPropagation();
+  }
+  state.sidebarOpen = !state.sidebarOpen;
 };
 
 const closeSidebar = () => {
   state.sidebarOpen = false;
 };
 
-// Replace open/close functions with a single toggle function
-const toggleSidebar = () => {
-  state.sidebarOpen = !state.sidebarOpen;
-};
-
-// Add navigation close handler
-const handleNavigation = () => {
-  if (state.isMobileView) {
-    state.sidebarOpen = false;
+// Only close sidebar when clicking outside if it's open
+const handleClickOutside = (event) => {
+  if (state.sidebarOpen &&
+      !event.target.closest('.sidebar') &&
+      !event.target.closest('.hamburger-btn')) {
+    closeSidebar();
   }
 };
+
+// Combined lifecycle hooks
+onMounted(() => {
+  // Load saved state
+  const savedSidebarState = localStorage.getItem('sidebarOpen');
+  if (savedSidebarState !== null) {
+    state.sidebarOpen = JSON.parse(savedSidebarState);
+  }
+
+  // Add event listeners
+  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('click', closeSidebarDropdown);
+  window.addEventListener('resize', handleResize);
+
+  // Initial resize check
+  handleResize();
+});
+
+onBeforeUnmount(() => {
+  // Remove event listeners
+  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('click', closeSidebarDropdown);
+  window.removeEventListener('resize', handleResize);
+});
 
 </script>
 
@@ -209,12 +214,10 @@ const handleNavigation = () => {
   <div class="flex h-screen overflow-hidden">
     <!-- Sidebar -->
     <div
-      class="flex flex-col flex-shrink-0 text-indigo-700 bg-white dark:text-indigo-200 dark:bg-indigo-900 h-screen fixed md:sticky top-0"
+      class="sidebar flex flex-col flex-shrink-0 text-indigo-700 bg-white dark:text-indigo-200 dark:bg-indigo-900 h-screen fixed md:sticky top-0 transition-all duration-300 overflow-hidden"
       :class="{
-        'w-64': state.sidebarOpen,
-        'w-0': !state.sidebarOpen,
-        'translate-x-0': state.sidebarOpen,
-        '-translate-x-full md:translate-x-0': !state.sidebarOpen
+        'w-64 opacity-100 visible': state.sidebarOpen,
+        'w-0 opacity-0 invisible': !state.sidebarOpen
       }"
     >
       <!-- Sidebar header with close button -->
@@ -240,27 +243,31 @@ const handleNavigation = () => {
       <nav class="flex-grow px-4 pb-4 overflow-y-auto">
         <!-- Dashboard -->
         <Link :href="route('dashboard')"
-            class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline">
+            class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+            @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">home</span>
             <span class="ml-2">Dashboard</span>
         </Link>
         <!-- Manage Stranded Incident -->
         <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-        :href="route('stranded.incident.index')">
+        :href="route('stranded.incident.index')"
+        @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">medication</span>
             <span class="ml-2">Stranded Incident</span>
         </Link>
 
         <!-- Manage Sightings -->
         <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-          :href="route('sighting.index')">
+          :href="route('sighting.index')"
+          @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">visibility</span>
             <span class="ml-2">Sightings</span>
         </Link>
 
         <!-- Manage Species  -->
          <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-         :href="route('species.index')">
+         :href="route('species.index')"
+         @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">manage_search</span>
             <span class="ml-2">Explore Species</span>
         </Link>
@@ -294,6 +301,7 @@ const handleNavigation = () => {
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('manage.guideline.index', {user_role: 'lgu_responder', archived: false})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">LGU Responder</span>
@@ -301,6 +309,7 @@ const handleNavigation = () => {
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('manage.guideline.index', {user_role: 'barangay_official', archived: false})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">Barangay Official</span>
@@ -308,6 +317,7 @@ const handleNavigation = () => {
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('manage.guideline.index', {user_role: 'public_user', archived: false})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">Public User</span>
@@ -319,7 +329,8 @@ const handleNavigation = () => {
         <Link
           v-if="user.user_role==='lgu_responder' || user.user_role==='barangay_official' || user.user_role==='public_user'"
           class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
-          :href="route('guideline.index')">
+          :href="route('guideline.index')"
+          @click="closeSidebar">
           <span class="material-icons text-lg mr-2 leading-none">article</span>
           <span class="ml-2">Guidelines</span>
         </Link>
@@ -352,6 +363,7 @@ const handleNavigation = () => {
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('generate.report.cluster.map')"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">map</span>
               <span class="ml-2">Cluster Map</span>
@@ -359,6 +371,7 @@ const handleNavigation = () => {
             <Link
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('generate.report.summary.report')"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">Summary Report</span>
@@ -396,6 +409,7 @@ const handleNavigation = () => {
               v-if="user.user_role === 'bpemo_admin'"
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_admin'})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">BPEMO Administrator</span>
@@ -404,6 +418,7 @@ const handleNavigation = () => {
               v-if="user.user_role === 'bpemo_admin'"
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_staff'})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">BPEMO Staff</span>
@@ -412,6 +427,7 @@ const handleNavigation = () => {
               v-if="user.user_role === 'bpemo_admin'"
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('bpemo.admin.manage.account.index', { type: 'lgu_responder'})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">LGU Responder</span>
@@ -420,6 +436,7 @@ const handleNavigation = () => {
               v-if="user.user_role === 'bpemo_admin'"
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('bpemo.admin.manage.account.index', {type: 'barangay_official'})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">Barangay Official</span>
@@ -428,6 +445,7 @@ const handleNavigation = () => {
               v-if="user.user_role === 'bpemo_admin'"
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('bpemo.admin.manage.account.index', {type: 'public_user'})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">Public User</span>
@@ -438,6 +456,7 @@ const handleNavigation = () => {
               v-if="user.user_role === 'lgu_responder'"
               class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
               :href="route('lgu.responder.manage.account.index', {type: 'barangay_official'})"
+              @click="closeSidebar"
             >
               <span class="material-icons text-lg mr-2 leading-none">visibility</span>
               <span class="ml-2">Barangay Official</span>
@@ -451,13 +470,12 @@ const handleNavigation = () => {
     <div class="flex-1 flex flex-col min-h-screen w-full">
       <!-- Header with hamburger button -->
       <header class="sticky top-0 bg-white shadow-md z-30">
-        <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div class="mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div class="flex items-center gap-5">
             <!-- Hamburger button -->
             <button
-              v-if="!state.sidebarOpen"
-              class="rounded-lg focus:outline-none focus:shadow-outline hover:bg-gray-100"
-              @click="openSidebar"
+              class="hamburger-btn rounded-lg focus:outline-none focus:shadow-outline hover:bg-gray-100 p-2"
+              @click="toggleSidebar"
             >
               <span class="material-icons text-2xl">menu</span>
             </button>
@@ -620,5 +638,13 @@ const handleNavigation = () => {
 /* Ensure dropdowns stay on top */
 .dropdown-container {
   z-index: 50;
+}
+
+.sidebar {
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar.invisible {
+  pointer-events: none;
 }
 </style>
