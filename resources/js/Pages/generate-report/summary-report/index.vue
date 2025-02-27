@@ -1,9 +1,14 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
+import { Head } from '@inertiajs/vue3';
 import { ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale, LineController, LineElement, PieController, PointElement, Tooltip } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import * as XLSX from 'xlsx';
+
 
 // Register Chart.js components and plugins
 Chart.register(LineController, BarController, PieController, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler, ChartDataLabels);
@@ -28,6 +33,13 @@ const summaryData = ref({
     topCommonSpecies: [],
     falseReports: 0
 });
+
+// Add refs for modals
+const showDownloadModal = ref(false);
+const showExportModal = ref(false);
+const isDownloading = ref(false);
+const isExporting = ref(false);
+const filteredData = ref([]);
 
 let yearlyTrendsChart, categoryTrendsChart, municipalityDistributionChart, conditionFrequencyChart;
 
@@ -83,7 +95,7 @@ const fetchData = async () => {
 
         const combinedData = [...processedSightings, ...processedStrandedIncidents];
 
-        const filteredData = combinedData.filter((item) => {
+        const filtered = combinedData.filter((item) => {
             const yearMatch =
                 !filters.value.year ||
                 new Date(item.date).getFullYear() ===
@@ -110,6 +122,9 @@ const fetchData = async () => {
             );
         });
 
+        // Store filtered data for export
+        filteredData.value = filtered;
+
         const falseReportsData = combinedData.filter((item) => {
             const yearMatch =
                 !filters.value.year ||
@@ -134,7 +149,7 @@ const fetchData = async () => {
             );
         });
 
-        console.log('Filtered Data:', filteredData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
+        console.log('Filtered Data:', filtered.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
         console.log('Combined Data:', combinedData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
 
         const verifiedSightings = processedSightings.filter(
@@ -196,7 +211,7 @@ const fetchData = async () => {
         updateSummaryData(
             verifiedAndResolvedData,
             falseReportsData,
-            filteredData,
+            filtered,
         );
     }
 };
@@ -521,18 +536,150 @@ const resetFilters = () => {
     fetchData();
 };
 
-const downloadPDF = () => {
-    // Implement PDF download logic
-    alert('You have successfully downloaded the file');
+// Show download confirmation modal
+const showDownloadConfirmation = () => {
+    showDownloadModal.value = true;
 };
 
-const exportData = () => {
-    // Implement export logic
+// Show export confirmation modal
+const showExportConfirmation = () => {
+    showExportModal.value = true;
 };
 
+// Download PDF implementation
+const downloadPDF = async () => {
+    try {
+        isDownloading.value = true;
+        showDownloadModal.value = false;
+
+        // Get the dashboard content
+        const dashboardElement = document.getElementById('dashboard-content');
+
+        const filtersElement = dashboardElement.querySelector('.filters');
+        filtersElement.style.display = 'none';
+
+        // Create a canvas from the dashboard element
+        const canvas = await html2canvas(dashboardElement, {
+            scale: 2, // Higher scale for better quality
+            useCORS: true, // Enable CORS for images
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+
+        filtersElement.style.display = ''; // Restore the display
+
+        // Create PDF
+        const pdf = new jsPDF('p', 'mm', 'a4');
+
+        // Get the dimensions
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Add title
+        const title = `Marine Life Analytics Report`;
+        const subtitle = `Generated on ${new Date().toLocaleDateString()}`;
+
+        pdf.setFontSize(18);
+        pdf.text(title, 105, 20, { align: 'center' });
+        pdf.setFontSize(12);
+        pdf.text(subtitle, 105, 30, { align: 'center' });
+
+        // Add filter information
+        let filterText = 'Filters: ';
+        filterText += filters.value.year ? `Year: ${filters.value.year}, ` : 'All Years, ';
+        filterText += filters.value.municipality ? `Municipality: ${municipalities.value.find(m => m.id === parseInt(filters.value.municipality))?.name || 'Unknown'}, ` : 'All Municipalities, ';
+        filterText += filters.value.category ? `Category: ${filters.value.category}, ` : 'All Categories, ';
+        filterText += filters.value.eventType ? `Event Type: ${filters.value.eventType}` : 'All Event Types';
+
+        pdf.setFontSize(10);
+        const splitFilterText = pdf.splitTextToSize(filterText, 190); // Split text if it's too long
+
+        const y = 40; // You can change this value to adjust the vertical position
+
+        // Add the text to the PDF
+        pdf.text(splitFilterText, 105, y, { align: 'center' });
+
+        // Add the image to the PDF
+        const imgData = canvas.toDataURL('image/png');
+        // Calculate the height of the filter text
+        const filterTextHeight = pdf.getTextDimensions(splitFilterText).h; // Get the height of the filter text
+
+        // Set the position for the image, reducing the space
+        let position = y + filterTextHeight + 1; // Add a small margin (5 mm) below the filter text
+
+        // Split the image across multiple pages if needed
+        let heightLeft = imgHeight;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth - 20, imgHeight);
+        heightLeft -= (pageHeight - position);
+
+        // Add more pages if the content is longer than one page
+        while (heightLeft > 0) {
+            position = 0;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth - 20, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        // Save the PDF
+        pdf.save(`marine-life-analytics-${new Date().toISOString().slice(0, 10)}.pdf`);
+
+        isDownloading.value = false;
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        isDownloading.value = false;
+        alert('Error generating PDF. Please try again.');
+    }
+};
+
+// Export to Excel implementation
+const exportToExcel = () => {
+    try {
+        isExporting.value = true;
+        showExportModal.value = false;
+
+        // Prepare data for export
+        const dataToExport = filteredData.value.map(item => {
+            // Find municipality name
+            const municipality = municipalities.value.find(m => m.id === item.municipality_id);
+
+            return {
+                'Date': new Date(item.date).toLocaleDateString(),
+                'Type': item.type.charAt(0).toUpperCase() + item.type.slice(1),
+                'Species': item.species_name,
+                'Category': item.category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+                'Municipality': municipality ? municipality.name : 'Unknown',
+                'Latitude': item.latitude,
+                'Longitude': item.longitude,
+                'Status': item.type === 'stranded' ?
+                    ['Alive', 'Freshly Dead', 'Decomposed', 'Advanced Decomposition', 'Skeletal Remains', 'Destroyed'][item.status - 1] || 'Unknown'
+                    : 'N/A',
+                'Report Status': item.report_status.charAt(0).toUpperCase() + item.report_status.slice(1)
+            };
+        });
+
+        // Create worksheet
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+        // Create workbook
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Marine Life Data');
+
+        // Generate Excel file
+        XLSX.writeFile(workbook, `marine-life-data-${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+        isExporting.value = false;
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        isExporting.value = false;
+        alert('Error exporting data. Please try again.');
+    }
+};
 </script>
 
 <template>
+    <Head title="Summary Report" />
     <Sidebar>
         <template #header>
             <div>
@@ -542,7 +689,7 @@ const exportData = () => {
             </div>
         </template>
 
-        <div class="container mx-auto px-4 py-8">
+        <div class="container mx-auto px-4 py-8" id="dashboard-content">
             <div class="filters flex flex-wrap items-center gap-4 mb-4">
                 <label for="year" class="font-medium">Year:</label>
                 <select v-model="filters.year" id="year" class="border rounded px-2 py-1">
@@ -572,8 +719,8 @@ const exportData = () => {
                 </select>
 
                 <button @click="resetFilters" class="bg-gray-300 px-4 py-2 rounded">Reset</button>
-                <button @click="downloadPDF" class="bg-green-500 text-white px-4 py-2 rounded">Download</button>
-                <button @click="exportData" class="bg-yellow-500 text-white px-4 py-2 rounded">Export</button>
+                <button @click="showDownloadConfirmation" class="bg-green-500 text-white px-4 py-2 rounded">Download</button>
+                <button @click="showExportConfirmation" class="bg-yellow-500 text-white px-4 py-2 rounded">Export</button>
             </div>
 
             <!-- Summary Cards -->
@@ -624,6 +771,48 @@ const exportData = () => {
                 </div>
             </div>
         </div>
+
+        <!-- Download Confirmation Modal -->
+        <div v-if="showDownloadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 class="text-lg font-semibold mb-4">Download Report</h3>
+                <p class="mb-6">Are you sure you want to download the current report as a PDF?</p>
+                <div class="flex justify-end space-x-3">
+                    <button
+                        @click="showDownloadModal = false"
+                        class="px-4 py-2 bg-gray-300 rounded">
+                        Cancel
+                    </button>
+                    <button
+                        @click="downloadPDF"
+                        class="px-4 py-2 bg-green-500 text-white rounded"
+                        :disabled="isDownloading">
+                        {{ isDownloading ? 'Downloading...' : 'Download' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Confirmation Modal -->
+        <div v-if="showExportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 class="text-lg font-semibold mb-4">Export Data</h3>
+                <p class="mb-6">Are you sure you want to export the filtered data to Excel?</p>
+                <div class="flex justify-end space-x-3">
+                    <button
+                        @click="showExportModal = false"
+                        class="px-4 py-2 bg-gray-300 rounded">
+                        Cancel
+                    </button>
+                    <button
+                        @click="exportToExcel"
+                        class="px-4 py-2 bg-yellow-500 text-white rounded"
+                        :disabled="isExporting">
+                        {{ isExporting ? 'Exporting...' : 'Export' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </Sidebar>
 </template>
 
@@ -639,4 +828,20 @@ canvas {
     max-width: 100%;
     height: auto;
 }
+
+/* Loading spinner styles */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 </style>
+

@@ -1,6 +1,7 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
+import { Head } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet.markercluster/dist/leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -179,6 +180,7 @@ const resetFilters = () => {
 </script>
 
 <template>
+    <Head title="Cluster Map" />
     <Sidebar>
         <template #header>
             <div>
