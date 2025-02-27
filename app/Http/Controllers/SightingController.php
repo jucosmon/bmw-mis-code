@@ -21,7 +21,7 @@ class SightingController extends Controller
         $user = Auth::user();
 
         // Retrieve pending sightings based on user role
-        $sightings = Sighting::where('report_status', 'pending')->where('is_active', true);
+        $sightings = Sighting::where('is_active', true);
 
         if ($user->user_role !== 'bpemo_admin') {
             $sightings->where('user_id', $user->id);
@@ -29,28 +29,6 @@ class SightingController extends Controller
 
         return Inertia::render('manage-sighting/index', [
             'sightings' => $sightings->get(),
-            'success' => session('success'),
-        ]);
-    }
-
-    public function indexFinishedSightings()
-    {
-        $user = Auth::user();
-
-        if (in_array($user->user_role, ['bpemo_admin', 'bpemo_staff'])) {
-            $sightings = Sighting::whereIn('report_status', ['false', 'verified'])
-                ->get();
-        } else if (in_array($user->user_role, ['lgu_responder', 'barangay_official', 'public_user'])) {
-            $sightings = Sighting::whereIn('report_status', ['false', 'verified'])
-                ->where('user_id', $user->id)
-                ->get();
-        }
-         else {
-            abort(403);
-        }
-
-        return Inertia::render('manage-sighting/finished-sightings/index', [
-            'sightings' => $sightings,
             'success' => session('success'),
         ]);
     }

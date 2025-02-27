@@ -31,6 +31,6 @@ createInertiaApp({
         // Progress bar configuration
         color: '#4B5563',
         showSpinner: true,
-        delay: 250,
+        delay: 50,
     },
 });
