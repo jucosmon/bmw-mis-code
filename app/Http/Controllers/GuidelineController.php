@@ -50,36 +50,28 @@ class GuidelineController extends Controller
 }
 
     //for bpemo admin
-    public function index($user_role, $archived)
+    public function index($user_role)
     {
-        $archived = filter_var($archived, FILTER_VALIDATE_BOOLEAN);
         $guidelines = [];
 
         switch ($user_role) {
             case 'lgu_responder':
-                $guidelines = Guideline::where('user_role', 'lgu_responder')
-                    ->where('is_active', !$archived) // Adjusted to handle archived
-                    ->get();
+                $guidelines = Guideline::where('user_role', 'lgu_responder')->get();
                 break;
             case 'barangay_official':
-                $guidelines = Guideline::where('user_role', 'barangay_official')
-                    ->where('is_active', !$archived)
-                    ->get();
+                $guidelines = Guideline::where('user_role', 'barangay_official')->get();
                 break;
             case 'public_user':
-                $guidelines = Guideline::where('user_role', 'public_user')
-                    ->where('is_active', !$archived)
-                    ->get();
+                $guidelines = Guideline::where('user_role', 'public_user')->get();
                 break;
             default:
-                abort(403, 'hakdog.');
+                abort(403, 'Invalid role.');
         }
 
         return Inertia::render('manage-guideline/index', [
             'guidelines' => $guidelines,
             'success' => session('success'),
             'user_role' => $user_role,
-            'archived' => $archived,
         ]);
     }
 
