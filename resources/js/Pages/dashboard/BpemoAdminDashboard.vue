@@ -249,36 +249,68 @@ onMounted(() => {
     maxZoom: 18,
   }).addTo(map.value);
 
-  // Set up real-time subscriptions
+  // Real-time subscriptions with specific event handling
   const strandings = supabase.channel('public:stranded_incidents')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'stranded_incidents' }, () => {
-      fetchData();
-    })
-    .subscribe();
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'stranded_incidents' },
+      (payload) => {
+        console.log('New stranding:', payload);
+        fetchData();
+      }
+    )
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'stranded_incidents' },
+      (payload) => {
+        console.log('Updated stranding:', payload);
+        fetchData();
+      }
+    )
+    .on('postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'stranded_incidents' },
+      (payload) => {
+        console.log('Deleted stranding:', payload);
+        fetchData();
+      }
+    )
+    .subscribe((status) => {
+      console.log('Stranding subscription status:', status);
+    });
 
   const sightings = supabase.channel('public:sightings')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'sightings' }, () => {
-      fetchData();
-    })
-    .subscribe();
-
-  const users = supabase.channel('public:users')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-      fetchData();
-    })
-    .subscribe();
-
-  onBeforeUnmount(() => {
-    supabase.removeChannel(strandings);
-    supabase.removeChannel(sightings);
-    supabase.removeChannel(users);
-    if (map.value) {
-      map.value.remove();
-    }
-  });
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'sightings' },
+      (payload) => {
+        console.log('New sighting:', payload);
+        fetchData();
+      }
+    )
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'sightings' },
+      (payload) => {
+        console.log('Updated sighting:', payload);
+        fetchData();
+      }
+    )
+    .on('postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'sightings' },
+      (payload) => {
+        console.log('Deleted sighting:', payload);
+        fetchData();
+      }
+    )
+    .subscribe((status) => {
+      console.log('Sighting subscription status:', status);
+    });
 
   // Initial data fetch
   fetchData();
+
+  onBeforeUnmount(() => {
+    // Properly cleanup subscriptions
+    if (strandings) supabase.removeChannel(strandings);
+    if (sightings) supabase.removeChannel(sightings);
+    if (map.value) map.value.remove();
+  });
 });
 
 // Helper functions
