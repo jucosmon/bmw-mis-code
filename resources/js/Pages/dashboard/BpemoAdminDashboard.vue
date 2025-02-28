@@ -212,7 +212,10 @@ const updateMapMarkers = () => {
 
   if (!map.value) return;
 
-  activeReports.value.forEach(report => {
+  // Filter only stranded incidents
+  const strandedReports = activeReports.value.filter(report => report.type === 'stranded');
+
+  strandedReports.forEach(report => {
     const markerColor = getMarkerColor(report.status);
 
     const markerIcon = L.icon({
