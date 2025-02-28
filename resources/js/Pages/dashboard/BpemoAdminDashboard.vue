@@ -462,7 +462,7 @@ const getMarkerColor = (status) => {
                   <div class="ml-3 w-0 flex-1">
                     <div class="flex justify-between items-center mb-1">
                       <h4 class="text-sm font-medium text-gray-900">
-                        {{ alert.species }} {{ alert.type }}
+                        {{ alert.species }} ({{ alert.type }})
                       </h4>
                       <span
                         :class="getStatusColor(alert.status)"
@@ -476,7 +476,7 @@ const getMarkerColor = (status) => {
                       <p>Reported: {{ formatDate(alert.date) }}</p>
                     </div>
                     <div class="mt-2">
-                      <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                      <a :href="alert.viewUrl" class="text-sm font-medium text-blue-600 hover:text-blue-800">
                         View details
                       </a>
                     </div>
