@@ -33,11 +33,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'barangay_id',
     ];
 
-    public function municipalities(){
-        return $this->belongsTo(Municipality::class, 'municipality_id');
-    }
-    public function barangays(){
+
+    public function barangay(){
         return $this->belongsTo(Barangay::class, 'barangay_id');
+    }
+
+    public function municipality()
+    {
+        return $this->belongsTo(Municipality::class);
     }
 
     public function strandedIncidents()

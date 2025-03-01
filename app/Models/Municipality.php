@@ -16,5 +16,9 @@ class Municipality extends Model
     {
         return $this->hasMany(Barangay::class);
     }
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 
 }
