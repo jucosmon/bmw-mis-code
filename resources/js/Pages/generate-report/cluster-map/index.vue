@@ -27,8 +27,8 @@ const isDownloading = ref(false);
 onMounted(() => {
     console.log('Incidents:', incidents.value);
 
-    map.value = L.map('map').setView([9.8500, 124.1833], 10); // Bohol coordinates
-
+    // Initialize map
+    map.value = L.map('map').setView([9.8500, 124.1833], 10);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
     }).addTo(map.value);
@@ -52,19 +52,39 @@ onMounted(() => {
     });
     map.value.addLayer(markers.value);
 
-    // Load initial data
-    fetchData();
-
-    // Subscribe to Supabase Realtime
-    const channel = supabase.channel('public:incidents')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, payload => {
-            console.log('Change received!', payload);
+    // Setup Supabase real-time subscriptions
+    const sightingsChannel = supabase.channel('public:sightings')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'sightings',
+            filter: 'is_active=eq.true'
+        }, () => {
+            console.log('Sightings updated');
             fetchData();
         })
         .subscribe();
 
+    const strandingsChannel = supabase.channel('public:stranded_incidents')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'stranded_incidents',
+            filter: 'is_active=eq.true'
+        }, () => {
+            console.log('Strandings updated');
+            fetchData();
+        })
+        .subscribe();
+
+    // Initial data fetch
+    fetchData();
+
+    // Cleanup
     onBeforeUnmount(() => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(sightingsChannel);
+        supabase.removeChannel(strandingsChannel);
+        if (map.value) map.value.remove();
     });
 });
 

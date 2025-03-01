@@ -44,176 +44,144 @@ const filteredData = ref([]);
 let yearlyTrendsChart, categoryTrendsChart, municipalityDistributionChart, conditionFrequencyChart;
 
 const fetchData = async () => {
-    const { data: sightings, error: sightingsError } = await supabase
-        .from('sightings')
-        .select('*, sighted_species(*, species(*))')
-        .eq('is_active', true);
+    try {
+        // Fetch verified/resolved reports
+        const [sightingsRes, strandingsRes] = await Promise.all([
+            supabase
+                .from('sightings')
+                .select(`
+                    id,
+                    date,
+                    municipality_id,
+                    latitude,
+                    longitude,
+                    report_status,
+                    is_active,
+                    sighted_species (
+                        id,
+                        species (
+                            id,
+                            name,
+                            category
+                        )
+                    )
+                `)
+                .eq('is_active', true),
+            supabase
+                .from('stranded_incidents')
+                .select(`
+                    id,
+                    date,
+                    municipality_id,
+                    report_status,
+                    is_active,
+                    stranded_species (
+                        id,
+                        condition_code,
+                        latitude,
+                        longitude,
+                        species (
+                            id,
+                            name,
+                            category
+                        )
+                    )
+                `)
+                .eq('is_active', true)
+        ]);
 
-    const { data: strandedIncidents, error: strandedIncidentsError } = await supabase
-        .from('stranded_incidents')
-        .select('*, stranded_species(*, species(*))')
-        .eq('is_active', true);
+        if (sightingsRes.error) throw sightingsRes.error;
+        if (strandingsRes.error) throw strandingsRes.error;
 
+        // Get false reports
+        const [falseSightingsRes, falseStrandingsRes] = await Promise.all([
+            supabase
+                .from('sightings')
+                .select('*')
+                .eq('report_status', 'false_report')
+                .eq('is_active', true),
+            supabase
+                .from('stranded_incidents')
+                .select('*')
+                .eq('report_status', 'false_report')
+                .eq('is_active', true)
+        ]);
 
-    if (sightingsError || strandedIncidentsError) {
-        console.error('Error fetching data:', sightingsError || strandedIncidentsError);
-    } else {
-        const processedSightings = sightings.flatMap(sighting => {
-            return sighting.sighted_species.map(sighted_species => ({
-                latitude: sighting.latitude,
-                longitude: sighting.longitude,
-                date: sighting.date,
-                type: 'sighting',
-                sighting_id: sighting.id,
-                species_id: sighted_species.species?.id ?? null,
-                species_name: sighted_species.species?.name ?? 'Unknown',
-                category: sighted_species.species?.category ?? 'Unknown',
-                municipality_id: sighting.municipality_id,
-                report_status: sighting.report_status
-            }));
-        });
+        if (falseSightingsRes.error) throw falseSightingsRes.error;
+        if (falseStrandingsRes.error) throw falseStrandingsRes.error;
 
-        const processedStrandedIncidents = strandedIncidents.flatMap(incident => {
-            return incident.stranded_species.map(stranded_species => {
-                const status = stranded_species.condition_code == 1 ? 'Alive' :
-                    (stranded_species.condition_code >= 2 && stranded_species.condition_code <= 5 ? 'Dead' : 'Unknown');
-                return {
-                    latitude: stranded_species.latitude,
-                    longitude: stranded_species.longitude,
-                    date: incident.date,
-                    type: 'stranded',
-                    stranded_incident_id: incident.id,
-                    status: stranded_species.condition_code,
-                    species_id: stranded_species.species?.id ?? null,
-                    species_name: stranded_species.species?.name ?? 'Unknown',
-                    category: stranded_species.species?.category ?? 'Unknown',
-                    municipality_id: incident.municipality_id,
-                    report_status: incident.report_status
-                };
-            });
-        });
+        const verifiedAndResolvedData = [
+            ...processSightings(sightingsRes.data || []),
+            ...processStrandings(strandingsRes.data || [])
+        ];
 
-        const combinedData = [...processedSightings, ...processedStrandedIncidents];
+        const falseReportsData = [
+            ...(falseSightingsRes.data || []),
+            ...(falseStrandingsRes.data || [])
+        ];
 
-        const filtered = combinedData.filter((item) => {
-            const yearMatch =
-                !filters.value.year ||
-                new Date(item.date).getFullYear() ===
-                    parseInt(filters.value.year);
-            const municipalityMatch =
-                !filters.value.municipality ||
-                item.municipality_id === parseInt(filters.value.municipality);
-            const categoryMatch =
-                !filters.value.category ||
-                item.category === filters.value.category;
-            const eventTypeMatch =
-                !filters.value.eventType ||
-                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
-            const statusMatch =
-                (item.type === 'sighting' && item.report_status === 'verified') ||
-                (item.type === 'stranded' && item.report_status === 'resolved');
+        // Apply filters to verified/resolved data
+        const filteredData = applyFilters(verifiedAndResolvedData);
 
-            return (
-                yearMatch &&
-                municipalityMatch &&
-                categoryMatch &&
-                eventTypeMatch &&
-                statusMatch
-            );
-        });
+        // Update the summary data with all the information
+        updateSummaryData(verifiedAndResolvedData, falseReportsData, filteredData);
 
-        // Store filtered data for export
-        filteredData.value = filtered;
-
-        const falseReportsData = combinedData.filter((item) => {
-            const yearMatch =
-                !filters.value.year ||
-                new Date(item.date).getFullYear() ===
-                    parseInt(filters.value.year);
-            const municipalityMatch =
-                !filters.value.municipality ||
-                item.municipality_id === parseInt(filters.value.municipality);
-            const categoryMatch =
-                !filters.value.category ||
-                item.category === filters.value.category;
-            const eventTypeMatch =
-                !filters.value.eventType ||
-                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
-
-            return (
-                yearMatch &&
-                municipalityMatch &&
-                categoryMatch &&
-                eventTypeMatch &&
-                item.report_status === "false"
-            );
-        });
-
-        console.log('Filtered Data:', filtered.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
-        console.log('Combined Data:', combinedData.map(item => ({ category: item.category, report_status: item.report_status, type: item.type })));
-
-        const verifiedSightings = processedSightings.filter(
-            (item) => item.report_status === "verified"
-        );
-
-        const resolvedStrandedIncidents = processedStrandedIncidents.filter(
-            (item) => item.report_status === "resolved"
-        );
-
-        const filteredVerifiedSightings = verifiedSightings.filter((item) => {
-            const yearMatch =
-                !filters.value.year ||
-                new Date(item.date).getFullYear() ===
-                    parseInt(filters.value.year);
-            const municipalityMatch =
-                !filters.value.municipality ||
-                item.municipality_id === parseInt(filters.value.municipality);
-            const categoryMatch =
-                !filters.value.category ||
-                item.category === filters.value.category;
-            const eventTypeMatch =
-                !filters.value.eventType ||
-                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
-
-            return (
-                yearMatch &&
-                municipalityMatch &&
-                categoryMatch &&
-                eventTypeMatch
-            );
-        });
-
-        const filteredResolvedStrandedIncidents = resolvedStrandedIncidents.filter((item) => {
-            const yearMatch =
-                !filters.value.year ||
-                new Date(item.date).getFullYear() ===
-                    parseInt(filters.value.year);
-            const municipalityMatch =
-                !filters.value.municipality ||
-                item.municipality_id === parseInt(filters.value.municipality);
-            const categoryMatch =
-                !filters.value.category ||
-                item.category === filters.value.category;
-            const eventTypeMatch =
-                !filters.value.eventType ||
-                (item.type && item.type.toLowerCase() === filters.value.eventType.toLowerCase());
-
-            return (
-                yearMatch &&
-                municipalityMatch &&
-                categoryMatch &&
-                eventTypeMatch
-            );
-        });
-
-        const verifiedAndResolvedData = [...filteredVerifiedSightings, ...filteredResolvedStrandedIncidents];
-
-        updateSummaryData(
-            verifiedAndResolvedData,
-            falseReportsData,
-            filtered,
-        );
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
+};
+
+// Add these helper functions
+const processSightings = (sightings) => {
+    return sightings.flatMap(sighting =>
+        sighting.sighted_species.map(ss => ({
+            date: sighting.date,
+            type: 'sighting',
+            sighting_id: sighting.id,
+            species_id: ss.species?.id,
+            species_name: ss.species?.name ?? 'Unknown',
+            category: ss.species?.category ?? 'Unknown',
+            municipality_id: sighting.municipality_id,
+            report_status: sighting.report_status,
+            latitude: sighting.latitude,
+            longitude: sighting.longitude
+        }))
+    );
+};
+
+const processStrandings = (incidents) => {
+    return incidents.flatMap(incident =>
+        incident.stranded_species.map(ss => ({
+            date: incident.date,
+            type: 'stranded',
+            stranded_incident_id: incident.id,
+            species_id: ss.species?.id,
+            species_name: ss.species?.name ?? 'Unknown',
+            category: ss.species?.category ?? 'Unknown',
+            municipality_id: incident.municipality_id,
+            report_status: incident.report_status,
+            status: ss.condition_code,
+            latitude: ss.latitude,
+            longitude: ss.longitude
+        }))
+    );
+};
+
+const applyFilters = (data) => {
+    return data.filter(item => {
+        const yearMatch = !filters.value.year ||
+            new Date(item.date).getFullYear() === parseInt(filters.value.year);
+        const municipalityMatch = !filters.value.municipality ||
+            item.municipality_id === parseInt(filters.value.municipality);
+        const categoryMatch = !filters.value.category ||
+            item.category === filters.value.category;
+        const eventTypeMatch = !filters.value.eventType ||
+            item.type.toLowerCase() === filters.value.eventType.toLowerCase();
+        const statusMatch = (item.type === 'sighting' && item.report_status === 'verified') ||
+            (item.type === 'stranded' && item.report_status === 'resolved');
+
+        return yearMatch && municipalityMatch && categoryMatch && eventTypeMatch && statusMatch;
+    });
 };
 
 const updateSummaryData = (
@@ -502,25 +470,62 @@ const renderCharts = () => {
     });
 };
 
-onMounted(async () => {
-    const response = await fetch('/municipalities');
-    municipalities.value = await response.json();
+// Add these refs for channels
+const sightingsChannel = ref(null);
+const strandingsChannel = ref(null);
 
-    // Subscribe to Supabase Realtime
-    const channel = supabase.channel('public:incidents')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, payload => {
-            console.log('Change received!', payload);
-            fetchData();
-        })
-        .subscribe();
-
-    // Move onBeforeUnmount here
+onMounted(() => {
+    // Register cleanup first, before any async operations
     onBeforeUnmount(() => {
-        supabase.removeChannel(channel);
+        if (sightingsChannel.value) {
+            supabase.removeChannel(sightingsChannel.value);
+        }
+        if (strandingsChannel.value) {
+            supabase.removeChannel(strandingsChannel.value);
+        }
     });
 
-    fetchData();
+    // Setup real-time subscriptions
+    sightingsChannel.value = supabase.channel('sightings-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'sightings'
+            },
+            () => fetchData()
+        )
+        .subscribe();
+
+    strandingsChannel.value = supabase.channel('strandings-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'stranded_incidents'
+            },
+            () => fetchData()
+        )
+        .subscribe();
+
+    // Initialize data
+    initializeData();
 });
+
+const initializeData = async () => {
+    try {
+        // Fetch municipalities first
+        const response = await fetch('/municipalities');
+        municipalities.value = await response.json();
+
+        // Initial data fetch
+        await fetchData();
+    } catch (error) {
+        console.error('Error in initialization:', error);
+    }
+};
 
 watch(filters, () => {
     fetchData();

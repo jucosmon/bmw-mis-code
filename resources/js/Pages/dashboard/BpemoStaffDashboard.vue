@@ -421,7 +421,7 @@ const getMarkerColor = (status) => {
             </div>
             <div class="p-6">
               <!-- Map placeholder - In a real implementation, this would be replaced with a map component -->
-              <div id="map" class="bg-gray-100 rounded-lg h-96 relative overflow-hidden"></div>
+              <div id="map" class="bg-gray-100 rounded-lg h-96 relative overflow-hidden z-0"></div>
               <div class="mt-4 flex justify-start text-sm gap-5">
                 <div class="flex items-center gap-2">
                     <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
