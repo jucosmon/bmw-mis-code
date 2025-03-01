@@ -666,7 +666,7 @@ onMounted(() => {
                         <h2 class="text-xl font-semibold text-indigo-700 mb-4">Incident Location</h2>
                         <p class="mb-1"><strong>Location:</strong> {{ barangayName }}, {{ municipalityName }}</p>
                         <p class="mb-1"><strong>Detailed Location:</strong> {{ props.strandedIncident.detailed_location }}</p>
-                        <div id="map" style="height: 400px; width: 100%;" class="mb-3"></div>
+                        <div id="map" style="height: 400px; width: 100%;" class="mb-3 z-0"></div>
                         <p class="mt-2 text-gray-500 text-sm text-center">{{ props.strandedIncident.latitude }} lat. | {{ props.strandedIncident.longitude }} long.</p>
 
                     </div>

@@ -409,7 +409,7 @@ onMounted(() => {
                             {{ props.sighting.detailed_location }}
                         </p>
                     </div>
-                    <div id="map" class="rounded-lg overflow-hidden shadow-md" style="height: 400px; width: 100%;"></div>
+                    <div id="map" class="rounded-lg overflow-hidden shadow-md z-0" style="height: 400px; width: 100%;"></div>
                     <p class="mt-4 text-center text-sm text-gray-500">
                         <span class="font-medium text-indigo-700">Coordinates:</span> {{ props.sighting.latitude }} lat | {{ props.sighting.longitude }} long
                     </p>

@@ -448,7 +448,7 @@ const handleDropdownClick = (index) => {
                             <div
                                 id="map"
                                 style="height: 400px; width: 100%; margin-top: 10px;"
-                                class="rounded-lg border shadow"
+                                class="rounded-lg border shadow z-0"
                             ></div>
                         </div>
 

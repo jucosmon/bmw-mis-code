@@ -24,10 +24,12 @@ const incidents = ref([]);
 const showDownloadModal = ref(false);
 const isDownloading = ref(false);
 
-onMounted(() => {
-    console.log('Incidents:', incidents.value);
+// Add these refs for channels
+const sightingsChannel = ref(null);
+const strandingsChannel = ref(null);
 
-    // Initialize map
+onMounted(() => {
+    // Initialize map first
     map.value = L.map('map').setView([9.8500, 124.1833], 10);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
@@ -37,12 +39,8 @@ onMounted(() => {
         iconCreateFunction: function (cluster) {
             const count = cluster.getChildCount();
             let size = 'small';
-            if (count > 10) {
-                size = 'medium';
-            }
-            if (count > 50) {
-                size = 'large';
-            }
+            if (count > 10) size = 'medium';
+            if (count > 50) size = 'large';
             return L.divIcon({
                 html: `<div><span>${count}</span></div>`,
                 className: `marker-cluster marker-cluster-${size}`,
@@ -52,40 +50,46 @@ onMounted(() => {
     });
     map.value.addLayer(markers.value);
 
-    // Setup Supabase real-time subscriptions
-    const sightingsChannel = supabase.channel('public:sightings')
-        .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'sightings',
-            filter: 'is_active=eq.true'
-        }, () => {
-            console.log('Sightings updated');
-            fetchData();
-        })
+    // Register cleanup first, before any async operations
+    onBeforeUnmount(() => {
+        if (sightingsChannel.value) {
+            supabase.removeChannel(sightingsChannel.value);
+        }
+        if (strandingsChannel.value) {
+            supabase.removeChannel(strandingsChannel.value);
+        }
+        if (map.value) map.value.remove();
+    });
+
+    // Setup real-time subscriptions
+    sightingsChannel.value = supabase.channel('cluster-sightings-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'sightings',
+                filter: 'is_active=eq.true'
+            },
+            () => fetchData()
+        )
         .subscribe();
 
-    const strandingsChannel = supabase.channel('public:stranded_incidents')
-        .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'stranded_incidents',
-            filter: 'is_active=eq.true'
-        }, () => {
-            console.log('Strandings updated');
-            fetchData();
-        })
+    strandingsChannel.value = supabase.channel('cluster-strandings-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'stranded_incidents',
+                filter: 'is_active=eq.true'
+            },
+            () => fetchData()
+        )
         .subscribe();
 
     // Initial data fetch
     fetchData();
-
-    // Cleanup
-    onBeforeUnmount(() => {
-        supabase.removeChannel(sightingsChannel);
-        supabase.removeChannel(strandingsChannel);
-        if (map.value) map.value.remove();
-    });
 });
 
 const statusText = (status) => {
@@ -106,51 +110,85 @@ const statusText = (status) => {
 };
 
 const fetchData = async () => {
-    const { data: sightings, error: sightingsError } = await supabase
-        .from('sightings')
-        .select('*, sighted_species(*, species(*))')
-        .eq('is_active', true)
-        .eq('report_status', 'verified');
+    try {
+        const [sightingsRes, strandingsRes] = await Promise.all([
+            supabase
+                .from('sightings')
+                .select(`
+                    id,
+                    date,
+                    latitude,
+                    longitude,
+                    report_status,
+                    is_active,
+                    sighted_species (
+                        id,
+                        species (
+                            id,
+                            name,
+                            category
+                        )
+                    )
+                `)
+                .eq('is_active', true)
+                .eq('report_status', 'verified'),
 
-    const { data: strandedIncidents, error: strandedIncidentsError } = await supabase
-        .from('stranded_incidents')
-        .select('*, stranded_species(*, species(*))')
-        .eq('is_active', true)
-        .eq('report_status', 'resolved');
+            supabase
+                .from('stranded_incidents')
+                .select(`
+                    id,
+                    date,
+                    report_status,
+                    is_active,
+                    stranded_species (
+                        id,
+                        condition_code,
+                        latitude,
+                        longitude,
+                        species (
+                            id,
+                            name,
+                            category
+                        )
+                    )
+                `)
+                .eq('is_active', true)
+                .eq('report_status', 'resolved')
+        ]);
 
-    if (sightingsError || strandedIncidentsError) {
-        console.error('Error fetching data:', sightingsError || strandedIncidentsError);
-    } else {
-        const processedSightings = sightings.flatMap(sighting => {
-            return sighting.sighted_species.map(sighted_species => ({
+        if (sightingsRes.error) throw sightingsRes.error;
+        if (strandingsRes.error) throw strandingsRes.error;
+
+        const processedSightings = sightingsRes.data.flatMap(sighting =>
+            sighting.sighted_species.map(ss => ({
                 latitude: sighting.latitude,
                 longitude: sighting.longitude,
                 date: sighting.date,
                 type: 'sighting',
-                species_id: sighted_species.species.id,
-                species_name: sighted_species.species.name ?? 'Unknown',
-                category: sighted_species.species.category ?? 'Unknown',
-            }));
-        });
+                species_id: ss.species?.id,
+                species_name: ss.species?.name ?? 'Unknown',
+                category: ss.species?.category ?? 'Unknown',
+            }))
+        );
 
-        const processedStrandedIncidents = strandedIncidents.flatMap(incident => {
-            return incident.stranded_species.map(stranded_species => {
-                const status = stranded_species.condition_code == 1 ? 'Alive' : (stranded_species.condition_code >= 2 && stranded_species.condition_code <= 5 ? 'Dead' : 'Unknown');
-                return {
-                    latitude: stranded_species.latitude,
-                    longitude: stranded_species.longitude,
-                    date: incident.date,
-                    type: 'stranded',
-                    status: stranded_species.condition_code,
-                    species_id: stranded_species.species.id,
-                    species_name: stranded_species.species.name ?? 'Unknown',
-                    category: stranded_species.species.category ?? 'Unknown',
-                };
-            });
-        });
+        const processedStrandedIncidents = strandingsRes.data.flatMap(incident =>
+            incident.stranded_species.map(ss => ({
+                latitude: ss.latitude,
+                longitude: ss.longitude,
+                date: incident.date,
+                type: 'stranded',
+                status: ss.condition_code,
+                species_id: ss.species?.id,
+                species_name: ss.species?.name ?? 'Unknown',
+                category: ss.species?.category ?? 'Unknown',
+            }))
+        );
 
         incidents.value = [...processedSightings, ...processedStrandedIncidents];
         loadData();
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
 };
 
