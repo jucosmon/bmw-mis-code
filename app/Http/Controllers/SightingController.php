@@ -23,8 +23,12 @@ class SightingController extends Controller
         // Retrieve pending sightings based on user role
         $sightings = Sighting::where('is_active', true);
 
-        if ($user->user_role !== 'bpemo_admin') {
+        if ($user->user_role === 'public_user') {
             $sightings->where('user_id', $user->id);
+        }else if($user->user_role === 'lgu_responder'){
+            $sightings->where('municipality_id', $user->municipality_id);
+        }else if($user->user_role === 'barangay_official'){
+            $sightings->where('barangay_id', $user->barangay_id);
         }
 
         return Inertia::render('manage-sighting/index', [
@@ -46,7 +50,7 @@ class SightingController extends Controller
         $user = Auth::user();
 
         // Determine report status based on user role
-        $reportStatus = ($user->user_role === 'bpemo_admin') ? 'verified' : 'pending';
+        $reportStatus = ($user->user_role === 'bpemo_admin' ||$user->user_role === 'bpemo_staff') ? 'verified' : 'pending';
 
         // Validate the incoming request
         $request->validate([

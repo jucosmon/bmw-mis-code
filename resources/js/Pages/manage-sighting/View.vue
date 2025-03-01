@@ -61,11 +61,8 @@ const sizeText = (sightedSpeciesSize) => {
 
 //routes
 const backRoute = computed(() => {
-    if( props.sighting.report_status === 'verified' || props.sighting.report_status === 'false'){
-        return route('sighting.finished.index');
-    }else{
-        return route('sighting.index');
-    }
+
+    return route('sighting.index');
 
 });
 
@@ -135,7 +132,8 @@ const archiveSighting = () => {
 // Update button validation for regular sighting reports
 const updateButton = computed(() => {
     return ((isPublicUser.value || isBarangayOfficial.value || isLguResponder.value)
-    && props.sighting.report_status === 'pending' && props.sighting.is_active === true);
+    && props.sighting.report_status === 'pending' && props.sighting.is_active === true
+    && page.props.auth.user.id === props.sighting.user_id);
 });
 
 
@@ -259,7 +257,7 @@ onMounted(() => {
                 <h1 class="text-3xl font-bold">Sighting Information</h1>
                 <span class="text-xs text-gray-100 italic mb-4">[{{ props.sighting.id }}] {{ props.sighting.date }} : {{ props.sighting.time }}</span>
                 <p class="text-sm mt-2">{{ props.sighting.is_active ? 'Active' : 'Inactive' }} ({{ props.sighting.report_status }})</p>
-                <div class="flex justify-end space-x-4">
+                <div v-if=updateButton class="flex justify-end space-x-4">
                     <button
                         class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
                         @click="confirmArchiveSighting"
