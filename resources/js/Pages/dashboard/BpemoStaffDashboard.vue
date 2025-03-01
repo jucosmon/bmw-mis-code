@@ -14,7 +14,6 @@ const markers = ref([]);
 
 // Stats data
 const stats = ref({
-  totalUsers: 0,
   totalStrandings: {
     total: 0,
     breakdown: {
@@ -49,13 +48,6 @@ const totalReports = ref(0);
 
 // Fetch all data
 const fetchData = async () => {
-  // Fetch total users (just count, no role breakdown)
-  const { count: usersCount } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true });
-
-  stats.value.totalUsers = usersCount || 0;
-
   // Fetch stranding stats (count main records, not species)
   const { data: strandings } = await supabase
     .from('stranded_incidents')
@@ -334,26 +326,7 @@ const getMarkerColor = (status) => {
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-          <!-- Total Users Card -->
-          <div class="bg-white overflow-hidden rounded-lg shadow">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                  <i class="fas fa-users text-blue-600 text-xl"></i>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                    <dd>
-                      <div class="text-lg font-semibold text-gray-900">{{ stats.totalUsers }}</div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-3 mb-6">
           <!-- Total Unresolved Strandings -->
           <div class="bg-white overflow-hidden rounded-lg shadow">
             <div class="p-5">
