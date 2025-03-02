@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'active' => \App\Http\Middleware\CheckIfUserIsActive::class,
+            'check.restrict' => \App\Http\Middleware\CheckUserRestriction::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
@@ -54,6 +55,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         //
+    })
+    ->withSchedule(function ($schedule) {
+        $schedule->command('app:unrestrict-users')->daily();
+        $schedule->command('app:check-inactive-incidents')->everyMinute();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

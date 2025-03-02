@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\HandlesFalseReports;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HandlesFalseReports;
 
     /**
      * The attributes that are mass assignable.
@@ -27,6 +28,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'birthdate',
         'sex',
         'position',
+        'false_report_count',
+        'is_restricted',
+        'restriction_start',
+        'restriction_end',
         'is_active',
         'user_role',
         'municipality_id',
@@ -91,6 +96,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_restricted' => 'boolean',
+            'restriction_start' => 'datetime',
+            'restriction_end' => 'datetime',
         ];
     }
 

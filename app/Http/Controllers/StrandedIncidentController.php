@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\RespondAction;
 use App\Models\Species;
 use App\Models\StrandedIncident;
+use App\Traits\HandlesFalseReports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,6 +17,7 @@ use Inertia\Inertia;
 
 class StrandedIncidentController extends Controller
 {
+    use HandlesFalseReports;
     //
     public function index()
     {
@@ -386,12 +388,11 @@ class StrandedIncidentController extends Controller
 
         $strandedIncident = StrandedIncident::findOrFail($id);
 
-        // Store the old report status to check for changes
         $oldReportStatus = $strandedIncident->report_status;
 
-        if($validated['report_status'] === 'false'){
-            $validated['is_active'] = false;
-        }
+        // if($validated['report_status'] === 'false'){
+        //     $validated['is_active'] = false;
+        // }
 
         $strandedIncident->update($validated);
 
@@ -401,7 +402,9 @@ class StrandedIncidentController extends Controller
                     // Delete previous notifications if the status is marked as false
             if ($validated['report_status'] === 'false') {
                 Notification::where('stranded_incident_id', $id)->delete();
+                $this->handleFalseReport($strandedIncident->user_id);
             }
+
             $this->createNotification($strandedIncident, $validated['report_status']);
 
             if($validated['report_status'] === 'verified' || $validated['report_status'] === 'false'){
@@ -428,6 +431,7 @@ class StrandedIncidentController extends Controller
                     $successMessage = 'You have successfully verified a stranded incident report!';
                 }
             }
+
         }else{
             $successMessage = 'You have successfully updated a stranded incident report!';
         }
