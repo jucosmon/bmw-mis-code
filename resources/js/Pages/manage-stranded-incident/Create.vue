@@ -7,35 +7,16 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 const page = usePage();
 const formErrors = ref(null);
 const previewImages = ref([]);
 const municipalities = ref([]);
 const barangays = ref([]);
+const locationSource = ref('manual'); // 'manual' or 'gps'
+const isGeocodingInProgress = ref(false);
 const props = defineProps({});
-
-
-onMounted(async () => {
-  console.log("Mounting...");
-  try {
-    const response = await fetch('/municipalities');
-    municipalities.value = await response.json();
-    console.log("Municipalities:", municipalities.value);
-  } catch (error) {
-    console.error("Error fetching municipalities:", error);
-  }
-});
-
-
-const fetchBarangays = async (municipalityId) => {
-  const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
-  barangays.value = await response.json();
-};
-
-const backRoute = computed(() => route('stranded.incident.index'));
-const createRoute = computed(() => route('stranded.incident.create'));
 
 const form = useForm({
   certainty_level: 10,
@@ -56,9 +37,47 @@ const form = useForm({
   mediaFiles: [],
 });
 
+const backRoute = computed(() => route('stranded.incident.index'));
+const createRoute = computed(() => route('stranded.incident.create'));
+
+onMounted(async () => {
+  console.log("Mounting...");
+  try {
+    const response = await fetch('/municipalities');
+    municipalities.value = await response.json();
+    console.log("Municipalities:", municipalities.value);
+  } catch (error) {
+    console.error("Error fetching municipalities:", error);
+  }
+
+  // Initialize map after component is mounted
+  nextTick(() => {
+    initializeMap();
+  });
+});
+
+const fetchBarangays = async (municipalityId) => {
+  if (!municipalityId) return;
+
+  try {
+    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
+    barangays.value = await response.json();
+  } catch (error) {
+    console.error("Error fetching barangays:", error);
+  }
+};
+
+// Watch for changes in municipality_id after form is initialized
+watch(() => form.municipality_id, (newValue) => {
+  if (newValue) {
+    fetchBarangays(newValue);
+    form.barangay_id = ''; // Reset barangay selection when municipality changes
+  }
+});
+
 const handleFileChange = (event) => {
   const files = event.target.files;
-  form.mediaFiles = Array.from(files); // Store the selected files in form.mediaFiles
+  form.mediaFiles = Array.from(files);
 
   previewImages.value = Array.from(files).map((file) => {
     return URL.createObjectURL(file);
@@ -68,6 +87,67 @@ const handleFileChange = (event) => {
 const removeImage = (index) => {
   previewImages.value.splice(index, 1);
   form.mediaFiles.splice(index, 1);
+};
+
+// Nominatim reverse geocoding function
+const reverseGeocode = async (latitude, longitude) => {
+  isGeocodingInProgress.value = true;
+
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+    const data = await response.json();
+
+    console.log("Nominatim response:", data);
+
+    // Extract address components
+    const address = data.address;
+
+    // Update form with location details
+    // Note: You'll need to map Nominatim's address components to your database fields
+    // This is an example and might need adjustments based on your location data
+
+    // Try to find the most relevant administrative level for municipality
+    // In the Philippines, this could be city, town, or municipality
+    let municipalityName = address.city || address.town || address.municipality;
+
+    // For barangay (which is specific to the Philippines)
+    // It might be stored under different keys depending on the region
+    let barangayName = address.village || address.suburb || address.neighbourhood || address.hamlet || address.quarter;
+
+    console.log("Found municipality:", municipalityName);
+    console.log("Found barangay:", barangayName);
+
+    // Find matching municipality in our database
+    if (municipalityName) {
+      const matchedMunicipality = municipalities.value.find(m =>
+        m.name.toLowerCase() === municipalityName.toLowerCase()
+      );
+
+      if (matchedMunicipality) {
+        form.municipality_id = matchedMunicipality.id;
+        await fetchBarangays(matchedMunicipality.id);
+
+        // Find matching barangay in our database
+        if (barangayName && barangays.value.length > 0) {
+          const matchedBarangay = barangays.value.find(b =>
+            b.name.toLowerCase() === barangayName.toLowerCase()
+          );
+
+          if (matchedBarangay) {
+            form.barangay_id = matchedBarangay.id;
+          }
+        }
+      }
+    }
+
+    // Set detailed location from Nominatim
+    form.detailed_location = data.display_name || '';
+
+  } catch (error) {
+    console.error("Error with reverse geocoding:", error);
+  } finally {
+    isGeocodingInProgress.value = false;
+  }
 };
 
 const submit = () => {
@@ -85,48 +165,66 @@ const submit = () => {
   }
 };
 
-// location
 // Map references
 const map = ref(null);
 const marker = ref(null);
 
-// Initialize Leaflet map
-onMounted(() => {
-  nextTick(() => {
-    console.log('Form object:', form); // Debugging line
-    map.value = L.map('map').setView([form.latitude, form.longitude], 13);
+const initializeMap = () => {
+  // Default to Philippines if no coordinates are set
+  const defaultLat = 12.8797;
+  const defaultLng = 121.7740;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map.value);
+  map.value = L.map('map').setView([form.latitude || defaultLat, form.longitude || defaultLng], 6);
 
-    marker.value = L.marker([form.latitude, form.longitude], {
-      draggable: true,
-    }).addTo(map.value);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+  }).addTo(map.value);
 
-    marker.value.on('dragend', (e) => {
-      const { lat, lng } = e.target.getLatLng();
-      form.latitude = lat;
-      form.longitude = lng;
-    });
+  marker.value = L.marker([form.latitude || defaultLat, form.longitude || defaultLng], {
+    draggable: true,
+  }).addTo(map.value);
+
+  marker.value.on('dragend', async (e) => {
+    const { lat, lng } = e.target.getLatLng();
+    form.latitude = lat;
+    form.longitude = lng;
+
+    if (locationSource.value === 'gps') {
+      await reverseGeocode(lat, lng);
+    }
   });
-});
 
+  map.value.on('click', async (e) => {
+    const { lat, lng } = e.latlng;
+    form.latitude = lat;
+    form.longitude = lng;
+    marker.value.setLatLng([lat, lng]);
+
+    if (locationSource.value === 'gps') {
+      await reverseGeocode(lat, lng);
+    }
+  });
+};
 
 // Use current location
-const setLocationFromMap = () => {
+const setLocationFromMap = async () => {
+  locationSource.value = 'gps';
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
 
         // Update the form's latitude and longitude
-        form.latitude = latitude; // No .value needed
-        form.longitude = longitude; // No .value needed
+        form.latitude = latitude;
+        form.longitude = longitude;
 
         // Update the map view and marker position
         map.value.setView([latitude, longitude], 13);
         marker.value.setLatLng([latitude, longitude]);
+
+        // Get municipality and barangay from coordinates
+        await reverseGeocode(latitude, longitude);
       },
       () => {
         alert('Failed to fetch current location. Please allow location access.');
@@ -137,6 +235,10 @@ const setLocationFromMap = () => {
   }
 };
 
+// Switch to manual selection mode
+const useManualSelection = () => {
+  locationSource.value = 'manual';
+};
 </script>
 
 <template>
@@ -213,7 +315,8 @@ const setLocationFromMap = () => {
                 <option value="rough">Rough</option>
               </select>
               <InputError class="mt-2" :message="form.errors.sea_state" />
-            </div>  <div>
+            </div>
+            <div>
               <InputLabel for="weather" value="Weather" />
               <select v-model="form.weather" class="w-full">
                 <option value="" disabled>Select an option</option>
@@ -222,7 +325,8 @@ const setLocationFromMap = () => {
                 <option value="rainy">Rainy</option>
               </select>
               <InputError class="mt-2" :message="form.errors.weather" />
-            </div>  <div>
+            </div>
+            <div>
               <InputLabel for="beach_type" value="Beach type" />
               <select v-model="form.beach_type" class="w-full">
                 <option value="" disabled>Select an option</option>
@@ -234,26 +338,44 @@ const setLocationFromMap = () => {
               <InputError class="mt-2" :message="form.errors.beach_type" />
             </div>
 
-            <!--Map-->
-            <div class="mt-4 sm:col-span-2">
+            <!--Location Selection Method-->
+            <div class="sm:col-span-2">
+              <div class="flex justify-center space-x-4 mb-4">
                 <button
-                    @click.prevent="setLocationFromMap"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm w-full"
+                  @click.prevent="setLocationFromMap"
+                  class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm flex-1"
+                  :class="{ 'bg-indigo-800': locationSource === 'gps' }"
                 >
-                    Use Current Location
+                  Use GPS Location
                 </button>
-                <p class="text-sm text-gray-600 mt-2">
-                    Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-                </p>
-                <div
-                    id="map"
-                    style="height: 400px; width: 100%; margin-top: 10px;"
-                    class="rounded-lg border shadow z-0"
-                ></div>
-                </div>
+                <button
+                  @click.prevent="useManualSelection"
+                  class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm flex-1"
+                  :class="{ 'bg-indigo-800': locationSource === 'manual' }"
+                >
+                  Manual Selection
+                </button>
+              </div>
+
+              <!--Map-->
+              <div
+                id="map"
+                style="height: 400px; width: 100%;"
+                class="rounded-lg border shadow z-0 mb-4"
+              ></div>
+
+              <p class="text-sm text-gray-600 mb-2">
+                Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
+              </p>
+
+              <div v-if="isGeocodingInProgress" class="text-sm text-indigo-600 mb-2">
+                Looking up location details...
+              </div>
+            </div>
+
             <div>
               <InputLabel for="municipality_id" value="Municipality" />
-              <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
+              <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a municipality</option>
                 <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
                   {{ municipality.name }}
@@ -264,7 +386,7 @@ const setLocationFromMap = () => {
 
             <div>
               <InputLabel for="barangay_id" value="Barangay" />
-              <select required v-model="form.barangay_id" class="w-full">
+              <select required v-model="form.barangay_id" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a barangay</option>
                 <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
                   {{ barangay.name }}
@@ -281,9 +403,10 @@ const setLocationFromMap = () => {
                 autocomplete="detailed_location"
                 class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
                 placeholder="Please add more details of the exact location"
-            ></textarea>
+              ></textarea>
               <InputError class="mt-2" :message="form.errors.detailed_location" />
             </div>
+
             <div class="sm:col-span-2">
               <InputLabel for="more_information" value="More Information of the Incident" />
               <textarea
@@ -292,14 +415,14 @@ const setLocationFromMap = () => {
                 autocomplete="more_information"
                 class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
                 placeholder="Please share more information of the incident"
-            ></textarea>
+              ></textarea>
               <InputError class="mt-2" :message="form.errors.more_information" />
             </div>
 
             <div class="sm:col-span-2">
               <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-              <input type="file" accept="image/*,video/*"  id="mediaFiles" @change="handleFileChange" multiple class="file-input w-full"/>
-              <div v-if="previewImages.length" class="mt-2 flex gap-4">
+              <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="file-input w-full"/>
+              <div v-if="previewImages.length" class="mt-2 flex gap-4 flex-wrap">
                 <div v-for="(img, index) in previewImages" :key="index" class="relative">
                   <img :src="img" alt="Preview" class="w-20 h-20 object-cover rounded-lg"/>
                   <button @click="removeImage(index)" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">X</button>
@@ -319,42 +442,34 @@ const setLocationFromMap = () => {
 </template>
 
 <style scoped>
-/* Custom styles can go here */
-</style>
-
-
-
-<style scoped>
 /* Hide the file name (text) but keep the button */
 .file-input {
   position: relative;
   overflow: hidden;
-  width: 100%; /* Adjust as needed */
-  height: 40px; /* Adjust height as needed */
+  width: 100%;
+  height: 40px;
   color: white;
-
-
 }
+
 #map {
-    height: 400px; /* Ensure this is set */
-    width: 100%; /* Ensure this is set */
+  height: 400px;
+  width: 100%;
 }
 
 /* Hide the file name text after file is selected */
 .file-input::-webkit-file-upload-button {
-  visibility: hidden; /* Hides the file name */
+  visibility: hidden;
 }
 
 /* Optional: custom styling for the file input button */
 .file-input::before {
-  content: "Choose Files"; /* Text for the button */
+  content: "Choose Files";
   display: inline-block;
-  background-color: indigo; /* Change to your preferred color */
+  background-color: indigo;
   color: white;
   padding: 10px;
   border-radius: 5px;
   cursor: pointer;
   text-align: center;
 }
-
 </style>
