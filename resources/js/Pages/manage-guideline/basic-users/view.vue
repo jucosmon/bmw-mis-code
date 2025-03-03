@@ -2,9 +2,9 @@
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+
 
 const page = usePage();
 const props = defineProps({
@@ -32,7 +32,7 @@ const closeFileModal = () => {
 };
 
 const backRoute = () => {
-    Inertia.get(route('guideline.index'));
+    router.get(route('guideline.index'));
 };
 </script>
 

@@ -1,7 +1,6 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 // Ensure usePage is not null
@@ -39,15 +38,15 @@ const groupedIncidents = computed(() => {
 
 // Button routes
 const createStrandedIncidents = () => {
-    Inertia.get(route('stranded.incident.createPage'));
+    router.get(route('stranded.incident.createPage'));
 };
 const viewStrandedIncidents = (id) => {
-    Inertia.visit(route('stranded.incident.view', { id }));
+    router.visit(route('stranded.incident.view', { id }));
 };
 
 
 const resolvedIncidentsButton = () => {
-    Inertia.visit(route('resolved.incidents.index'));
+    router.visit(route('resolved.incidents.index'));
 }
 
 </script>

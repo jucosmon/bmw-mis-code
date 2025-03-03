@@ -1,7 +1,6 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -65,16 +64,16 @@ const hasMorePages = computed(() => filteredUsers.value.length > PER_PAGE * curr
 //button routes
 const createUser = () => {
     if(page.props.auth?.user?.user_role==='lgu_responder'){
-        Inertia.get(route('lgu.responder.manage.account.create.page'));
+        router.get(route('lgu.responder.manage.account.create.page'));
     }else {
-        Inertia.get(route('bpemo.admin.manage.account.create.page', { type: props.type }));
+        router.get(route('bpemo.admin.manage.account.create.page', { type: props.type }));
     }
 }
 const viewUser = (user_id)=> {
     if(page.props.auth?.user?.user_role==='lgu_responder'){
-        Inertia.visit(route('lgu.responder.manage.account.view', {user_id: user_id}));
+        router.visit(route('lgu.responder.manage.account.view', {user_id: user_id}));
     }else{
-        Inertia.visit(route('bpemo.admin.manage.account.view', {user_id: user_id}));
+        router.visit(route('bpemo.admin.manage.account.view', {user_id: user_id}));
     }
 }
 </script>

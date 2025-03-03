@@ -3,8 +3,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -52,7 +51,7 @@ const unarchiveRoute = computed(() => {
 
 // Methods
 const updateSpeciesForm = () => {
-    Inertia.visit(updateRoute.value);
+    router.visit(updateRoute.value);
 };
 
 const showConfirmArchiveModal = ref(false);

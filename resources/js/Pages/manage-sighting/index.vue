@@ -1,8 +1,8 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+
 
 const page = usePage();
 const props = defineProps({
@@ -12,10 +12,10 @@ const props = defineProps({
 
 // Button routes
 const createSightings = () => {
-    Inertia.get(route('sighting.createPage'));
+    router.get(route('sighting.createPage'));
 };
 const viewSighting = (id) => {
-    Inertia.visit(route('sighting.view', { id }));
+    router.visit(route('sighting.view', { id }));
 };
 
 // Filter status

@@ -3,8 +3,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 
@@ -118,7 +117,7 @@ onMounted(async () => {
 });
 
 const updateUser = ()=> {
-    Inertia.visit(updateRoute.value);
+    router.visit(updateRoute.value);
 }
 
 //disable user modal

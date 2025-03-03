@@ -1,7 +1,6 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -53,7 +52,7 @@ const filteredGuidelines = computed(() => {
 
 // Button routes
 const viewGuideline = (id) => {
-    return Inertia.visit(route('guideline.view', { id }));
+    return router.visit(route('guideline.view', { id }));
 };
 </script>
 

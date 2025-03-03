@@ -3,8 +3,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
@@ -96,7 +95,7 @@ const unarchiveRoute = computed(() => {
 
 // main methods with consecutive modals
 const updateIncident = () => {
-    Inertia.visit(updateRoute.value);
+    router.visit(updateRoute.value);
 };
 
 const showConfirmArchiveModal = ref(false);
@@ -191,7 +190,7 @@ const handleRespondAction = (response) => {
             return;
     }
 
-    Inertia.post(
+    router.post(
         route('stranded.incident.respond'),
         { status, id: props.strandedIncident.id },
         {
@@ -221,7 +220,7 @@ const showCompleteModal = () => {
 const handleCompleteAction = (response) => {
     if (response === 'yes') {
         console.log('Stranded Incident ID:', props.strandedIncident.id); // Check the ID value
-        Inertia.patch(
+        router.patch(
             route('stranded.incident.complete', { id: props.strandedIncident.id }), // Pass the ID here
             {},
             {
@@ -252,7 +251,7 @@ const showResolveModal = () => {
 
 const handleResolveAction = (response) => {
     if (response === 'yes') {
-        Inertia.patch(
+        router.patch(
             route('stranded.incident.resolve', { id: props.strandedIncident.id }), // Pass the ID here
             {},
             {
@@ -283,7 +282,7 @@ const showUnresolveModal = () => {
 
 const handleUnresolveAction = (response) => {
     if (response === 'yes') {
-        Inertia.patch(
+        router.patch(
             route('stranded.incident.unresolve', { id: props.strandedIncident.id }), // Pass the ID here
             {},
             {
@@ -306,7 +305,7 @@ const submitComment = () => {
         form.errors.text = 'Comment cannot be empty.';
         return;
     }
-    Inertia.post(route('comment.create'), {
+    router.post(route('comment.create'), {
         text: form.text,
         stranded_incident_id: props.strandedIncident.id // Ensure this is included
     }, {
@@ -353,7 +352,7 @@ const cancelEditComment = () => {
 };
 
 const submitEditComment = (commentId) => {
-    Inertia.patch(route('comment.update', commentId), { text: newCommentText.value }, {
+    router.patch(route('comment.update', commentId), { text: newCommentText.value }, {
         onSuccess: () => {
             // Find the updated comment and update its text
             const updatedComment = comments.value.find(comment => comment.id === commentId);
@@ -369,7 +368,7 @@ const submitEditComment = (commentId) => {
 };
 
 const archiveComment = (commentId) => {
-    Inertia.patch(route('comment.archive', commentId), {}, {
+    router.patch(route('comment.archive', commentId), {}, {
         onSuccess: () => {
             // Remove the archived comment from the local state
             comments.value = comments.value.filter(comment => comment.id !== commentId);
@@ -390,12 +389,12 @@ const scrollToCommentsSection = () => {
 
 // detailed species forms
 const createSpeciesForm = () => {
-    Inertia.get(route('stranded.species.createPage', {id: props.strandedIncident.id}));
+    router.get(route('stranded.species.createPage', {id: props.strandedIncident.id}));
 }
 
 // view species form
 const handleSpeciesClick = ($id) => {
-    Inertia.get(route('stranded.species.view', {id: $id}));
+    router.get(route('stranded.species.view', {id: $id}));
 }
 
 // location data

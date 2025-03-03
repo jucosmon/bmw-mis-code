@@ -3,8 +3,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { supabase } from '@/supabase';
-import { Inertia } from '@inertiajs/inertia';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
 const state = reactive({
@@ -264,13 +263,13 @@ const openNotification = async (notification) => {
                 openFalseNotificationModal(notification.content);
             } else {
                 // Navigate to the Inertia route
-                Inertia.get(route('stranded.incident.view', { id: notification.stranded_incident_id }));
+                router.get(route('stranded.incident.view', { id: notification.stranded_incident_id }));
             }
         } catch (error) {
             console.error('Error fetching stranded incident status:', error);
         }
     } else if (notification.category === 'general' && notification.type === 'sighting') {
-        Inertia.get(); // Add your logic here
+        router.get(); // Add your logic here
     } else if (notification.category === 'false' || notification.category === 'warning') {
         openFalseNotificationModal(notification.content);
     }

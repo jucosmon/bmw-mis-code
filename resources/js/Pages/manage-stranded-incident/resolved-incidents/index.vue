@@ -1,7 +1,6 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -26,7 +25,7 @@ const groupedIncidents = computed(() => {
 
 
 const viewStrandedIncidents = (id) => {
-    Inertia.visit(route('stranded.incident.view', { id }));
+    router.visit(route('stranded.incident.view', { id }));
 };
 
 const status = computed(() => {

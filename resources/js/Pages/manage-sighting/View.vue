@@ -3,11 +3,11 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
+
 
 
 const page = usePage();
@@ -85,7 +85,7 @@ const unarchiveRoute = computed(() => {
 
 // main methods with consecutive modals
 const updateSighting = () => {
-    Inertia.visit(updateRoute.value);
+    router.visit(updateRoute.value);
 };
 
 const showConfirmArchiveModal = ref(false);

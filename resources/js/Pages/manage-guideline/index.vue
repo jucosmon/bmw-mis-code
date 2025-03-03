@@ -1,8 +1,7 @@
 <script setup>
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -76,19 +75,19 @@ const hasMorePages = computed(() => filteredGuidelines.value.length > PER_PAGE *
 
 // Button routes
 const createGuideline = () => {
-    return Inertia.visit(route('manage.guideline.createPage', { user_role: props.user_role }));
+    return router.visit(route('manage.guideline.createPage', { user_role: props.user_role }));
 };
 
 const viewGuideline = (id) => {
-    return Inertia.visit(route('manage.guideline.view', { id }));
+    return router.visit(route('manage.guideline.view', { id }));
 };
 
 const archivedButton = () => {
-    return Inertia.get(route('manage.guideline.index', { user_role: props.user_role, archived: true }));
+    return router.get(route('manage.guideline.index', { user_role: props.user_role, archived: true }));
 };
 
 const backRoute = () => {
-    return Inertia.get(route('manage.guideline.index', { user_role: props.user_role, archived: false }));
+    return router.get(route('manage.guideline.index', { user_role: props.user_role, archived: false }));
 };
 
 // Toggle between active and inactive guidelines

@@ -1,8 +1,7 @@
 <script setup>
 import Modal from '@/Components/Modal.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
 const page = usePage();
@@ -130,10 +129,10 @@ const categoryText = (category) => {
 
 // Button routes
 const createSpecies = () => {
-    Inertia.get(route('bpemo.admin.manage.species.create.page'));
+    router.get(route('bpemo.admin.manage.species.create.page'));
 };
 const viewSpecies = (id) => {
-    Inertia.visit(route('species.view', { id }));
+    router.visit(route('species.view', { id }));
 };
 
 // Toggle between active and inactive species

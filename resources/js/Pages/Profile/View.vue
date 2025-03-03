@@ -1,8 +1,7 @@
 <script setup>
 import Modal from '@/Components/Modal.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
@@ -80,7 +79,7 @@ onMounted(async () => {
 });
 
 const updateUser = ()=> {
-    Inertia.visit(route('profile.edit'));
+    router.visit(route('profile.edit'));
 }
 
 //update password user modal

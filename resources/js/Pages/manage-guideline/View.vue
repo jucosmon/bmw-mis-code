@@ -4,7 +4,6 @@ import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Inertia } from '@inertiajs/inertia';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -25,10 +24,10 @@ const sortedItems = computed(() => {
 const backRoute = () => {
     if (props.guideline.is_active) {
         // Navigate to the active guidelines
-        Inertia.get(route('manage.guideline.index', { user_role: props.guideline.user_role, archived: false}));
+        router.get(route('manage.guideline.index', { user_role: props.guideline.user_role, archived: false}));
     } else {
         // Navigate to the archived guidelines
-        Inertia.get(route('manage.guideline.index', { user_role: props.guideline.user_role, archived: true}));
+        router.get(route('manage.guideline.index', { user_role: props.guideline.user_role, archived: true}));
     }
 };
 
@@ -85,7 +84,7 @@ const archive = ()=> {
 
 // update
 const updateButton = () => {
-    return Inertia.get(route('manage.guideline.updatePage', { id: props.guideline.id }));
+    return router.get(route('manage.guideline.updatePage', { id: props.guideline.id }));
 };
 </script>
 
