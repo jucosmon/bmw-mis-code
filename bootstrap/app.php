@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'active' => \App\Http\Middleware\CheckIfUserIsActive::class,
-            'check.restrict' => \App\Http\Middleware\CheckUserRestriction::class,
+            'notRestricted' => \App\Http\Middleware\CheckUserRestriction::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

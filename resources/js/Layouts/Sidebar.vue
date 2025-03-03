@@ -2,6 +2,7 @@
 import DropdownLink from '@/Components/DropdownLink.vue';
 import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import { supabase } from '@/supabase';
 import { Inertia } from '@inertiajs/inertia';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
@@ -38,13 +39,173 @@ const toggleNotificationsDropdown = (event) => {
 
 const fetchNotifications = async () => {
   try {
-    const response = await fetch('/notifications'); // Fetch all notifications
-    const data = await response.json();
-    notifications.value = data; // Store all notifications
-    displayedNotifications.value = notifications.value.slice(0, limit.value); // Limit the displayed notifications
+    const userId = user.value.id;
+    const userRole = user.value.user_role;
+    console.log('User role:', userRole);
+    let query = [];
+
+    if (userRole === 'public_user') {
+      const strandedRes = await supabase
+        .from('stranded_incidents')
+        .select('id')
+        .eq('user_id', userId);
+
+      const strandedIds = strandedRes.data?.map(s => s.id) || [];
+
+      // Get sightings IDs
+      const sightingRes = await supabase
+        .from('sightings')
+        .select('id')
+        .eq('user_id', userId);
+
+      const sightingIds = sightingRes.data?.map(s => s.id) || [];
+
+      // Get comments for user's stranded incidents
+      const commentsRes = await supabase
+        .from('comments')
+        .select('id')
+        .in('stranded_incident_id', strandedIds);
+
+      const commentIds = commentsRes.data?.map(c => c.id) || [];
+
+      // Build the notification query with all conditions
+      const conditions = [];
+
+      if (strandedIds.length > 0) {
+        conditions.push(`and(stranded_incident_id.in.(${strandedIds}),notif_for.eq.all)`);
+      }
+      if (sightingIds.length > 0) {
+        conditions.push(`and(sighting_id.in.(${sightingIds}),notif_for.eq.all)`);
+      }
+      if (commentIds.length > 0) {
+        conditions.push(`and(comment_id.in.(${commentIds}),notif_for.eq.all)`);
+      }
+
+      // Always include specific user notifications
+      conditions.push(`and(user_id.eq.${userId},notif_for.eq.specific_user)`);
+        query = supabase
+      .from('notifications')
+      .select('*');
+      query = query.or(conditions.join(','));
+
+    } else if (userRole === 'barangay_official') {
+
+      const barangayId = user.value.barangay_id;
+
+      const [strandedRes, sightingRes] = await Promise.all([
+        supabase.from('stranded_incidents').select('id').eq('barangay_id', barangayId),
+        supabase.from('sightings').select('id').eq('barangay_id', barangayId)
+      ]);
+
+      const strandedIds = strandedRes.data?.map(s => s.id) || [];
+      const sightingIds = sightingRes.data?.map(s => s.id) || [];
+
+      let commentIds = [];
+      if (strandedIds.length > 0) {
+        const commentsRes = await supabase
+          .from('comments')
+          .select('id')
+          .in('stranded_incident_id', strandedIds);
+        commentIds = commentsRes.data?.map(c => c.id) || [];
+      }
+
+      const conditions = [];
+      if (strandedIds.length > 0) {
+        conditions.push(`stranded_incident_id.in.(${strandedIds})`);
+      }
+      if (sightingIds.length > 0) {
+        conditions.push(`sighting_id.in.(${sightingIds})`);
+      }
+      if (commentIds.length > 0) {
+        conditions.push(`comment_id.in.(${commentIds})`);
+      }
+      if (conditions.length > 0) {
+        query = supabase
+        .from('notifications')
+        .select('*');
+        query = query.or(conditions.join(','));
+        query = query.neq('notif_for', 'specific_user');
+      }
+
+    } else if (userRole === 'lgu_responder') {
+      // Similar approach for LGU responders
+      const municipalityId = user.value.municipality_id;
+
+      const [strandedRes, sightingRes] = await Promise.all([
+        supabase.from('stranded_incidents').select('id').eq('municipality_id', municipalityId),
+        supabase.from('sightings').select('id').eq('municipality_id', municipalityId)
+      ]);
+
+      const strandedIds = strandedRes.data?.map(s => s.id) || [];
+      const sightingIds = sightingRes.data?.map(s => s.id) || [];
+
+      let commentIds = [];
+      if (strandedIds.length > 0) {
+        const commentsRes = await supabase
+          .from('comments')
+          .select('id')
+          .in('stranded_incident_id', strandedIds);
+        commentIds = commentsRes.data?.map(c => c.id) || [];
+      }
+
+      const conditions = [];
+      if (strandedIds.length > 0) {
+        conditions.push(`stranded_incident_id.in.(${strandedIds})`);
+      }
+      if (sightingIds.length > 0) {
+        conditions.push(`sighting_id.in.(${sightingIds})`);
+      }
+      if (commentIds.length > 0) {
+        conditions.push(`comment_id.in.(${commentIds})`);
+      }
+      if (conditions.length > 0) {
+        query = supabase
+      .from('notifications')
+      .select('*');
+        query = query.or(conditions.join(','));
+        query = query.neq('notif_for', 'specific_user');
+      }
+
+    } else if (userRole === 'bpemo_admin' || userRole === 'bpemo_staff') {
+        query = supabase
+      .from('notifications')
+      .select('*');
+      query = query.neq('notif_for', 'specific_user');
+    }
+    if (query.length === 0) {
+      return;
+    }
+    query = query.order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase query error:', error);
+      throw error;
+    }
+
+    notifications.value = data;
+    displayedNotifications.value = notifications.value.slice(0, limit.value);
   } catch (error) {
     console.error('Error fetching notifications:', error);
   }
+};
+
+// Subscribe to real-time notifications
+const subscribeToNotifications = () => {
+  const notificationsChannel = supabase
+    .channel('public:notifications')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, (payload) => {
+      console.log('Change received!', payload);
+      fetchNotifications();
+    })
+    .subscribe((status) => {
+      console.log('Notification subscription status:', status);
+    });
+
+  onBeforeUnmount(() => {
+    supabase.removeChannel(notificationsChannel);
+  });
 };
 
 const filteredNotifications = computed(() => {
@@ -199,6 +360,8 @@ onMounted(() => {
 
   // Initial resize check
   handleResize();
+  fetchNotifications();
+  subscribeToNotifications();
 });
 
 onBeforeUnmount(() => {

@@ -32,6 +32,7 @@ const municipalityData = ref([]);
 const barangayData = ref([]);
 
 const municipalityName = computed(() => {
+    if (!user.municipality_id) return 'Unknown Municipality';
     const municipality = municipalityData.value.find(
         (m) => m.id === user.municipality_id
     );
@@ -39,21 +40,40 @@ const municipalityName = computed(() => {
 });
 
 const barangayName = computed(() => {
+    if (!user.barangay_id) return 'Unknown Barangay';
     const barangay = barangayData.value.find(
         (b) => b.id === user.barangay_id
     );
     return barangay ? barangay.name : 'Unknown Barangay';
 });
 
+const municipalityId = ref(null);
+const barangays = ref([]);
+
+const fetchBarangays = async () => {
+  try {
+    if (!municipalityId.value) {
+      throw new Error('Municipality ID is not set');
+    }
+    const response = await axios.get(`/barangays?municipality_id=${municipalityId.value}`);
+    barangays.value = response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
 onMounted(async () => {
     try {
         const municipalityResponse = await axios.get('/municipalities');
         municipalityData.value = municipalityResponse.data;
 
-        const barangayResponse = await axios.get(
-            `/barangays?municipality_id=${user.municipality_id}`
-        );
-        barangayData.value = barangayResponse.data;
+        municipalityId.value = user.municipality_id;
+
+        if (municipalityId.value) {
+            fetchBarangays();
+        } else {
+            console.warn('Municipality ID is not set');
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -132,12 +152,12 @@ const form = useForm({
                         <p><strong>Email:</strong> {{ user.email }}</p>
                         <p><strong>Phone:</strong> {{ user.contact_number }}</p>
                         <p><strong>Sex:</strong> {{ user.sex }}</p>
-                        <p v-if="user.user_role!=='public_user'"><strong>Position:</strong> {{ user.position }}</p>
+                        <p v-if="user.user_role!=='public_user' && user.position"><strong>Position:</strong> {{ user.position }}</p>
                         <p>
                             <strong>Birthdate:</strong>
                             {{ new Date(user.birthdate).toLocaleDateString() }}
                         </p>
-                        <p v-if="user.user_role!=='public_user'"><strong>Address:</strong> {{ barangayName }}, {{ municipalityName }}</p>
+                        <p v-if="user.user_role!=='public_user' && user.municipality_id && user.barangay_id"><strong>Address:</strong> {{ barangayName }}, {{ municipalityName }}</p>
 
                     </div>
                 </div>

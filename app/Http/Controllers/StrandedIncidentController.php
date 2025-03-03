@@ -183,7 +183,7 @@ class StrandedIncidentController extends Controller
             Notification::create([
                 'content' => "[{$userRole}] {$user->first_name} {$user->last_name} reported a new stranding incident.",
                 'category' => 'general',
-                'notif_for' => 'all',
+                'notif_for' => 'responders',
                 'type' => 'stranding',
                 'is_read' => false,
                 'created_at' => now(),
@@ -244,7 +244,7 @@ class StrandedIncidentController extends Controller
             Notification::create([
                 'content' => "[{$userRole}] {$user->first_name} {$user->last_name} archived the reported stranding incident.",
                 'category' => 'false',
-                'notif_for' => 'all',
+                'notif_for' => 'responders',
                 'type' => 'stranding',
                 'is_read' => false,
                 'created_at' => now(),

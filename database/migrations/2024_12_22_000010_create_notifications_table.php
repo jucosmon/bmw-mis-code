@@ -23,6 +23,11 @@ return new class extends Migration
             $table->foreignId('stranded_incident_id')->nullable()->constrained()->onDelete('cascade'); // Foreign key for stranded incident
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade'); // Foreign key for user
             $table->foreignId('comment_id')->nullable()->constrained()->onDelete('cascade'); // Foreign key for user
+
+            // Add indexes for frequently queried columns
+            $table->index('notif_for');
+            $table->index('type');
+            $table->index('is_read');
         });
     }
 
