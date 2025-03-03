@@ -16,6 +16,7 @@ const municipalities = ref([]);
 const barangays = ref([]);
 const locationSource = ref('manual'); // 'manual' or 'gps'
 const isGeocodingInProgress = ref(false);
+const showMap = ref(false);
 const props = defineProps({});
 
 const form = useForm({
@@ -49,11 +50,6 @@ onMounted(async () => {
   } catch (error) {
     console.error("Error fetching municipalities:", error);
   }
-
-  // Initialize map after component is mounted
-  nextTick(() => {
-    initializeMap();
-  });
 });
 
 const fetchBarangays = async (municipalityId) => {
@@ -112,10 +108,14 @@ const reverseGeocode = async (latitude, longitude) => {
 
     // For barangay (which is specific to the Philippines)
     // It might be stored under different keys depending on the region
-    let barangayName = address.village || address.suburb || address.neighbourhood || address.hamlet || address.quarter;
+    let barangayName = address.quarter || address.village || address.suburb || address.neighbourhood || address.hamlet;
 
     console.log("Found municipality:", municipalityName);
     console.log("Found barangay:", barangayName);
+
+    // Clear existing selections first
+    form.municipality_id = '';
+    form.barangay_id = '';
 
     // Find matching municipality in our database
     if (municipalityName) {
@@ -145,6 +145,8 @@ const reverseGeocode = async (latitude, longitude) => {
 
   } catch (error) {
     console.error("Error with reverse geocoding:", error);
+    form.municipality_id = '';
+    form.barangay_id = '';
   } finally {
     isGeocodingInProgress.value = false;
   }
@@ -209,22 +211,29 @@ const initializeMap = () => {
 // Use current location
 const setLocationFromMap = async () => {
   locationSource.value = 'gps';
+  showMap.value = true;
+
+  // Wait for the map container to be available in DOM
+  await nextTick();
+
+  // Clean up existing map if any
+  cleanupMap();
+
+  // Initialize new map
+  initializeMap();
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-
-        // Update the form's latitude and longitude
         form.latitude = latitude;
         form.longitude = longitude;
 
-        // Update the map view and marker position
-        map.value.setView([latitude, longitude], 13);
-        marker.value.setLatLng([latitude, longitude]);
-
-        // Get municipality and barangay from coordinates
-        await reverseGeocode(latitude, longitude);
+        if (map.value) {
+          map.value.setView([latitude, longitude], 13);
+          marker.value.setLatLng([latitude, longitude]);
+          await reverseGeocode(latitude, longitude);
+        }
       },
       () => {
         alert('Failed to fetch current location. Please allow location access.');
@@ -235,10 +244,38 @@ const setLocationFromMap = async () => {
   }
 };
 
+// Add function to remove GPS location
+const removeGpsLocation = () => {
+  showMap.value = false;
+  locationSource.value = 'manual';
+  form.latitude = '';
+  form.longitude = '';
+  form.municipality_id = '';
+  form.barangay_id = '';
+  form.detailed_location = '';
+  cleanupMap();
+};
+
 // Switch to manual selection mode
 const useManualSelection = () => {
   locationSource.value = 'manual';
 };
+
+// Add cleanup function for map
+const cleanupMap = () => {
+  if (map.value) {
+    map.value.remove();
+    map.value = null;
+    marker.value = null;
+  }
+};
+
+// Add watch for showMap to ensure proper cleanup
+watch(showMap, (newValue) => {
+  if (!newValue) {
+    cleanupMap();
+  }
+});
 </script>
 
 <template>
@@ -344,38 +381,41 @@ const useManualSelection = () => {
                 <button
                   @click.prevent="setLocationFromMap"
                   class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm flex-1"
-                  :class="{ 'bg-indigo-800': locationSource === 'gps' }"
+                  :class="{ 'bg-indigo-800': showMap }"
                 >
                   Use GPS Location
                 </button>
-                <button
-                  @click.prevent="useManualSelection"
-                  class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm flex-1"
-                  :class="{ 'bg-indigo-800': locationSource === 'manual' }"
-                >
-                  Manual Selection
-                </button>
               </div>
 
-              <!--Map-->
-              <div
-                id="map"
-                style="height: 400px; width: 100%;"
-                class="rounded-lg border shadow z-0 mb-4"
-              ></div>
+              <!--Map (only shown when GPS is activated)-->
+              <div v-if="showMap" class="relative">
+                <div
+                  id="map"
+                  style="height: 400px; width: 100%;"
+                  class="rounded-lg border shadow z-0 mb-4"
+                ></div>
 
-              <p class="text-sm text-gray-600 mb-2">
-                Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-              </p>
+                <!-- Remove GPS Location button -->
+                <button
+                  @click.prevent="removeGpsLocation"
+                  class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg shadow-sm"
+                >
+                  Remove GPS Location
+                </button>
 
-              <div v-if="isGeocodingInProgress" class="text-sm text-indigo-600 mb-2">
-                Looking up location details...
+                <p class="text-sm text-gray-600 mb-2">
+                  Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
+                </p>
+
+                <div v-if="isGeocodingInProgress" class="text-sm text-indigo-600 mb-2">
+                  Looking up location details...
+                </div>
               </div>
             </div>
 
             <div>
               <InputLabel for="municipality_id" value="Municipality" />
-              <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
+              <select v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a municipality</option>
                 <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
                   {{ municipality.name }}
@@ -386,7 +426,7 @@ const useManualSelection = () => {
 
             <div>
               <InputLabel for="barangay_id" value="Barangay" />
-              <select required v-model="form.barangay_id" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
+              <select v-model="form.barangay_id" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a barangay</option>
                 <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
                   {{ barangay.name }}
@@ -398,6 +438,7 @@ const useManualSelection = () => {
             <div class="sm:col-span-2">
               <InputLabel for="detailed_location" value="Detailed Location" />
               <textarea
+                required
                 id="detailed_location"
                 v-model="form.detailed_location"
                 autocomplete="detailed_location"

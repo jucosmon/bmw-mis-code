@@ -29,8 +29,8 @@ class BarangayMunicipalitySeeder extends Seeder
                 'name' => 'Tagbilaran',
                 'barangays' => [
                     'Bool', 'Booy', 'Cabawan', 'Cogon', 'Dampas', 'Dao',
-                    'Manga', 'Mansasa', 'Poblacion I', 'Poblacion II',
-                    'Poblacion III', 'San Isidro', 'Taloto', 'Tiptip', 'Ubujan'
+                    'Manga', 'Mansasa', 'Poblacion 1', 'Poblacion 2',
+                    'Poblacion 3', 'San Isidro', 'Taloto', 'Tiptip', 'Ubujan'
                 ]
             ],
             [
@@ -207,7 +207,7 @@ class BarangayMunicipalitySeeder extends Seeder
                 'name' => 'Mabini',
                 'barangays' => [
                     'Abaca', 'Abad Santos', 'Aguipo', 'Baybayon', 'Bulawan', 'Cabidian', 'Cawayanan', 'Concepcion',
-                    'Del Mar', 'Lungsoda-an', 'Marcelo', 'Minol', 'Paraiso', 'Poblacion I', 'Poblacion II', 'San Isidro',
+                    'Del Mar', 'Lungsoda-an', 'Marcelo', 'Minol', 'Paraiso', 'Poblacion 1', 'Poblacion 2', 'San Isidro',
                     'San Jose', 'San Rafael', 'San Roque', 'Tambo', 'Tangkigan', 'Valaga'
                 ]
             ],

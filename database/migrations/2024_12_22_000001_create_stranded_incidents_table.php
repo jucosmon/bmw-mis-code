@@ -16,7 +16,7 @@ return new class extends Migration
             $table->tinyInteger('certainty_level');
             $table->date('date');
             $table->time('time');
-            $table->text('species_involved')->nullable(); // Nullable
+            $table->text('species_involved')->nullable();
             $table->unsignedTinyInteger('quantity');
             $table->enum('condition', ['alive', 'dead']);
             $table->decimal('latitude', 10, 7)->nullable();
@@ -24,13 +24,13 @@ return new class extends Migration
             $table->enum('sea_state', ['calm', 'rough', 'moderate'])->nullable();
             $table->enum('weather', ['sunny', 'cloudy', 'rainy'])->nullable();
             $table->enum('beach_type', ['mangrove', 'rocky', 'sandy', 'reef'])->nullable();
-            $table->text('detailed_location')->nullable(); // Nullable
-            $table->text('more_information')->nullable(); // Nullable
+            $table->text('detailed_location');
+            $table->text('more_information')->nullable();
             $table->enum('report_status', ['pending', 'verified', 'completed', 'resolved', 'false'])->default('pending');
             $table->boolean('is_active')->default(true);
-            $table->unsignedInteger('municipality_id')->nullable(); // Nullable
-            $table->unsignedInteger('barangay_id')->nullable(); // Nullable
-            $table->unsignedInteger('user_id')->nullable(); // Nullable
+            $table->unsignedInteger('municipality_id')->nullable();
+            $table->unsignedInteger('barangay_id')->nullable();
+            $table->unsignedInteger('user_id')->nullable();
             $table->timestamps();
 
             // Foreign key constraints
