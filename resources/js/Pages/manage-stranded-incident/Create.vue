@@ -1,10 +1,9 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
@@ -152,18 +151,72 @@ const reverseGeocode = async (latitude, longitude) => {
   }
 };
 
+// Add new refs for form steps
+const currentStep = ref(1);
+const totalSteps = 4;
+const isSubmitting = ref(false);
+
+const steps = [
+  { number: 1, title: 'Basic Information' },
+  { number: 2, title: 'Location Details' },
+  { number: 3, title: 'Environmental Data' },
+  { number: 4, title: 'Media & Additional Info' },
+];
+
+const goToStep = (step) => {
+  if (step >= 1 && step <= totalSteps) {
+    currentStep.value = step;
+  }
+};
+
+// Add new refs for step validation
+const isStepValid = computed(() => {
+  switch (currentStep.value) {
+    case 1:
+      return form.date &&
+             form.time &&
+             form.species_involved &&
+             form.quantity &&
+             form.condition;
+    case 2:
+      return (form.municipality_id && form.barangay_id && form.detailed_location) ||
+             (locationSource.value === 'gps' && form.latitude && form.longitude);
+    case 3:
+      return form.sea_state && form.weather && form.beach_type;
+    case 4:
+      return true; // Optional fields
+    default:
+      return false;
+  }
+});
+
+// Modify nextStep to check validation
+const nextStep = () => {
+  if (currentStep.value < totalSteps && isStepValid.value) {
+    currentStep.value++;
+  }
+};
+
+const previousStep = () => {
+  if (currentStep.value > 1) {
+    currentStep.value--;
+  }
+};
+
+// Enhance submit function with loading state
 const submit = () => {
   if (createRoute.value) {
+    isSubmitting.value = true;
     form.post(createRoute.value, {
       onSuccess: () => {
-        formErrors.value = null; // Clear errors on successful submission
+        formErrors.value = null;
+        isSubmitting.value = false;
       },
       onError: (errors) => {
-        formErrors.value = errors; // Set errors on failed submission
+        formErrors.value = errors;
+        isSubmitting.value = false;
       },
     });
-  } else {
-    console.error("Create route is undefined");
   }
 };
 
@@ -276,6 +329,41 @@ watch(showMap, (newValue) => {
     cleanupMap();
   }
 });
+
+// Add new computed properties for field validation
+const getFieldState = (fieldName) => {
+  return {
+    isRequired: isFieldRequired(fieldName),
+    isEmpty: isFieldEmpty(fieldName),
+    isTouched: isFieldTouched.value[fieldName]
+  };
+};
+
+const isFieldRequired = (fieldName) => {
+  const requiredFields = {
+    date: true,
+    time: true,
+    species_involved: true,
+    quantity: true,
+    condition: true,
+    detailed_location: true,
+    sea_state: true,
+    weather: true,
+    beach_type: true
+  };
+  return requiredFields[fieldName] || false;
+};
+
+const isFieldEmpty = (fieldName) => {
+  return !form[fieldName] || form[fieldName] === '';
+};
+
+// Track touched fields
+const isFieldTouched = ref({});
+
+const markFieldAsTouched = (fieldName) => {
+  isFieldTouched.value[fieldName] = true;
+};
 </script>
 
 <template>
@@ -283,137 +371,192 @@ watch(showMap, (newValue) => {
 
   <Sidebar>
     <template #header>
-      <div>
-        <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-          <Link :href="backRoute" class="flex items-center">
-            Back
-          </Link>
-        </button>
-      </div>
+        <h1 class="text-xl font-semibold text-gray-900">Report Stranded Incident</h1>
     </template>
 
     <div class="container mx-auto px-4 py-8">
-      <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Report New Stranded Incident</h2>
-
-      <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-        <form @submit.prevent="submit" class="space-y-6">
-          <!-- Error Messages -->
-          <div v-if="formErrors" class="p-4 bg-red-100 border border-red-400 rounded-lg text-red-600">
-            <ul class="list-disc ml-4">
-              <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
-            </ul>
+      <!-- Progress Steps -->
+      <div class="max-w-4xl mx-auto mb-8 px-4">
+        <div class="hidden sm:flex justify-between items-center">
+          <!-- Existing progress steps for desktop -->
+          <div v-for="step in steps" :key="step.number"
+               class="flex-1 relative">
+            <div class="flex items-center">
+              <button @click="goToStep(step.number)"
+                      :class="[
+                        'w-10 h-10 rounded-full flex items-center justify-center transition-all',
+                        currentStep >= step.number
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                      ]">
+                {{ step.number }}
+              </button>
+              <div class="flex-1 h-1 mx-2"
+                   :class="currentStep >= step.number ? 'bg-indigo-600' : 'bg-gray-200'"></div>
+            </div>
+            <div class="text-xs text-center mt-2">{{ step.title }}</div>
           </div>
+        </div>
+        <!-- Mobile progress indicator -->
+        <div class="sm:hidden text-center">
+          <p class="text-lg font-medium text-gray-900">Step {{ currentStep }} of {{ totalSteps }}</p>
+          <p class="text-sm text-gray-500">{{ steps[currentStep - 1].title }}</p>
+        </div>
+      </div>
 
-          <!-- Form Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <InputLabel for="date" value="Date of the Incident" />
-              <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
-              <InputError class="mt-2" :message="form.errors.date" />
-            </div>
-            <div>
-              <InputLabel for="time" value="Time of the Incident" />
-              <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
-              <InputError class="mt-2" :message="form.errors.time" />
-            </div>
-
-            <div class="sm:col-span-2">
-              <InputLabel for="species_involved" value="Describe what species are involved" />
-              <TextInput id="species_involved" required v-model="form.species_involved" class="w-full" placeholder="e.g. Dolphins, Large Whales, Sharks" />
-              <InputError class="mt-2" :message="form.errors.species_involved" />
-            </div>
-
-            <div>
-              <InputLabel for="quantity" value="How many species are involved in the incident?" />
-              <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" required/>
-              <InputError class="mt-2" :message="form.errors.quantity" />
-            </div>
-            <div>
-              <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
-              <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
-              <p class="text-center">{{ form.certainty_level }}</p>
-              <InputError class="mt-2" :message="form.errors.certainty_level" />
-            </div>
-            <div>
-              <InputLabel for="condition" value="Condition" />
-              <select v-model="form.condition" class="w-full" required>
-                <option value="" disabled>Select an option</option>
-                <option value="alive">Alive</option>
-                <option value="dead">Dead</option>
-              </select>
-              <InputError class="mt-2" :message="form.errors.condition" />
-            </div>
-            <div>
-              <InputLabel for="sea_state" value="Sea State" />
-              <select v-model="form.sea_state" class="w-full">
-                <option value="" disabled>Select an option</option>
-                <option value="calm">Calm</option>
-                <option value="moderate">Moderate</option>
-                <option value="rough">Rough</option>
-              </select>
-              <InputError class="mt-2" :message="form.errors.sea_state" />
-            </div>
-            <div>
-              <InputLabel for="weather" value="Weather" />
-              <select v-model="form.weather" class="w-full">
-                <option value="" disabled>Select an option</option>
-                <option value="sunny">Sunny</option>
-                <option value="cloudy">Cloudy</option>
-                <option value="rainy">Rainy</option>
-              </select>
-              <InputError class="mt-2" :message="form.errors.weather" />
-            </div>
-            <div>
-              <InputLabel for="beach_type" value="Beach type" />
-              <select v-model="form.beach_type" class="w-full">
-                <option value="" disabled>Select an option</option>
-                <option value="mangrove">Mangrove</option>
-                <option value="rocky">Rocky</option>
-                <option value="sandy">Sandy</option>
-                <option value="reef">Reef</option>
-              </select>
-              <InputError class="mt-2" :message="form.errors.beach_type" />
-            </div>
-
-            <!--Location Selection Method-->
-            <div class="sm:col-span-2">
-              <div class="flex justify-center space-x-4 mb-4">
-                <button
-                  @click.prevent="setLocationFromMap"
-                  class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm flex-1"
-                  :class="{ 'bg-indigo-800': showMap }"
-                >
-                  Use GPS Location
-                </button>
+      <!-- Main Form Container -->
+      <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <form @submit.prevent="submit" class="divide-y divide-gray-200">
+          <!-- Error Messages -->
+          <div v-if="formErrors"
+               class="p-4 bg-red-50 border-l-4 border-red-400">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
               </div>
-
-              <!--Map (only shown when GPS is activated)-->
-              <div v-if="showMap" class="relative">
-                <div
-                  id="map"
-                  style="height: 400px; width: 100%;"
-                  class="rounded-lg border shadow z-0 mb-4"
-                ></div>
-
-                <!-- Remove GPS Location button -->
-                <button
-                  @click.prevent="removeGpsLocation"
-                  class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg shadow-sm"
-                >
-                  Remove GPS Location
-                </button>
-
-                <p class="text-sm text-gray-600 mb-2">
-                  Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-                </p>
-
-                <div v-if="isGeocodingInProgress" class="text-sm text-indigo-600 mb-2">
-                  Looking up location details...
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                <div class="mt-2 text-sm text-red-700">
+                  <ul class="list-disc pl-5 space-y-1">
+                    <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
+                  </ul>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div>
+          <!-- Step 1: Basic Information -->
+          <div v-show="currentStep === 1" class="p-8 space-y-6">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div class="space-y-2">
+                <InputLabel for="date" value="Date of Incident" />
+                <TextInput
+                  required
+                  id="date"
+                  type="date"
+                  v-model="form.date"
+                  class="w-full transition-all border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 rounded-md shadow-sm"
+                />
+                <InputError :message="form.errors.date" />
+              </div>
+
+              <div class="space-y-2">
+                <InputLabel for="time" value="Time of the Incident" />
+                <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
+                <InputError class="mt-2" :message="form.errors.time" />
+              </div>
+
+              <div class="sm:col-span-2 space-y-2">
+                <InputLabel for="species_involved" class="flex items-center">
+                  <span>Describe what species are involved</span>
+                  <span v-if="getFieldState('species_involved').isRequired" class="text-red-500 ml-1">*</span>
+                </InputLabel>
+                <TextInput
+                  id="species_involved"
+                  v-model="form.species_involved"
+                  required
+                  :class="{
+                    'border-red-300 bg-red-50': getFieldState('species_involved').isTouched &&
+                                               getFieldState('species_involved').isEmpty,
+                    'border-green-300 bg-green-50': form.species_involved
+                  }"
+                  @blur="markFieldAsTouched('species_involved')"
+                  class="w-full transition-all duration-200"
+                  placeholder="e.g. Dolphins, Large Whales, Sharks"
+                />
+                <div v-if="getFieldState('species_involved').isTouched && getFieldState('species_involved').isEmpty"
+                     class="text-sm text-red-600">
+                  This field is required
+                </div>
+                <InputError class="mt-2" :message="form.errors.species_involved" />
+              </div>
+
+              <div class="space-y-2">
+                <InputLabel for="quantity" value="How many species are involved in the incident?" />
+                <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" required/>
+                <InputError class="mt-2" :message="form.errors.quantity" />
+              </div>
+              <div class="space-y-2">
+                <InputLabel for="condition" class="flex items-center">
+                  <span>Condition</span>
+                  <span v-if="getFieldState('condition').isRequired" class="text-red-500 ml-1">*</span>
+                </InputLabel>
+                <select
+                  v-model="form.condition"
+                  @blur="markFieldAsTouched('condition')"
+                  :class="{
+                    'border-red-300 bg-red-50': getFieldState('condition').isTouched &&
+                                               getFieldState('condition').isEmpty,
+                    'border-green-300 bg-green-50': form.condition
+                  }"
+                  class="w-full px-4 py-2 border rounded-lg transition-all duration-200"
+                  required
+                >
+                  <option value="" disabled>Select an option</option>
+                  <option value="alive">Alive</option>
+                  <option value="dead">Dead</option>
+                </select>
+                <div v-if="getFieldState('condition').isTouched && getFieldState('condition').isEmpty"
+                     class="text-sm text-red-600">
+                  Please select a condition
+                </div>
+                <InputError class="mt-2" :message="form.errors.condition" />
+              </div>
+              <div class="sm:col-span-2 space-y-2">
+                <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
+                <div class="relative">
+                  <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                  <div class="flex justify-between px-2 text-xs text-gray-600">
+                    <span>Not Sure</span>
+                    <span>Very Sure</span>
+                  </div>
+                  <div class="text-center text-lg font-medium text-indigo-600 mt-2">
+                    {{ form.certainty_level }}
+                  </div>
+                </div>
+                <InputError class="mt-2" :message="form.errors.certainty_level" />
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Step 2: Location Details -->
+          <div v-show="currentStep === 2" class="p-8 space-y-6">
+            <!-- GPS Location Button -->
+            <div class="flex justify-center space-x-4 mb-4">
+              <button
+                @click.prevent="setLocationFromMap"
+                class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors duration-200"
+                :class="{ 'bg-indigo-800': showMap }"
+              >
+                <div class="flex items-center justify-center space-x-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Use Current Location</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Enhanced map container -->
+            <div v-if="showMap" class="relative rounded-xl overflow-hidden shadow-lg">
+              <div id="map" class="h-[500px] w-full z-0"></div>
+              <div class="absolute top-4 right-4 space-y-2">
+                <button
+                  @click="removeGpsLocation"
+                  class="px-4 py-2 bg-white shadow-lg rounded-lg text-red-600 hover:bg-red-50 transition-all">
+                  <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Remove GPS
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2">
               <InputLabel for="municipality_id" value="Municipality" />
               <select v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a municipality</option>
@@ -424,7 +567,7 @@ watch(showMap, (newValue) => {
               <InputError class="mt-2" :message="form.errors.municipality_id" />
             </div>
 
-            <div>
+            <div class="space-y-2">
               <InputLabel for="barangay_id" value="Barangay" />
               <select v-model="form.barangay_id" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a barangay</option>
@@ -435,7 +578,7 @@ watch(showMap, (newValue) => {
               <InputError class="mt-2" :message="form.errors.barangay_id" />
             </div>
 
-            <div class="sm:col-span-2">
+            <div class="sm:col-span-2 space-y-2">
               <InputLabel for="detailed_location" value="Detailed Location" />
               <textarea
                 required
@@ -447,8 +590,46 @@ watch(showMap, (newValue) => {
               ></textarea>
               <InputError class="mt-2" :message="form.errors.detailed_location" />
             </div>
+          </div>
 
-            <div class="sm:col-span-2">
+          <!-- Step 3: Environmental Data -->
+          <div v-show="currentStep === 3" class="p-8 space-y-6">
+            <div class="space-y-2">
+              <InputLabel for="sea_state" value="Sea State" />
+              <select v-model="form.sea_state" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm hover:border-indigo-300">
+                <option value="" disabled>Select an option</option>
+                <option value="calm">Calm</option>
+                <option value="moderate">Moderate</option>
+                <option value="rough">Rough</option>
+              </select>
+              <InputError class="mt-2" :message="form.errors.sea_state" />
+            </div>
+            <div class="space-y-2">
+              <InputLabel for="weather" value="Weather" />
+              <select v-model="form.weather" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm hover:border-indigo-300">
+                <option value="" disabled>Select an option</option>
+                <option value="sunny">Sunny</option>
+                <option value="cloudy">Cloudy</option>
+                <option value="rainy">Rainy</option>
+              </select>
+              <InputError class="mt-2" :message="form.errors.weather" />
+            </div>
+            <div class="space-y-2">
+              <InputLabel for="beach_type" value="Beach type" />
+              <select v-model="form.beach_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm hover:border-indigo-300">
+                <option value="" disabled>Select an option</option>
+                <option value="mangrove">Mangrove</option>
+                <option value="rocky">Rocky</option>
+                <option value="sandy">Sandy</option>
+                <option value="reef">Reef</option>
+              </select>
+              <InputError class="mt-2" :message="form.errors.beach_type" />
+            </div>
+          </div>
+
+          <!-- Step 4: Media & Additional Info -->
+          <div v-show="currentStep === 4" class="p-8 space-y-6">
+            <div class="sm:col-span-2 space-y-2">
               <InputLabel for="more_information" value="More Information of the Incident" />
               <textarea
                 id="more_information"
@@ -460,21 +641,52 @@ watch(showMap, (newValue) => {
               <InputError class="mt-2" :message="form.errors.more_information" />
             </div>
 
-            <div class="sm:col-span-2">
+            <div class="sm:col-span-2 space-y-2">
               <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
               <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="file-input w-full"/>
-              <div v-if="previewImages.length" class="mt-2 flex gap-4 flex-wrap">
-                <div v-for="(img, index) in previewImages" :key="index" class="relative">
-                  <img :src="img" alt="Preview" class="w-20 h-20 object-cover rounded-lg"/>
-                  <button @click="removeImage(index)" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">X</button>
+              <div v-if="previewImages.length" class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div v-for="(img, index) in previewImages" :key="index" class="relative aspect-square">
+                  <img :src="img" alt="Preview" class="w-full h-full object-cover rounded-lg"/>
+                  <button @click="removeImage(index)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
               <InputError class="mt-2" :message="form.errors.mediaFiles" />
             </div>
           </div>
 
-          <div class="text-center mt-6">
-            <PrimaryButton type="submit">Submit Report</PrimaryButton>
+          <!-- Navigation Buttons -->
+          <div class="px-4 sm:px-8 py-4 bg-gray-50 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+            <button
+              type="button"
+              @click="previousStep"
+              v-show="currentStep > 1"
+              class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+              Previous
+            </button>
+            <div class="flex space-x-4 w-full sm:w-auto">
+              <button
+                v-if="currentStep < totalSteps"
+                type="button"
+                @click="nextStep"
+                :disabled="!isStepValid"
+                class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                Next
+              </button>
+              <button
+                v-else
+                type="submit"
+                :disabled="isSubmitting"
+                class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg v-if="isSubmitting" class="animate-spin h-5 w-5 mr-2 inline-block" viewBox="0 0 24 24">
+                  <!-- Loading spinner SVG -->
+                </svg>
+                {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -483,18 +695,13 @@ watch(showMap, (newValue) => {
 </template>
 
 <style scoped>
-/* Hide the file name (text) but keep the button */
+/* Base styles */
 .file-input {
   position: relative;
   overflow: hidden;
   width: 100%;
   height: 40px;
   color: white;
-}
-
-#map {
-  height: 400px;
-  width: 100%;
 }
 
 /* Hide the file name text after file is selected */
@@ -512,5 +719,109 @@ watch(showMap, (newValue) => {
   border-radius: 5px;
   cursor: pointer;
   text-align: center;
+}
+
+/* Form elements base styling */
+.form-base {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg
+         focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+         transition-all duration-200 bg-white shadow-sm
+         hover:border-indigo-300;
+}
+
+/* Range input custom styling */
+input[type="range"] {
+  @apply appearance-none bg-gray-200 h-2 rounded-lg;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-6 h-6 bg-indigo-600
+         rounded-full border-none cursor-pointer
+         transition-all duration-200
+         hover:bg-indigo-700
+         active:ring-4 active:ring-indigo-200;
+}
+
+/* Map styling */
+#map {
+  @apply h-[300px] sm:h-[500px] w-full rounded-lg shadow-lg;
+}
+
+/* Required field indicator */
+.required::after {
+  content: "*";
+  @apply text-red-500 ml-1;
+}
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Map controls */
+.leaflet-control-zoom {
+  @apply shadow-lg rounded-lg overflow-hidden;
+}
+
+.leaflet-control-zoom a {
+  @apply bg-white text-gray-700 hover:bg-gray-50 transition-colors;
+}
+
+/* Add new styles for form validation */
+.input-required {
+  @apply border-red-300 bg-red-50;
+}
+
+.input-valid {
+  @apply border-green-300 bg-green-50;
+}
+
+.input-helper-text {
+  @apply text-sm mt-1;
+}
+
+.input-error-text {
+  @apply text-red-600;
+}
+
+.input-success-text {
+  @apply text-green-600;
+}
+
+/* Enhanced focus states for validation */
+.input-required:focus {
+  @apply ring-red-200 border-red-400;
+}
+
+.input-valid:focus {
+  @apply ring-green-200 border-green-400;
+}
+
+/* Required field indicator animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.required-indicator {
+  @apply text-red-500 ml-1;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 </style>

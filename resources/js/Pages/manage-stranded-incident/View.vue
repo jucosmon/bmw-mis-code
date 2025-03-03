@@ -433,29 +433,39 @@ onMounted(async () => {
 const map = ref(null);
 const marker = ref(null);
 
-// Initialize Leaflet map
+// Add helper function for formatting
+const formatValue = (value, defaultText = 'Not specified') => {
+    if (value === null || value === undefined || value === '') {
+        return defaultText;
+    }
+    return value;
+};
+
+// Update map initialization
 onMounted(() => {
   nextTick(() => {
-    console.log('Stranded Incident:', props.strandedIncident); // Log the stranded incident for debugging
+    // Only initialize map if coordinates exist
+    if (props.strandedIncident.latitude && props.strandedIncident.longitude) {
+      initializeMap();
+    }
+  });
+});
 
-    // Initialize the map with the latitude and longitude from props
+const initializeMap = () => {
     map.value = L.map('map', {
-      dragging: false, // Disable dragging
-      scrollWheelZoom: false, // Disable zooming with the mouse wheel
-      touchZoom: false, // Disable touch zooming on mobile
-      doubleClickZoom: false, // Disable double-click zooming
-      boxZoom: false, // Disable box zooming
+      dragging: false,
+      scrollWheelZoom: false,
+      touchZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
     }).setView([props.strandedIncident.latitude, props.strandedIncident.longitude], 13);
 
-    // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map.value);
 
-    // Add a marker at the specified location (non-draggable)
     marker.value = L.marker([props.strandedIncident.latitude, props.strandedIncident.longitude]).addTo(map.value);
-  });
-});
+};
 </script>
 
 <template>
@@ -472,14 +482,26 @@ onMounted(() => {
         </template>
 
         <div class="container mx-auto px-6 pb-6 max-w-5xl">
-            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
-                <strong class="font-bold">Success! </strong>
-                <span class="block sm:inline">{{ props?.success}}</span>
+            <div v-if="props?.success"
+                 class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded shadow-sm"
+                 role="alert">
+                <p class="font-bold">Success!</p>
+                <p>{{ props?.success }}</p>
             </div>
-            <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-lg shadow-lg mb-8">
-                <h1 class="text-3xl font-bold">Stranded Incident Information</h1>
-                <p class="text-sm mt-2">({{ props.strandedIncident.report_status }}) - Marked as {{ props.userRespondStatus }}</p>
-                <div class="flex justify-end space-x-4">
+            <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-8 rounded-xl shadow-xl mb-8">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2">Stranded Incident #{{ props.strandedIncident.id }}</h1>
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3 py-1 bg-white/20 rounded-full text-sm">
+                                Status: {{ props.strandedIncident.report_status }}
+                            </span>
+                            <span v-if="userRespondStatus" class="px-3 py-1 bg-white/20 rounded-full text-sm">
+                                Response: {{ userRespondStatus }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-4">
                     <button
                         class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
                         @click="confirmArchiveIncident"
@@ -634,42 +656,108 @@ onMounted(() => {
                         </div>
                     </Modal>
                 </div>
+                </div>
             </div>
 
-            <div class="space-y-6">
-                <!-- Text Details -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white shadow-lg rounded-xl p-6">
-                        <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-9-4h2v2H9V6zm0 4h2v6H9v-6z" />
+            <div class="space-y-8">
+                <!-- Main details card -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition-shadow">
+                        <h2 class="text-xl font-semibold text-indigo-700 mb-6 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Stranded Incident Details
+                            Incident Details
                         </h2>
-                        <div class="space-y-2">
-                            <p><strong>ID:</strong> {{ props.strandedIncident.id }}</p>
-                            <p><strong>Certainty Level:</strong> {{ props.strandedIncident.certainty_level }}</p>
-                            <p><strong>Date:</strong> {{ props.strandedIncident.date }}</p>
-                            <p><strong>Time:</strong> {{ props.strandedIncident.time }}</p>
-                            <p><strong>Species Involved:</strong> {{ props.strandedIncident.species_involved }}</p>
-                            <p><strong>Quantity:</strong> {{ props.strandedIncident.quantity }}</p>
-                            <p><strong>Condition:</strong> {{ props.strandedIncident.condition }}</p>
-                            <p><strong>Sea State:</strong> {{ props.strandedIncident.sea_state }}</p>
-                            <p><strong>Weather:</strong> {{ props.strandedIncident.weather }} </p>
-                            <p><strong>Beach Type:</strong> {{ props.strandedIncident.beach_type }}</p>
-                            <p><strong>More Information:</strong> {{ props.strandedIncident.more_information  }}</p>
-                            <p><strong>Active Status:</strong> {{ props.strandedIncident.is_active ? 'Active' : 'Inactive' }}</p>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-500">Date</p>
+                                    <p class="font-medium">{{ formatValue(props.strandedIncident.date) }}</p>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-500">Time</p>
+                                    <p class="font-medium">{{ formatValue(props.strandedIncident.time) }}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-500">Species Involved</p>
+                                <p class="font-medium">{{ formatValue(props.strandedIncident.species_involved) }}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-500">Quantity</p>
+                                    <p class="font-medium">{{ formatValue(props.strandedIncident.quantity) }}</p>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-500">Condition</p>
+                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.condition) }}</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-500">Sea State</p>
+                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.sea_state) }}</p>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-500">Weather</p>
+                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.weather) }}</p>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-500">Beach Type</p>
+                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.beach_type) }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-white shadow-lg rounded-xl p-6">
-                        <h2 class="text-xl font-semibold text-indigo-700 mb-4">Incident Location</h2>
-                        <p class="mb-1"><strong>Location:</strong> {{ barangayName }}, {{ municipalityName }}</p>
-                        <p class="mb-1"><strong>Detailed Location:</strong> {{ props.strandedIncident.detailed_location }}</p>
-                        <div id="map" style="height: 400px; width: 100%;" class="mb-3 z-0"></div>
-                        <p class="mt-2 text-gray-500 text-sm text-center">{{ props.strandedIncident.latitude }} lat. | {{ props.strandedIncident.longitude }} long.</p>
 
+                    <!-- Location Information -->
+                    <div class="bg-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition-shadow">
+                        <h2 class="text-xl font-semibold text-indigo-700 mb-6 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Location Details
+                        </h2>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-500">Address</p>
+                                <p class="font-medium">{{ formatValue(barangayName) }}, {{ formatValue(municipalityName) }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-500">Detailed Location</p>
+                                <p class="font-medium">{{ formatValue(props.strandedIncident.detailed_location, 'No detailed location provided') }}</p>
+                            </div>
+
+                            <!-- Only show map if coordinates exist -->
+                            <template v-if="props.strandedIncident.latitude && props.strandedIncident.longitude">
+                                <div id="map" class="h-[300px] rounded-lg shadow-inner"></div>
+                                <p class="text-sm text-gray-500 text-center">
+                                    {{ props.strandedIncident.latitude }}° N, {{ props.strandedIncident.longitude }}° E
+                                </p>
+                            </template>
+                            <p v-else class="text-gray-500 italic text-center py-4">
+                                No GPS coordinates available
+                            </p>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Additional Information -->
+                <div class="bg-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition-shadow">
+                    <h2 class="text-xl font-semibold text-indigo-700 mb-6 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Additional Information
+                    </h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="whitespace-pre-wrap">{{ formatValue(props.strandedIncident.more_information, 'No additional information provided') }}</p>
+                    </div>
+                </div>
+
+                <!-- Rest of the existing sections with enhanced styling -->
                 <!--Media Files section -->
                 <div class="bg-white shadow-lg rounded-xl p-6 relative z-10">
                     <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
@@ -776,8 +864,33 @@ onMounted(() => {
     </Sidebar>
 </template>
 
-<style>
+<style scoped>
+.from-indigo-700 {
+    background-image: linear-gradient(135deg, #4338ca 0%, #312e81 100%);
+}
+
+/* Add smooth transitions */
+.transition-shadow {
+    transition: all 0.3s ease;
+}
+
+/* Enhance card hover effects */
+.hover\:shadow-2xl:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
+}
+
 #map {
-    height: 400px; /* Ensure this is set */
-    width: 100%; /* Ensure this is set */
-}</style>
+    height: 400px;
+    width: 100%;
+    border-radius: 0.5rem;
+}
+
+/* Add responsive padding */
+@media (max-width: 640px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+</style>
