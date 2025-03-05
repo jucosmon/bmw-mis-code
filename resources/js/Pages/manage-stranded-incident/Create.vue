@@ -19,7 +19,7 @@ const showMap = ref(false);
 const props = defineProps({});
 
 const form = useForm({
-  certainty_level: 10,
+  certainty_level: 5,
   date: new Date().toISOString().split('T')[0],
   time: new Date().toTimeString().split(' ')[0],
   species_involved: '',
@@ -176,13 +176,14 @@ const isStepValid = computed(() => {
       return form.date &&
              form.time &&
              form.species_involved &&
-             form.quantity &&
-             form.condition;
+             form.quantity > 0 &&
+             form.condition &&
+             form.certainty_level;
     case 2:
       return (form.municipality_id && form.barangay_id && form.detailed_location) ||
              (locationSource.value === 'gps' && form.latitude && form.longitude);
     case 3:
-      return form.sea_state && form.weather && form.beach_type;
+      return true; // Make step 3 always valid since environmental fields are optional
     case 4:
       return true; // Optional fields
     default:
@@ -190,7 +191,24 @@ const isStepValid = computed(() => {
   }
 });
 
-// Modify nextStep to check validation
+// Modify the isFieldRequired function in the script section
+const isFieldRequired = (fieldName) => {
+  const requiredFields = {
+    date: true,
+    time: true,
+    species_involved: true,
+    quantity: true,
+    condition: true,
+    detailed_location: true,
+    certainty_level: true,
+    // Make environmental fields not required
+    sea_state: false,
+    weather: false,
+    beach_type: false
+  };
+  return requiredFields[fieldName] || false;
+};
+
 const nextStep = () => {
   if (currentStep.value < totalSteps && isStepValid.value) {
     currentStep.value++;
@@ -339,21 +357,6 @@ const getFieldState = (fieldName) => {
   };
 };
 
-const isFieldRequired = (fieldName) => {
-  const requiredFields = {
-    date: true,
-    time: true,
-    species_involved: true,
-    quantity: true,
-    condition: true,
-    detailed_location: true,
-    sea_state: true,
-    weather: true,
-    beach_type: true
-  };
-  return requiredFields[fieldName] || false;
-};
-
 const isFieldEmpty = (fieldName) => {
   return !form[fieldName] || form[fieldName] === '';
 };
@@ -431,20 +434,51 @@ const markFieldAsTouched = (fieldName) => {
           <div v-show="currentStep === 1" class="p-8 space-y-6">
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div class="space-y-2">
-                <InputLabel for="date" value="Date of Incident" />
+                <InputLabel for="date" class="flex items-center">
+                  <span>Date of Incident</span>
+                  <span v-if="getFieldState('date').isRequired" class="text-red-500 ml-1">*</span>
+                </InputLabel>
                 <TextInput
                   required
                   id="date"
                   type="date"
                   v-model="form.date"
-                  class="w-full transition-all border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 rounded-md shadow-sm"
+                  @blur="markFieldAsTouched('date')"
+                  :class="{
+                    'border-red-300 bg-red-50': getFieldState('date').isTouched && getFieldState('date').isEmpty,
+                    'border-green-300 bg-green-50': form.date
+                  }"
+                  class="w-full transition-all"
                 />
+                <div v-if="getFieldState('date').isTouched && getFieldState('date').isEmpty"
+                     class="text-sm text-red-600">
+                  This field is required
+                </div>
                 <InputError :message="form.errors.date" />
               </div>
 
               <div class="space-y-2">
-                <InputLabel for="time" value="Time of the Incident" />
-                <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
+                <InputLabel for="time" class="flex items-center">
+                  <span>Time of the Incident</span>
+                  <span v-if="getFieldState('time').isRequired" class="text-red-500 ml-1">*</span>
+                </InputLabel>
+                <TextInput
+                  required
+                  id="time"
+                  type="time"
+                  v-model="form.time"
+                  @blur="markFieldAsTouched('time')"
+                  :class="{
+                    'border-red-300 bg-red-50': getFieldState('time').isTouched && getFieldState('time').isEmpty,
+                    'border-green-300 bg-green-50': form.time
+                  }"
+                  class="w-full transition-all"
+                  step="1"
+                />
+                <div v-if="getFieldState('time').isTouched && getFieldState('time').isEmpty"
+                     class="text-sm text-red-600">
+                  This field is required
+                </div>
                 <InputError class="mt-2" :message="form.errors.time" />
               </div>
 
@@ -474,8 +508,27 @@ const markFieldAsTouched = (fieldName) => {
               </div>
 
               <div class="space-y-2">
-                <InputLabel for="quantity" value="How many species are involved in the incident?" />
-                <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" required/>
+                <InputLabel for="quantity" class="flex items-center">
+                  <span>Species Quantity</span>
+                  <span v-if="getFieldState('quantity').isRequired" class="text-red-500 ml-1">*</span>
+                </InputLabel>
+                <input
+                  required
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  v-model="form.quantity"
+                  @blur="markFieldAsTouched('quantity')"
+                  :class="{
+                    'border-red-300 bg-red-50': getFieldState('quantity').isTouched && (!form.quantity || form.quantity < 1),
+                    'border-green-300 bg-green-50': form.quantity && form.quantity >= 1
+                  }"
+                  class="w-full transition-all"
+                />
+                <div v-if="getFieldState('quantity').isTouched && (!form.quantity || form.quantity < 1)"
+                     class="text-sm text-red-600">
+                  Please enter a valid quantity (minimum 1)
+                </div>
                 <InputError class="mt-2" :message="form.errors.quantity" />
               </div>
               <div class="space-y-2">
@@ -505,7 +558,10 @@ const markFieldAsTouched = (fieldName) => {
                 <InputError class="mt-2" :message="form.errors.condition" />
               </div>
               <div class="sm:col-span-2 space-y-2">
-                <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
+                <InputLabel for="certainty_level" class="flex items-center">
+                  <span>Certainty Level (1-10)</span>
+                  <span v-if="getFieldState('certainty_level').isRequired" class="text-red-500 ml-1">*</span>
+                </InputLabel>
                 <div class="relative">
                   <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
                   <div class="flex justify-between px-2 text-xs text-gray-600">
@@ -579,15 +635,27 @@ const markFieldAsTouched = (fieldName) => {
             </div>
 
             <div class="sm:col-span-2 space-y-2">
-              <InputLabel for="detailed_location" value="Detailed Location" />
+              <InputLabel for="detailed_location" class="flex items-center">
+                <span>Detailed Location</span>
+                <span v-if="getFieldState('detailed_location').isRequired" class="text-red-500 ml-1">*</span>
+              </InputLabel>
               <textarea
                 required
                 id="detailed_location"
                 v-model="form.detailed_location"
-                autocomplete="detailed_location"
-                class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                @blur="markFieldAsTouched('detailed_location')"
+                :class="{
+                  'border-red-300 bg-red-50': getFieldState('detailed_location').isTouched &&
+                                             getFieldState('detailed_location').isEmpty,
+                  'border-green-300 bg-green-50': form.detailed_location
+                }"
+                class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y transition-all"
                 placeholder="Please add more details of the exact location"
               ></textarea>
+              <div v-if="getFieldState('detailed_location').isTouched && getFieldState('detailed_location').isEmpty"
+                   class="text-sm text-red-600">
+                This field is required
+              </div>
               <InputError class="mt-2" :message="form.errors.detailed_location" />
             </div>
           </div>
@@ -597,7 +665,7 @@ const markFieldAsTouched = (fieldName) => {
             <div class="space-y-2">
               <InputLabel for="sea_state" value="Sea State" />
               <select v-model="form.sea_state" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm hover:border-indigo-300">
-                <option value="" disabled>Select an option</option>
+                <option value="">Select an option (optional)</option>
                 <option value="calm">Calm</option>
                 <option value="moderate">Moderate</option>
                 <option value="rough">Rough</option>
@@ -607,7 +675,7 @@ const markFieldAsTouched = (fieldName) => {
             <div class="space-y-2">
               <InputLabel for="weather" value="Weather" />
               <select v-model="form.weather" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm hover:border-indigo-300">
-                <option value="" disabled>Select an option</option>
+                <option value="">Select an option (optional)</option>
                 <option value="sunny">Sunny</option>
                 <option value="cloudy">Cloudy</option>
                 <option value="rainy">Rainy</option>
@@ -617,7 +685,7 @@ const markFieldAsTouched = (fieldName) => {
             <div class="space-y-2">
               <InputLabel for="beach_type" value="Beach type" />
               <select v-model="form.beach_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm hover:border-indigo-300">
-                <option value="" disabled>Select an option</option>
+                <option value="">Select an option (optional)</option>
                 <option value="mangrove">Mangrove</option>
                 <option value="rocky">Rocky</option>
                 <option value="sandy">Sandy</option>
