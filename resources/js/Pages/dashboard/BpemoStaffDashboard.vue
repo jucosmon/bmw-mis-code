@@ -4,7 +4,7 @@ import { supabase } from '@/supabase';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -14,6 +14,7 @@ const markers = ref([]);
 
 // Stats data
 const stats = ref({
+  totalUsers: 0,
   totalStrandings: {
     total: 0,
     breakdown: {
@@ -48,6 +49,13 @@ const totalReports = ref(0);
 
 // Fetch all data
 const fetchData = async () => {
+  // Fetch total users (just count, no role breakdown)
+  const { count: usersCount } = await supabase
+    .from('users')
+    .select('*', { count: 'exact', head: true });
+
+  stats.value.totalUsers = usersCount || 0;
+
   // Fetch stranding stats (count main records, not species)
   const { data: strandings } = await supabase
     .from('stranded_incidents')
@@ -196,82 +204,127 @@ const setView = (view) => {
   currentPage.value = 1; // Reset to first page when changing views
 };
 
-// Update map markers
+// Add these functions after your ref declarations
+const initializeMap = () => {
+  if (map.value) {
+    map.value.remove();
+  }
+
+  map.value = L.map('map').setView([9.8500, 124.1833], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+  }).addTo(map.value);
+};
+
 const updateMapMarkers = () => {
+  if (!map.value) {
+    initializeMap();
+  }
+
   // Clear existing markers
   markers.value.forEach(marker => marker.remove());
   markers.value = [];
 
-  if (!map.value) return;
+  // Filter only stranded reports with valid coordinates
+  const strandedReports = activeReports.value.filter(report => {
+    return report.type === 'stranded' &&
+           report.latitude != null &&
+           report.longitude != null &&
+           !isNaN(Number(report.latitude)) &&
+           !isNaN(Number(report.longitude)) &&
+           Math.abs(Number(report.latitude)) <= 90 &&
+           Math.abs(Number(report.longitude)) <= 180;
+  });
 
-  // Filter only stranded incidents
-  const strandedReports = activeReports.value.filter(report => report.type === 'stranded');
+  if (strandedReports.length === 0) return;
+
+  // Create bounds object to fit all markers
+  const bounds = L.latLngBounds();
 
   strandedReports.forEach(report => {
-    const markerColor = getMarkerColor(report.status);
+    try {
+      const lat = Number(report.latitude);
+      const lng = Number(report.longitude);
 
-    const markerIcon = L.icon({
-      iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${markerColor}.png`,
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+      const markerColor = getMarkerColor(report.status);
+      const markerIcon = L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${markerColor}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
 
-    const marker = L.marker([report.latitude, report.longitude], { icon: markerIcon })
-      .bindPopup(`
-        <b>${report.species}</b><br>
-        Status: ${report.status}<br>
-        Location: ${report.location}<br>
-        Date: ${formatDate(report.date)}
-      `);
+      const marker = L.marker([lat, lng], { icon: markerIcon })
+        .bindPopup(`
+          <b>${report.species}</b><br>
+          Status: ${report.status}<br>
+          Location: ${report.location}<br>
+          Date: ${formatDate(report.date)}
+        `);
 
-    marker.addTo(map.value);
-    markers.value.push(marker);
-  });
-};
-
-// Initialize map
-onMounted(() => {
-  // Initialize map
-  map.value = L.map('map').setView([9.8500, 124.1833], 10); // Bohol coordinates
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-  }).addTo(map.value);
-
-  // Set up real-time subscriptions
-  const strandings = supabase.channel('public:stranded_incidents')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'stranded_incidents' }, () => {
-      fetchData();
-    })
-    .subscribe();
-
-  const sightings = supabase.channel('public:sightings')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'sightings' }, () => {
-      fetchData();
-    })
-    .subscribe();
-
-  const users = supabase.channel('public:users')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-      fetchData();
-    })
-    .subscribe();
-
-  onBeforeUnmount(() => {
-    supabase.removeChannel(strandings);
-    supabase.removeChannel(sightings);
-    supabase.removeChannel(users);
-    if (map.value) {
-      map.value.remove();
+      marker.addTo(map.value);
+      markers.value.push(marker);
+      bounds.extend([lat, lng]);
+    } catch (error) {
+      console.error('Error adding marker for report:', report.id, error);
     }
   });
 
-  // Initial data fetch
-  fetchData();
+  // Fit map to show all markers with padding
+  if (bounds.isValid()) {
+    map.value.fitBounds(bounds, { padding: [50, 50] });
+  }
+};
+
+// Replace your onMounted with this
+onMounted(() => {
+  try {
+    initializeMap();
+
+    // Real-time subscriptions
+    const strandings = supabase.channel('public:stranded_incidents')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'stranded_incidents' },
+        async () => {
+          await fetchData();
+          updateMapMarkers();
+        }
+      )
+      .subscribe();
+
+    const sightings = supabase.channel('public:sightings')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'sightings' },
+        async () => {
+          await fetchData();
+          updateMapMarkers();
+        }
+      )
+      .subscribe();
+
+    // Initial data fetch
+    fetchData().then(() => {
+      updateMapMarkers();
+    }).catch(error => {
+      console.error('Error fetching initial data:', error);
+    });
+
+    onBeforeUnmount(() => {
+      supabase.removeChannel(strandings);
+      supabase.removeChannel(sightings);
+      if (map.value) map.value.remove();
+    });
+  } catch (error) {
+    console.error('Error initializing map:', error);
+  }
 });
+
+// Update your watch statement
+watch(activeReports, () => {
+  nextTick(() => updateMapMarkers());
+}, { deep: true });
 
 // Helper functions
 const getStatusColor = (status) => {
@@ -326,7 +379,7 @@ const getMarkerColor = (status) => {
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-3 mb-6">
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
           <!-- Total Unresolved Strandings -->
           <div class="bg-white overflow-hidden rounded-lg shadow">
             <div class="p-5">

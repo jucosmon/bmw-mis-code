@@ -1,10 +1,11 @@
 import '../css/app.css';
 import './bootstrap';
 
-import { createInertiaApp, router } from '@inertiajs/vue3';
+import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import { ScrollManager } from './scroll-manager';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -16,16 +17,23 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        const vueApp = createApp({ render: () => h(App, props) })
+        const scrollManager = new ScrollManager();
+
+        return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue, Ziggy)
+            .mixin({
+                mounted() {
+                    this.$nextTick(() => {
+                        const element = this.$el;
+                        if (element && element instanceof Element) {
+                            scrollManager.scrollRegionsToTop(element);
+                        }
+                    });
+                }
+            })
             .mount(el);
 
-        if (!window.history.state) {
-            router.replace(window.location.pathname);
-        }
-
-        return vueApp;
     },
     progress: {
         // Progress bar configuration
