@@ -3,8 +3,11 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet/dist/leaflet.css';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -51,6 +54,17 @@ const totalReports = ref(0);
 
 // Fetch all data
 const fetchData = async () => {
+  // Ensure municipality data is loaded first
+  if (!userMunicipality.value) {
+    await fetchMunicipalityData();
+  }
+
+  // Only proceed if municipality data is available
+  if (!userMunicipality.value) {
+    console.error('Municipality data not available');
+    return;
+  }
+
   // Fetch stranding stats for user's municipality
   const { data: strandings } = await supabase
     .from('stranded_incidents')
@@ -207,38 +221,100 @@ const setView = (view) => {
 
 // Update map markers
 const updateMapMarkers = () => {
-  // Clear existing markers
+  if (!map.value) {
+    initializeMap();
+    return;
+  }
+
+  // Clear existing markers and cluster group
+  if (map.value.markerClusterGroup) {
+    map.value.markerClusterGroup.clearLayers();
+    map.value.removeLayer(map.value.markerClusterGroup);
+  }
   markers.value.forEach(marker => marker.remove());
   markers.value = [];
 
-  if (!map.value) return;
+  // Create a new marker cluster group
+  const markerCluster = L.markerClusterGroup({
+    maxClusterRadius: 30,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    animate: false,
+    animateAddingMarkers: false
+  });
 
-  // Filter only stranded incidents
+  map.value.markerClusterGroup = markerCluster;
+
+  // Filter and process reports
   const strandedReports = activeReports.value.filter(report => report.type === 'stranded');
 
-  strandedReports.forEach(report => {
-    const markerColor = getMarkerColor(report.status);
+  strandedReports.forEach((report, index) => {
+    try {
+      if (!report.latitude || !report.longitude) {
+        console.warn('Missing coordinates for report:', report.id);
+        return;
+      }
 
-    const markerIcon = L.icon({
-      iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${markerColor}.png`,
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+      const lat = Number(parseFloat(report.latitude).toFixed(6));
+      const lng = Number(parseFloat(report.longitude).toFixed(6));
 
-    const marker = L.marker([report.latitude, report.longitude], { icon: markerIcon })
-      .bindPopup(`
-        <b>${report.species}</b><br>
-        Status: ${report.status}<br>
-        Location: ${report.location}<br>
-        Date: ${formatDate(report.date)}
-      `);
+      if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+        console.warn('Invalid coordinates for report:', report.id, lat, lng);
+        return;
+      }
 
-    marker.addTo(map.value);
-    markers.value.push(marker);
+      // Add offset for reports with same coordinates
+      const angle = index * (Math.PI * 2) / 8;
+      const radius = 0.0001 * Math.floor(index / 8);
+      const adjustedLat = lat + Math.cos(angle) * radius;
+      const adjustedLng = lng + Math.sin(angle) * radius;
+
+      const marker = L.marker([adjustedLat, adjustedLng], {
+        icon: L.icon({
+          iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${getMarkerColor(report.status)}.png`,
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        })
+      });
+
+      const popupContent = `
+        <div class="mb-2 pb-2 border-b border-gray-200">
+          <b>${report.species}</b><br>
+          ID: ${report.id}<br>
+          Status: ${report.status}<br>
+          Location: ${report.location}<br>
+          Coordinates: ${lat}, ${lng}<br>
+          Date: ${formatDate(report.date)}<br>
+          <a href="${report.viewUrl}" class="text-blue-600 hover:text-blue-800">View details</a>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      markerCluster.addLayer(marker);
+      markers.value.push(marker);
+    } catch (error) {
+      console.error('Error adding marker for report:', report.id, error);
+    }
   });
+
+  map.value.addLayer(markerCluster);
+
+  if (markerCluster.getBounds().isValid()) {
+    try {
+      map.value.fitBounds(markerCluster.getBounds(), {
+        padding: [50, 50],
+        maxZoom: 15,
+        animate: false
+      });
+    } catch (error) {
+      console.error('Error fitting bounds:', error);
+      map.value.setView([9.8500, 124.1833], 10, { animate: false });
+    }
+  }
 };
 
 // Add this function to fetch municipality data
@@ -255,47 +331,95 @@ const fetchMunicipalityData = async () => {
 };
 
 // Initialize map
+const initializeMap = () => {
+  if (map.value) {
+    map.value.remove();
+  }
+
+  try {
+    map.value = L.map('map', {
+      center: [9.8500, 124.1833],
+      zoom: 10,
+      minZoom: 2,
+      maxZoom: 18,
+      zoomAnimation: false,
+      markerZoomAnimation: false
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+    }).addTo(map.value);
+  } catch (error) {
+    console.error('Error initializing map:', error);
+  }
+};
+
+// Add cleanup function ref
+const cleanup = ref(null);
+
+// Update onMounted
 onMounted(async () => {
-  await fetchMunicipalityData(); // Add this line first
+  try {
+    // Fetch municipality data first
+    await fetchMunicipalityData();
 
-  // Initialize map
-  map.value = L.map('map').setView([9.8500, 124.1833], 10); // Bohol coordinates
+    // Initialize map without immediate marker update
+    nextTick(() => {
+      initializeMap();
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-  }).addTo(map.value);
+      // Set up subscriptions
+      const strandings = supabase.channel('public:stranded_incidents')
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'stranded_incidents' },
+          async () => {
+            await fetchData();
+          }
+        )
+        .subscribe();
 
-  // Set up real-time subscriptions
-  const strandings = supabase.channel('public:stranded_incidents')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'stranded_incidents' }, () => {
-      fetchData();
-    })
-    .subscribe();
+      const sightings = supabase.channel('public:sightings')
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'sightings' },
+          async () => {
+            await fetchData();
+          }
+        )
+        .subscribe();
 
-  const sightings = supabase.channel('public:sightings')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'sightings' }, () => {
-      fetchData();
-    })
-    .subscribe();
+      cleanup.value = () => {
+        supabase.removeChannel(strandings);
+        supabase.removeChannel(sightings);
+        if (map.value) {
+          if (map.value.markerClusterGroup) {
+            map.value.markerClusterGroup.clearLayers();
+          }
+          map.value.remove();
+        }
+      };
 
-  const users = supabase.channel('public:users')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-      fetchData();
-    })
-    .subscribe();
-
-  onBeforeUnmount(() => {
-    supabase.removeChannel(strandings);
-    supabase.removeChannel(sightings);
-    supabase.removeChannel(users);
-    if (map.value) {
-      map.value.remove();
-    }
-  });
-
-  // Initial data fetch
-  fetchData();
+      // Initial data fetch
+      fetchData().then(() => {
+        nextTick(() => updateMapMarkers());
+      }).catch(error => {
+        console.error('Error fetching initial data:', error);
+      });
+    });
+  } catch (error) {
+    console.error('Error in onMounted:', error);
+  }
 });
+
+// Update onBeforeUnmount
+onBeforeUnmount(() => {
+  if (cleanup.value) {
+    cleanup.value();
+  }
+});
+
+// Add watch for activeReports
+watch(activeReports, () => {
+  nextTick(() => updateMapMarkers());
+}, { deep: true });
 
 // Helper functions
 const getStatusColor = (status) => {
