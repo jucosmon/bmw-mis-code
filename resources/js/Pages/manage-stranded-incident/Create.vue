@@ -602,12 +602,12 @@ const markFieldAsTouched = (fieldName) => {
               <div id="map" class="h-[500px] w-full z-0"></div>
               <div class="absolute top-4 right-4 space-y-2">
                 <button
-                  @click="removeGpsLocation"
-                  class="px-4 py-2 bg-white shadow-lg rounded-lg text-red-600 hover:bg-red-50 transition-all">
-                  <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Remove GPS
+                    @click="removeGpsLocation"
+                    class="px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
+                >
+                <span class="material-icons material-symbols-outlined">
+                    location_off
+                </span>
                 </button>
               </div>
             </div>

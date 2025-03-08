@@ -7,7 +7,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const page = usePage();
 
@@ -90,10 +90,65 @@ const submit = () => {
 const map = ref(null);
 const marker = ref(null);
 
-// Initialize Leaflet map
-onMounted(() => {
+// Add new refs for location functionality
+const locationSource = ref('manual');
+const isGeocodingInProgress = ref(false);
+const showMap = ref(false);
+
+// Nominatim reverse geocoding function
+const reverseGeocode = async (latitude, longitude) => {
+  isGeocodingInProgress.value = true;
+
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+    const data = await response.json();
+
+    console.log("Nominatim response:", data);
+    const address = data.address;
+    let municipalityName = address.city || address.town || address.municipality;
+    let barangayName = address.quarter || address.village || address.suburb || address.neighbourhood || address.hamlet;
+
+    console.log("Found municipality:", municipalityName);
+    console.log("Found barangay:", barangayName);
+
+    form.municipality_id = '';
+    form.barangay_id = '';
+
+    if (municipalityName) {
+      const matchedMunicipality = municipalities.value.find(m =>
+        m.name.toLowerCase() === municipalityName.toLowerCase()
+      );
+
+      if (matchedMunicipality) {
+        form.municipality_id = matchedMunicipality.id;
+        await fetchBarangays(matchedMunicipality.id);
+
+        if (barangayName && barangays.value.length > 0) {
+          const matchedBarangay = barangays.value.find(b =>
+            b.name.toLowerCase() === barangayName.toLowerCase()
+          );
+
+          if (matchedBarangay) {
+            form.barangay_id = matchedBarangay.id;
+          }
+        }
+      }
+    }
+
+    form.detailed_location = data.display_name || '';
+
+  } catch (error) {
+    console.error("Error with reverse geocoding:", error);
+    form.municipality_id = '';
+    form.barangay_id = '';
+  } finally {
+    isGeocodingInProgress.value = false;
+  }
+};
+
+// Update map initialization
+const initializeMap = () => {
   nextTick(() => {
-    console.log('Form object:', form); // Debugging line
     map.value = L.map('map').setView([form.latitude, form.longitude], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -104,28 +159,48 @@ onMounted(() => {
       draggable: true,
     }).addTo(map.value);
 
-    marker.value.on('dragend', (e) => {
+    marker.value.on('dragend', async (e) => {
       const { lat, lng } = e.target.getLatLng();
       form.latitude = lat;
       form.longitude = lng;
+      if (locationSource.value === 'gps') {
+        await reverseGeocode(lat, lng);
+      }
+    });
+
+    map.value.on('click', async (e) => {
+      const { lat, lng } = e.latlng;
+      form.latitude = lat;
+      form.longitude = lng;
+      marker.value.setLatLng([lat, lng]);
+      if (locationSource.value === 'gps') {
+        await reverseGeocode(lat, lng);
+      }
     });
   });
-});
+};
 
-// Use current location
-const setLocationFromMap = () => {
+// Update setLocationFromMap function
+const setLocationFromMap = async () => {
+  locationSource.value = 'gps';
+  showMap.value = true;
+
+  await nextTick();
+  cleanupMap();
+  initializeMap();
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
+        form.latitude = latitude;
+        form.longitude = longitude;
 
-        // Update the form's latitude and longitude
-        form.latitude = latitude; // No .value needed
-        form.longitude = longitude; // No .value needed
-
-        // Update the map view and marker position
-        map.value.setView([latitude, longitude], 13);
-        marker.value.setLatLng([latitude, longitude]);
+        if (map.value) {
+          map.value.setView([latitude, longitude], 13);
+          marker.value.setLatLng([latitude, longitude]);
+          await reverseGeocode(latitude, longitude);
+        }
       },
       () => {
         alert('Failed to fetch current location. Please allow location access.');
@@ -136,9 +211,38 @@ const setLocationFromMap = () => {
   }
 };
 
+// Add cleanup function for map
+const cleanupMap = () => {
+  if (map.value) {
+    map.value.remove();
+    map.value = null;
+    marker.value = null;
+  }
+};
+
+// Add function to remove GPS location
+const removeGpsLocation = () => {
+  showMap.value = false;
+  locationSource.value = 'manual';
+  form.latitude = '';
+  form.longitude = '';
+  form.municipality_id = '';
+  form.barangay_id = '';
+  form.detailed_location = '';
+  cleanupMap();
+};
+
+// Watch for showMap changes
+watch(showMap, (newValue) => {
+  if (!newValue) {
+    cleanupMap();
+  }
+});
+
 // Species
 const searches = ref([]);
 const dropdownVisibility = ref([]);
+const isDropdownVisible = ref([]);
 
 const filteredSpecies = (index) => {
   return computed(() => {
@@ -182,28 +286,26 @@ const toggleDropdown = (index) => {
 
 let closeTimeout; // Variable to hold the timeout ID
 
-const closeDropdown = (index) => {
-    if (!event.target.closest('.dropdown-container')) {
-        isDropdownVisible.value[index] = false;
+const closeDropdown = (event, index) => {
+  if (event && !event.target.closest('.dropdown-container')) {
+    dropdownVisibility.value[index] = false;
   }
 };
 
-
-
 // Use global setTimeout directly
-const handleBlur = (index) => {
+const handleBlur = (event, index) => {
     closeTimeout = setTimeout(() => {
-        closeDropdown(index);
+        closeDropdown(event, index);
     }, 100);
 };
 
 onMounted(() => {
     document.addEventListener('click', (event) => {
-        for (let i = 0; i < isDropdownVisible.value.length; i++) {
-            if (isDropdownVisible.value[i]) {
-                document.addEventListener('click', closeDropdown);
+        dropdownVisibility.value.forEach((isVisible, index) => {
+            if (isVisible) {
+                closeDropdown(event, index);
             }
-        }
+        });
     });
 });
 
@@ -268,21 +370,34 @@ const removeSpeciesEntry = (index) => {
             </div>
 
             <!-- Map -->
-            <div class="mt-4 sm:col-span-2">
+            <div class="flex justify-center space-x-4 mb-4 sm:col-span-2">
               <button
                 @click.prevent="setLocationFromMap"
-                class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm w-full"
+                class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors duration-200"
+                :class="{ 'bg-indigo-800': showMap }"
               >
-                Use Current Location
+                <div class="flex items-center justify-center space-x-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Use Current Location</span>
+                </div>
               </button>
-              <p class="text-sm text-gray-600 mt-2">
-                Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-              </p>
-              <div
-                id="map"
-                style="height: 400px; width: 100%; margin-top: 10px;"
-                class="rounded-lg border shadow z-0"
-              ></div>
+            </div>
+
+            <div v-if="showMap" class="sm:col-span-2 relative rounded-xl overflow-hidden shadow-lg">
+              <div id="map" class="h-[500px] w-full z-0"></div>
+              <div class="absolute top-4 right-4 space-y-2">
+                <button
+                  @click="removeGpsLocation"
+                  class="px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
+                >
+                  <span class="material-icons material-symbols-outlined">
+                    location_off
+                  </span>
+                </button>
+              </div>
             </div>
 
             <div>
@@ -341,7 +456,7 @@ const removeSpeciesEntry = (index) => {
                       v-model="searches[index]"
                       @focus="toggleDropdown(index)"
                       @input="filteredSpecies(index)"
-                      @blur="handleBlur"
+                      @blur="(event) => handleBlur(event, index)"
                       placeholder="Search and select what species is involved..."
                       class="w-full border rounded-lg p-2"
                       autocomplete="off"
@@ -460,5 +575,18 @@ const removeSpeciesEntry = (index) => {
   border-radius: 5px;
   cursor: pointer;
   text-align: center;
+}
+
+/* Add new map-related styles */
+#map {
+  @apply h-[300px] sm:h-[500px] w-full rounded-lg shadow-lg;
+}
+
+.leaflet-control-zoom {
+  @apply shadow-lg rounded-lg overflow-hidden;
+}
+
+.leaflet-control-zoom a {
+  @apply bg-white text-gray-700 hover:bg-gray-50 transition-colors;
 }
 </style>
