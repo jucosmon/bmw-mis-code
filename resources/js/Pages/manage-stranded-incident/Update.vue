@@ -4,7 +4,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, route, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
@@ -17,6 +17,8 @@ const props = defineProps({
         required: true
     }
 });
+
+Head
 
 // Add defensive check
 if (!page || !page.props) {
@@ -148,6 +150,16 @@ const submit = () => {
 // Map references
 const map = ref(null);
 const marker = ref(null);
+const locationSource = ref('original'); // 'original', 'gps', or 'manual'
+const isGeocodingInProgress = ref(false);
+const showMap = ref(true);
+const originalLocation = ref({
+    latitude: props.strandedIncident.latitude,
+    longitude: props.strandedIncident.longitude,
+    municipality_id: props.strandedIncident.municipality_id,
+    barangay_id: props.strandedIncident.barangay_id,
+    detailed_location: props.strandedIncident.detailed_location
+});
 
 // Initialize Leaflet map
 onMounted(() => {
@@ -177,19 +189,25 @@ onMounted(() => {
 
 
 // Use current location
-const setLocationFromMap = () => {
+const setLocationFromMap = async () => {
+  locationSource.value = 'gps';
+  showMap.value = true;
+
+  await nextTick();
+
+  if (!map.value) {
+    initializeMap();
+  }
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-
-        // Update the form's latitude and longitude
-        form.latitude = latitude; // No .value needed
-        form.longitude = longitude; // No .value needed
-
-        // Update the map view and marker position
+        form.latitude = latitude;
+        form.longitude = longitude;
         map.value.setView([latitude, longitude], 13);
         marker.value.setLatLng([latitude, longitude]);
+        await reverseGeocode(latitude, longitude);
       },
       () => {
         alert('Failed to fetch current location. Please allow location access.');
@@ -200,6 +218,151 @@ const setLocationFromMap = () => {
   }
 };
 
+// Add Nominatim reverse geocoding function
+const reverseGeocode = async (latitude, longitude) => {
+  isGeocodingInProgress.value = true;
+
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+    const data = await response.json();
+    const address = data.address;
+
+    let municipalityName = address.city || address.town || address.municipality;
+    let barangayName = address.quarter || address.village || address.suburb || address.neighbourhood || address.hamlet;
+
+    // Clear existing selections
+    form.municipality_id = '';
+    form.barangay_id = '';
+
+    if (municipalityName) {
+      const matchedMunicipality = municipalities.value.find(m =>
+        m.name.toLowerCase() === municipalityName.toLowerCase()
+      );
+
+      if (matchedMunicipality) {
+        form.municipality_id = matchedMunicipality.id;
+        await fetchBarangays(matchedMunicipality.id);
+
+        if (barangayName && barangays.value.length > 0) {
+          const matchedBarangay = barangays.value.find(b =>
+            b.name.toLowerCase() === barangayName.toLowerCase()
+          );
+
+          if (matchedBarangay) {
+            form.barangay_id = matchedBarangay.id;
+          }
+        }
+      }
+    }
+
+    form.detailed_location = data.display_name || '';
+
+  } catch (error) {
+    console.error("Error with reverse geocoding:", error);
+    form.municipality_id = '';
+    form.barangay_id = '';
+  } finally {
+    isGeocodingInProgress.value = false;
+  }
+};
+
+// Update map initialization
+const initializeMap = () => {
+    const defaultLat = form.latitude || originalLocation.value.latitude;
+    const defaultLng = form.longitude || originalLocation.value.longitude;
+
+    if (!defaultLat || !defaultLng) {
+        console.error('No valid coordinates available');
+        return;
+    }
+
+    cleanupMap();
+
+    map.value = L.map('map').setView([defaultLat, defaultLng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map.value);
+
+    marker.value = L.marker([defaultLat, defaultLng], {
+        draggable: true,
+    }).addTo(map.value);
+
+    marker.value.on('dragend', async (e) => {
+        const { lat, lng } = e.target.getLatLng();
+        form.latitude = lat;
+        form.longitude = lng;
+        locationSource.value = 'manual';
+        await reverseGeocode(lat, lng);
+    });
+
+    map.value.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        form.latitude = lat;
+        form.longitude = lng;
+        marker.value.setLatLng([lat, lng]);
+        locationSource.value = 'manual';
+        await reverseGeocode(lat, lng);
+    });
+};
+
+// Add remove GPS location function
+const removeGpsLocation = () => {
+    locationSource.value = 'manual';
+    showMap.value = false;  // Hide map
+    form.latitude = '';
+    form.longitude = '';
+    form.municipality_id = '';
+    form.barangay_id = '';
+    form.detailed_location = ''; // Ensure detailed location is emptied
+    cleanupMap();
+};
+
+// Initialize map on mount
+onMounted(() => {
+    nextTick(() => {
+        if (originalLocation.value.latitude && originalLocation.value.longitude) {
+            initializeMap();
+        }
+    });
+});
+
+// Add reset to original location function
+const resetToOriginal = () => {
+    locationSource.value = 'original';
+    showMap.value = true; // Show map when resetting to original
+
+    // Wait for DOM update before initializing map
+    nextTick(() => {
+        form.latitude = originalLocation.value.latitude;
+        form.longitude = originalLocation.value.longitude;
+        form.municipality_id = originalLocation.value.municipality_id;
+        form.barangay_id = originalLocation.value.barangay_id;
+        form.detailed_location = originalLocation.value.detailed_location;
+
+        // Fetch barangays for the original municipality
+        if (originalLocation.value.municipality_id) {
+            fetchBarangays(originalLocation.value.municipality_id);
+        }
+
+        // Initialize map if it doesn't exist
+        if (!map.value) {
+            initializeMap();
+        } else {
+            map.value.setView([form.latitude, form.longitude], 13);
+            marker.value.setLatLng([form.latitude, form.longitude]);
+        }
+    });
+};
+
+// Update cleanup function
+const cleanupMap = () => {
+  if (map.value) {
+    map.value.remove();
+    map.value = null;
+    marker.value = null;
+  }
+};
 
 </script>
 
@@ -298,47 +461,91 @@ const setLocationFromMap = () => {
                         </div>
 
                         <!--Map-->
-                        <div class="mt-4 sm:col-span-2">
-                            <button
-                                @click.prevent="setLocationFromMap"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm w-full"
-                            >
-                                Use Current Location
-                            </button>
-                            <p class="text-sm text-gray-600 mt-2">
-                                Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-                            </p>
-                            <div
-                                id="map"
-                                style="height: 400px; width: 100%; margin-top: 10px;"
-                                class="rounded-lg border shadow z-0"
-                            ></div>
+                        <div class="mt-4 sm:col-span-2 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-semibold text-gray-900">Location Details</h3>
+                                <div class="flex space-x-2">
+                                    <!-- Always show Use Current Location -->
+                                    <button
+                                        @click.prevent="setLocationFromMap"
+                                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        </svg>
+                                        <span>Use Current Location</span>
+                                    </button>
+                                    <!-- Show Reset to Original if map is not visible or location is not original -->
+                                    <button
+                                        v-if="!showMap || locationSource !== 'original'"
+                                        @click="resetToOriginal"
+                                        class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                                    >
+                                        Reset to Original
+                                    </button>
+                                </div>
                             </div>
-                        <div>
-                        <InputLabel for="municipality_id" value="Municipality" />
-                        <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
-                            <option value="" disabled>Select a municipality</option>
-                            <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
-                            {{ municipality.name }}
-                            </option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.municipality_id" />
-                        </div>
 
-                        <div>
-                        <InputLabel for="barangay_id" value="Barangay" />
-                        <select required v-model="form.barangay_id" class="w-full">
-                            <option value="" disabled>Select a barangay</option>
-                            <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
-                            {{ barangay.name }}
-                            </option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.barangay_id" />
+                            <div v-if="showMap" class="relative rounded-xl overflow-hidden shadow-lg">
+                                <div id="map" class="h-[400px] w-full z-0"></div>
+                                <!-- Move Remove GPS button to top-right corner of map -->
+                                <div class="absolute top-4 right-4 z-10">
+                                    <button
+                                        @click="removeGpsLocation"
+                                        class="px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
+                                    >
+                                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Remove GPS
+                                    </button>
+                                </div>
+                                <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
+                                    <p class="text-sm font-medium text-gray-700">
+                                        Latitude: {{ form.latitude || 'Not Set' }}<br>
+                                        Longitude: {{ form.longitude || 'Not Set' }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Update municipality and barangay sections with loading states -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel for="municipality_id" value="Municipality" />
+                                    <select
+                                        v-model="form.municipality_id"
+                                        @change="fetchBarangays(form.municipality_id)"
+                                        class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                        :disabled="locationSource === 'gps' && isGeocodingInProgress"
+                                    >
+                                        <option value="" disabled>Select a municipality</option>
+                                        <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                                        {{ municipality.name }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <InputLabel for="barangay_id" value="Barangay" />
+                                    <select
+                                        v-model="form.barangay_id"
+                                        class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                        :disabled="locationSource === 'gps' && isGeocodingInProgress"
+                                    >
+                                        <option value="" disabled>Select a barangay</option>
+                                        <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
+                                        {{ barangay.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="sm:col-span-2">
                         <InputLabel for="detailed_location" value="Detailed Location" />
                         <textarea
+                            required
                             id="detailed_location"
                             v-model="form.detailed_location"
                             autocomplete="detailed_location"
@@ -451,4 +658,41 @@ const setLocationFromMap = () => {
   text-align: center;
 }
 
+/* Add new map-related styles */
+.map-container {
+  @apply relative rounded-xl overflow-hidden shadow-lg transition-all duration-300;
+}
+
+.map-controls {
+  @apply absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md
+         text-sm font-medium text-gray-700;
+}
+
+.location-button {
+  @apply px-4 py-2 rounded-lg transition-all duration-200
+         focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.gps-button {
+  @apply bg-indigo-600 text-white hover:bg-indigo-700
+         focus:ring-indigo-500;
+}
+
+.remove-gps-button {
+  @apply bg-red-600 text-white hover:bg-red-700
+         focus:ring-red-500;
+}
+
+/* Enhance map interaction styles */
+#map {
+  @apply rounded-lg border shadow-lg transition-all duration-300;
+}
+
+.leaflet-control-zoom {
+  @apply shadow-lg rounded-lg overflow-hidden;
+}
+
+.leaflet-control-zoom a {
+  @apply bg-white text-gray-700 hover:bg-gray-50 transition-colors;
+}
 </style>
