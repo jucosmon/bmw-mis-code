@@ -188,34 +188,46 @@ onMounted(() => {
 });
 
 
-// Use current location
+// Add helper function to check if locations match (add this before setLocationFromMap)
+const isSameLocation = (lat1, lng1, lat2, lng2, tolerance = 0.0001) => {
+    if (!lat1 || !lng1 || !lat2 || !lng2) return false;
+    return Math.abs(lat1 - lat2) < tolerance && Math.abs(lng1 - lng2) < tolerance;
+};
+
+// Update setLocationFromMap function
 const setLocationFromMap = async () => {
-  locationSource.value = 'gps';
-  showMap.value = true;
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
 
-  await nextTick();
+                // Only check if coordinates match current form values
+                if (isSameLocation(latitude, longitude, form.latitude, form.longitude)) {
+                    alert("You're already using these coordinates!");
+                    return;
+                }
 
-  if (!map.value) {
-    initializeMap();
-  }
+                locationSource.value = 'gps';
+                showMap.value = true;
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        form.latitude = latitude;
-        form.longitude = longitude;
-        map.value.setView([latitude, longitude], 13);
-        marker.value.setLatLng([latitude, longitude]);
-        await reverseGeocode(latitude, longitude);
-      },
-      () => {
-        alert('Failed to fetch current location. Please allow location access.');
-      }
-    );
-  } else {
-    alert('Geolocation is not supported by your browser.');
-  }
+                await nextTick();
+                if (!map.value) {
+                    initializeMap();
+                }
+
+                form.latitude = latitude;
+                form.longitude = longitude;
+                map.value.setView([latitude, longitude], 13);
+                marker.value.setLatLng([latitude, longitude]);
+                await reverseGeocode(latitude, longitude);
+            },
+            () => {
+                alert('Failed to fetch current location. Please allow location access.');
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser.');
+    }
 };
 
 // Add Nominatim reverse geocoding function
