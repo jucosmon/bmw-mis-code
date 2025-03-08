@@ -197,12 +197,16 @@ const handleRespondAction = (response) => {
 
             onSuccess: () => {
                 respondModalVisible.value = false;
+                if(response === 'onsite'){
+                    router.visit(route('stranded.incident.responder.update.page', props.strandedIncident.id));
+                }
             },
             onError: (errors) => {
                 console.error(errors);
             },
         }
     );
+
 };
 
 // completed button

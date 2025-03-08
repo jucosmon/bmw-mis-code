@@ -30,10 +30,6 @@ class RespondActionController extends Controller
         $userId = Auth::id();
         $strandedIncidentId = $request->id;
 
-        if ($request->status === 'onsite') {
-            return Inertia::location(route('stranded.incident.responder.update.page', $strandedIncidentId));
-        }
-
         // Check if a RespondAction record already exists for this user and incident
         $respondAction = RespondAction::where('stranded_incident_id', $strandedIncidentId)
                                         ->where('user_id', $userId)
