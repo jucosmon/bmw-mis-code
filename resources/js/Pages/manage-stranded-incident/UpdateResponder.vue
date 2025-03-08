@@ -472,7 +472,7 @@ const isRequired = computed(() => {
                         </div>
                         <div>
                         <InputLabel for="condition" value="Condition" />
-                        <select v-model="form.condition" class="w-full" :required="isRequired">
+                        <select v-model="form.condition" name="condition" class="w-full" :required="isRequired">
                             <option value="" disabled>Select an option</option>
                             <option value="alive">Alive</option>
                             <option value="dead">Dead</option>
@@ -481,7 +481,7 @@ const isRequired = computed(() => {
                         </div>
                         <div>
                         <InputLabel for="sea_state" value="Sea State" />
-                        <select v-model="form.sea_state" class="w-full">
+                        <select v-model="form.sea_state" name="sea_state" class="w-full">
                             <option value="" disabled>Select an option</option>
                             <option value="calm">Calm</option>
                             <option value="moderate">Moderate</option>
@@ -490,7 +490,7 @@ const isRequired = computed(() => {
                         <InputError class="mt-2" :message="form.errors.sea_state" />
                         </div>  <div>
                         <InputLabel for="weather" value="Weather" />
-                        <select v-model="form.weather" class="w-full">
+                        <select v-model="form.weather" name="weather" class="w-full">
                             <option value="" disabled>Select an option</option>
                             <option value="sunny">Sunny</option>
                             <option value="cloudy">Cloudy</option>
@@ -499,7 +499,7 @@ const isRequired = computed(() => {
                         <InputError class="mt-2" :message="form.errors.weather" />
                         </div>  <div>
                         <InputLabel for="beach_type" value="Beach type" />
-                        <select v-model="form.beach_type" class="w-full">
+                        <select v-model="form.beach_type" name="beach_type" class="w-full">
                             <option value="" disabled>Select an option</option>
                             <option value="mangrove">Mangrove</option>
                             <option value="rocky">Rocky</option>
@@ -558,7 +558,7 @@ const isRequired = computed(() => {
 
                         <div>
                         <InputLabel for="municipality_id" value="Municipality" />
-                        <select :required="isRequired" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
+                        <select :required="isRequired" name="municipality_id" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
                             <option value="" disabled>Select a municipality</option>
                             <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
                             {{ municipality.name }}
@@ -569,7 +569,7 @@ const isRequired = computed(() => {
 
                         <div>
                         <InputLabel for="barangay_id" value="Barangay" />
-                        <select :required="isRequired" v-model="form.barangay_id" class="w-full">
+                        <select :required="isRequired" name="barangay_id" v-model="form.barangay_id" class="w-full">
                             <option value="" disabled>Select a barangay</option>
                             <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
                             {{ barangay.name }}

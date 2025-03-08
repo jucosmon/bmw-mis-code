@@ -139,18 +139,22 @@ const updateButton = computed(() => {
 
 // Update button validation for verifiers
 const updateButtonStatusVerifier = computed(() => {
-    if (isPublicUser.value || isBarangayOfficial.value || isLguResponder.value) {
-        return false;
-    }
-    return true;
+    return ((isBpemoAdmin.value || isBpemoStaff.value)
+    && (props.sighting.report_status != 'false')
+    && props.sighting.is_active === true);
 });
 
 //unverify button
 const unverifyButtonStatus = computed(() => {
     return props.sighting.report_status === 'verified' &&
-           (isBpemoAdmin.value || isBpemoStaff.value);
+           (isBpemoAdmin.value || isBpemoStaff.value)
+           && props.sighting.is_active === true;
 });
 
+console.log('verify button',updateButtonStatusVerifier.value);
+console.log('unverify button',unverifyButtonStatus.value);
+console.log('archive button',archiveButtonStatus.value);
+console.log('update button for reporters',updateButton.value);
 const unverifyModalVisible = ref(false);
 
 const showUnverifyModal = () => {
@@ -257,7 +261,7 @@ onMounted(() => {
                 <h1 class="text-3xl font-bold">Sighting Information</h1>
                 <span class="text-xs text-gray-100 italic mb-4">[{{ props.sighting.id }}] {{ props.sighting.date }} : {{ props.sighting.time }}</span>
                 <p class="text-sm mt-2">{{ props.sighting.is_active ? 'Active' : 'Inactive' }} ({{ props.sighting.report_status }})</p>
-                <div v-if=updateButton class="flex justify-end space-x-4">
+                <div class="flex justify-end space-x-4">
                     <button
                         class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
                         @click="confirmArchiveSighting"
@@ -307,14 +311,14 @@ onMounted(() => {
                     >
                         Update Sighting
                     </button>
+
+                    <!-- Fix: Move this button outside the updateButton condition -->
                     <button
                         v-if="updateButtonStatusVerifier"
                         class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
                         @click="updateSighting"
                     >
-                    {{ (props.sighting.report_status==='pending' || props.sighting.report_status==='false') &&
-                    (isBpemoAdmin || isBpemoStaff)
-                        ? 'Verify Sighting' : 'Update Sighting' }}
+                        {{ (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') ? 'Verify Sighting' : 'Update Sighting' }}
                     </button>
 
                     <button

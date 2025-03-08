@@ -2,6 +2,7 @@
 import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
+import Modal from '@/Components/Modal.vue'; // Add this import
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
@@ -230,6 +231,187 @@ const removeExistingImage = (index) => {
 const map = ref(null);
 const marker = ref(null);
 
+const locationSource = ref('original');
+const isGeocodingInProgress = ref(false);
+const showMap = ref(true);
+const originalLocation = ref({
+    latitude: props.sighting.latitude,
+    longitude: props.sighting.longitude,
+    municipality_id: props.sighting.municipality_id,
+    barangay_id: props.sighting.barangay_id,
+    detailed_location: props.sighting.detailed_location
+});
+
+const initializeMap = () => {
+    const defaultLat = form.latitude || originalLocation.value.latitude;
+    const defaultLng = form.longitude || originalLocation.value.longitude;
+
+    if (!defaultLat || !defaultLng) {
+        console.error('No valid coordinates available');
+        return;
+    }
+
+    cleanupMap();
+
+    map.value = L.map('map').setView([defaultLat, defaultLng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map.value);
+
+    marker.value = L.marker([defaultLat, defaultLng], {
+        draggable: true,
+    }).addTo(map.value);
+
+    marker.value.on('dragend', async (e) => {
+        const { lat, lng } = e.target.getLatLng();
+        form.latitude = lat;
+        form.longitude = lng;
+        locationSource.value = 'manual';
+        await reverseGeocode(lat, lng);
+    });
+
+    map.value.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        form.latitude = lat;
+        form.longitude = lng;
+        marker.value.setLatLng([lat, lng]);
+        locationSource.value = 'manual';
+        await reverseGeocode(lat, lng);
+    });
+};
+
+const isSameLocation = (lat1, lng1, lat2, lng2, tolerance = 0.0001) => {
+    if (!lat1 || !lng1 || !lat2 || !lng2) return false;
+    if (lat1 === form.latitude && lng1 === form.longitude) {
+        return true;
+    }
+    return false;
+};
+
+const setLocationFromMap = async () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                if (isSameLocation(latitude, longitude, form.latitude, form.longitude)) {
+                    alert("You're already using these coordinates!");
+                    return;
+                }
+
+                locationSource.value = 'gps';
+                showMap.value = true;
+
+                await nextTick();
+                if (!map.value) {
+                    initializeMap();
+                }
+
+                form.latitude = latitude;
+                form.longitude = longitude;
+                map.value.setView([latitude, longitude], 13);
+                marker.value.setLatLng([latitude, longitude]);
+                await reverseGeocode(latitude, longitude);
+            },
+            () => {
+                alert('Failed to fetch current location. Please allow location access.');
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser.');
+    }
+};
+
+const reverseGeocode = async (latitude, longitude) => {
+    isGeocodingInProgress.value = true;
+
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+        const data = await response.json();
+        const address = data.address;
+
+        let municipalityName = address.city || address.town || address.municipality;
+        let barangayName = address.quarter || address.village || address.suburb || address.neighbourhood || address.hamlet;
+
+        form.municipality_id = '';
+        form.barangay_id = '';
+
+        if (municipalityName) {
+            const matchedMunicipality = municipalities.value.find(m =>
+                m.name.toLowerCase() === municipalityName.toLowerCase()
+            );
+
+            if (matchedMunicipality) {
+                form.municipality_id = matchedMunicipality.id;
+                await fetchBarangays(matchedMunicipality.id);
+
+                if (barangayName && barangays.value.length > 0) {
+                    const matchedBarangay = barangays.value.find(b =>
+                        b.name.toLowerCase() === barangayName.toLowerCase()
+                    );
+
+                    if (matchedBarangay) {
+                        form.barangay_id = matchedBarangay.id;
+                    }
+                }
+            }
+        }
+
+        form.detailed_location = data.display_name || '';
+
+    } catch (error) {
+        console.error("Error with reverse geocoding:", error);
+        form.municipality_id = '';
+        form.barangay_id = '';
+    } finally {
+        isGeocodingInProgress.value = false;
+    }
+};
+
+const resetToOriginal = () => {
+    locationSource.value = 'original';
+    showMap.value = true;
+
+    nextTick(() => {
+        form.latitude = originalLocation.value.latitude;
+        form.longitude = originalLocation.value.longitude;
+        form.municipality_id = originalLocation.value.municipality_id;
+        form.barangay_id = originalLocation.value.barangay_id;
+        form.detailed_location = originalLocation.value.detailed_location;
+
+        if (originalLocation.value.municipality_id) {
+            fetchBarangays(originalLocation.value.municipality_id);
+        }
+
+        if (!map.value) {
+            initializeMap();
+        } else {
+            map.value.setView([form.latitude, form.longitude], 13);
+            marker.value.setLatLng([form.latitude, form.longitude]);
+        }
+    });
+};
+
+const removeGpsLocation = () => {
+    locationSource.value = 'manual';
+    showMap.value = false;
+    form.latitude = '';
+    form.longitude = '';
+    form.municipality_id = '';
+    form.barangay_id = '';
+    form.detailed_location = '';
+    cleanupMap();
+};
+
+const cleanupMap = () => {
+    if (map.value) {
+        map.value.remove();
+        map.value = null;
+        marker.value = null;
+    }
+};
+
 onMounted(() => {
     nextTick(() => {
         map.value = L.map('map').setView([form.latitude, form.longitude], 13);
@@ -249,55 +431,58 @@ onMounted(() => {
     });
 });
 
-const setLocationFromMap = () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                form.latitude = latitude;
-                form.longitude = longitude;
-                map.value.setView([latitude, longitude], 13);
-                marker.value.setLatLng([latitude, longitude]);
-            },
-            () => {
-                alert('Failed to fetch current location. Please allow location access.');
-            }
-        );
-    } else {
-        alert('Geolocation is not supported by your browser.');
-    }
-};
-
 const buttonStatus = computed(() => {
     return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') &&
     (currentUser.value !== 'lgu_responder'  && currentUser.value !== 'barangay_official' && currentUser.value !== 'public_user');
 });
+const showVerifyModal = ref(false);
+const showFalseModal = ref(false);
 
 const falseIncident = () => {
-    form.report_status = 'false'; // Set report status
+    showFalseModal.value = true;
 };
 
-const verifyIncident = () => {
-    form.report_status = 'verified';
-};
+const submit = (e) => {
+    if (buttonStatus.value) {
+        e.preventDefault(); // Now e is properly defined
+        return;
+    }
 
-const submit = () => {
-    console.log('Has changes:', hasChanges.value);
     if (hasChanges.value) {
-        form.deletedImages = deletedImages.value;
-        form.deletedSightedSpecies = deletedSightedSpecies.value;
-
-        form.post(updateRoute.value, {
-            onSuccess: () => {
-                formErrors.value = null;
-            },
-            onError: (errors) => {
-                formErrors.value = errors;
-            },
-        });
+        submitForm();
     } else {
         alert('No changes detected in the form.');
     }
+};
+
+const submitForm = () => {
+    form.deletedImages = deletedImages.value;
+    form.deletedSightedSpecies = deletedSightedSpecies.value;
+
+    form.post(updateRoute.value, {
+        onSuccess: () => {
+            formErrors.value = null;
+        },
+        onError: (errors) => {
+            formErrors.value = errors;
+        },
+    });
+};
+
+const confirmFalse = () => {
+    form.report_status = 'false';
+    submitForm();
+    showFalseModal.value = false;
+};
+
+const verifyIncident = () => {
+    showVerifyModal.value = true;
+};
+
+const confirmVerify = () => {
+    form.report_status = 'verified';
+    submitForm();
+    showVerifyModal.value = false;
 };
 
 const searches = ref([]);
@@ -435,26 +620,54 @@ const handleDropdownClick = (index) => {
                         </div>
 
                         <!-- Map -->
-                        <div class="mt-4 sm:col-span-2">
-                            <button
-                                @click.prevent="setLocationFromMap"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm w-full"
-                            >
-                                Use Current Location
-                            </button>
-                            <p class="text-sm text-gray-600 mt-2">
-                                Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-                            </p>
-                            <div
-                                id="map"
-                                style="height: 400px; width: 100%; margin-top: 10px;"
-                                class="rounded-lg border shadow z-0"
-                            ></div>
+                        <div class="mt-4 sm:col-span-2 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-semibold text-gray-900">Location Details</h3>
+                                <div class="flex space-x-2">
+                                    <button
+                                        @click.prevent="setLocationFromMap"
+                                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
+                                    >
+                                        <span class="material-icons material-symbols-outlined">
+                                            my_location
+                                        </span>
+                                    </button>
+                                    <button
+                                        v-if="!showMap || locationSource !== 'original'"
+                                        @click="resetToOriginal"
+                                        class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                                    >
+                                        <span class="material-icons material-symbols-outlined">
+                                            restart_alt
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div v-if="showMap" class="relative rounded-xl overflow-hidden shadow-lg">
+                                <div id="map" class="h-[400px] w-full z-0"></div>
+                                <div class="absolute top-4 right-4 z-10">
+                                    <button
+                                        @click="removeGpsLocation"
+                                        class="px-5 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
+                                    >
+                                        <span class="material-icons material-symbols-outlined">
+                                            location_off
+                                        </span>
+                                    </button>
+                                </div>
+                                <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
+                                    <p class="text-sm font-medium text-gray-700">
+                                        Latitude: {{ form.latitude || 'Not Set' }}<br>
+                                        Longitude: {{ form.longitude || 'Not Set' }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
                             <InputLabel for="municipality_id" value="Municipality" />
-                            <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
+                            <select v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
                                 <option value="" disabled>Select a municipality</option>
                                 <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
                                     {{ municipality.name }}
@@ -465,7 +678,7 @@ const handleDropdownClick = (index) => {
 
                         <div>
                             <InputLabel for="barangay_id" value="Barangay" />
-                            <select required v-model="form.barangay_id" class="w-full">
+                            <select v-model="form.barangay_id" class="w-full">
                                 <option value="" disabled>Select a barangay</option>
                                 <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
                                     {{ barangay.name }}
@@ -477,6 +690,7 @@ const handleDropdownClick = (index) => {
                         <div class="sm:col-span-2">
                             <InputLabel for="detailed_location" value="Detailed Location" />
                             <textarea
+                                required
                                 id="detailed_location"
                                 v-model="form.detailed_location"
                                 autocomplete="detailed_location"
@@ -619,10 +833,20 @@ const handleDropdownClick = (index) => {
 
                     <!-- False and Verify button for pending cases-->
                     <div v-else class="flex items-center justify-end gap-5 mt-6">
-                        <DangerButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900" @click="falseIncident">
+                        <DangerButton
+                            :disabled="form.processing"
+                            :class="{ 'opacity-25': form.processing }"
+                            class="bg-indigo-900"
+                            @click="falseIncident"
+                        >
                             Mark as False
                         </DangerButton>
-                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900" @click="verifyIncident">
+                        <PrimaryButton
+                            :disabled="form.processing"
+                            :class="{ 'opacity-25': form.processing }"
+                            class="bg-indigo-900"
+                            @click="verifyIncident"
+                        >
                             Verify as True
                         </PrimaryButton>
                     </div>
@@ -630,6 +854,51 @@ const handleDropdownClick = (index) => {
                 </form>
             </div>
         </div>
+        <Modal :show="showVerifyModal" @close="showVerifyModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Confirm Verification
+                </h2>
+                <p class="mt-3 text-sm text-gray-600">
+                    Are you sure that the report is true and accurate?
+                </p>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        @click="showVerifyModal = false"
+                    >
+                        Cancel
+                    </button>
+                    <PrimaryButton @click="confirmVerify">
+                        Confirm
+                    </PrimaryButton>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal :show="showFalseModal" @close="showFalseModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Confirm False Report
+                </h2>
+                <p class="mt-3 text-sm text-gray-600">
+                    Are you sure the report is false?
+                </p>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        @click="showFalseModal = false"
+                    >
+                        Cancel
+                    </button>
+                    <PrimaryButton @click="confirmFalse">
+                        Confirm
+                    </PrimaryButton>
+                </div>
+            </div>
+        </Modal>
     </Sidebar>
 </template>
 
