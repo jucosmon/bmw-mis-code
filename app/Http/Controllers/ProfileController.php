@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Barangay;
+use App\Models\Municipality;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,15 +19,23 @@ class ProfileController extends Controller
      * Display the user's profile form.
      */
     public function view (){
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
         return Inertia::render('Profile/View', [
-
+            'municipalities' => $municipalities,
+            'barangays' => $barangays
         ]);
     }
+
     public function edit(Request $request): Response
     {
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'municipalities' => $municipalities,
+            'barangays' => $barangays
         ]);
     }
 
