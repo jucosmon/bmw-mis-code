@@ -2,6 +2,7 @@
 import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
+import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
@@ -321,22 +322,29 @@ const cleanupMap = () => {
     }
 };
 
-// Initialize map on mount
+// Fix map initialization
 onMounted(() => {
-  nextTick(async () => {
-    // First fetch municipalities
-    const response = await fetch('/municipalities');
-    municipalities.value = await response.json();
-
-    if (props.strandedIncident.municipality_id) {
-      await fetchBarangays();
+    // Initialize map immediately if coordinates exist
+    if (form.latitude && form.longitude) {
+        nextTick(() => {
+            try {
+                initializeMap();
+            } catch (error) {
+                console.error("Error initializing map:", error);
+            }
+        });
     }
 
-    // Then initialize map
-    if (originalLocation.value.latitude && originalLocation.value.longitude) {
-      initializeMap();
-    }
-  });
+    // Fetch municipalities after map initialization
+    fetch('/municipalities')
+        .then(response => response.json())
+        .then(data => {
+            municipalities.value = data;
+            if (props.strandedIncident.municipality_id) {
+                return fetchBarangays();
+            }
+        })
+        .catch(error => console.error("Error fetching data:", error));
 });
 
 // button status
@@ -350,34 +358,61 @@ const buttonStatus = computed(() => {
     }
 });
 
+const showVerifyModal = ref(false);
+const showFalseModal = ref(false);
 
 const falseIncident = () => {
-    form.report_status = 'false'; // Set report status
+    showFalseModal.value = true;
 };
 
-const verifyIncident = () => {
-    form.report_status = 'verified';
-};
+// Update submit function to properly handle status changes
+const submit = (e) => {
+    if (buttonStatus.value) {
+        e.preventDefault(); // Prevent form submission for verify/false buttons
+        return;
+    }
 
-
-//submit form
-const submit = () => {
     if (hasChanges.value) {
-        form.deletedImages = deletedImages.value;
-
-
-        form.post(updateRoute.value, {
-            onSuccess: () => {
-                formErrors.value = null;
-            },
-            onError: (errors) => {
-                formErrors.value = errors;
-            },
-        });
+        submitForm();
     } else {
         alert('No changes detected in the form.');
     }
 };
+
+// Add separate submitForm function
+const submitForm = () => {
+    form.deletedImages = deletedImages.value;
+    form.post(updateRoute.value, {
+        onSuccess: () => {
+            formErrors.value = null;
+        },
+        onError: (errors) => {
+            formErrors.value = errors;
+        },
+    });
+};
+
+// Update verify/false functions to use new submitForm
+const confirmFalse = () => {
+    form.report_status = 'false';
+    submitForm();
+    showFalseModal.value = false;
+};
+
+const verifyIncident = () => {
+    showVerifyModal.value = true;
+};
+
+const confirmVerify = () => {
+    form.report_status = 'verified';
+    submitForm();
+    showVerifyModal.value = false;
+};
+
+const isRequired = computed(() => {
+    return !(form.report_status === 'false');
+});
+
 </script>
 
 <template>
@@ -409,35 +444,35 @@ const submit = () => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                         <InputLabel for="date" value="Date of the Incident" />
-                        <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                        <TextInput :required="isRequired" id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
                         <InputError class="mt-2" :message="form.errors.date" />
                         </div>
                         <div>
                         <InputLabel for="time" value="Time of the Incident" />
-                        <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
+                        <TextInput :required="isRequired" id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
                         <InputError class="mt-2" :message="form.errors.time" />
                         </div>
 
                         <div class="sm:col-span-2">
                         <InputLabel for="species_involved" value="Describe what species are involved" />
-                        <TextInput id="species_involved" required v-model="form.species_involved" class="w-full" placeholder="e.g. Dolphins, Large Whales, Sharks" />
+                        <TextInput id="species_involved" :required="isRequired" v-model="form.species_involved" class="w-full" placeholder="e.g. Dolphins, Large Whales, Sharks" />
                         <InputError class="mt-2" :message="form.errors.species_involved" />
                         </div>
 
                         <div>
                         <InputLabel for="quantity" value="How many species are involved in the incident?" />
-                        <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" required/>
+                        <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" :required="isRequired"/>
                         <InputError class="mt-2" :message="form.errors.quantity" />
                         </div>
                         <div>
                         <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
-                        <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
+                        <input :required="isRequired" id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
                         <p class="text-center">{{ form.certainty_level }}</p>
                         <InputError class="mt-2" :message="form.errors.certainty_level" />
                         </div>
                         <div>
                         <InputLabel for="condition" value="Condition" />
-                        <select v-model="form.condition" class="w-full" required>
+                        <select v-model="form.condition" class="w-full" :required="isRequired">
                             <option value="" disabled>Select an option</option>
                             <option value="alive">Alive</option>
                             <option value="dead">Dead</option>
@@ -523,7 +558,7 @@ const submit = () => {
 
                         <div>
                         <InputLabel for="municipality_id" value="Municipality" />
-                        <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
+                        <select :required="isRequired" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
                             <option value="" disabled>Select a municipality</option>
                             <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
                             {{ municipality.name }}
@@ -534,7 +569,7 @@ const submit = () => {
 
                         <div>
                         <InputLabel for="barangay_id" value="Barangay" />
-                        <select required v-model="form.barangay_id" class="w-full">
+                        <select :required="isRequired" v-model="form.barangay_id" class="w-full">
                             <option value="" disabled>Select a barangay</option>
                             <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
                             {{ barangay.name }}
@@ -546,7 +581,7 @@ const submit = () => {
                         <div class="sm:col-span-2">
                         <InputLabel for="detailed_location" value="Detailed Location" />
                         <textarea
-                            required
+                            :required="isRequired"
                             id="detailed_location"
                             v-model="form.detailed_location"
                             autocomplete="detailed_location"
@@ -630,12 +665,20 @@ const submit = () => {
 
                     <!-- False and Verify button for pending cases-->
                     <div v-else class="flex items-center justify-end gap-5 mt-6">
-                        <DangerButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900"
-                        @click="falseIncident">
+                        <DangerButton
+                            :disabled="form.processing"
+                            :class="{ 'opacity-25': form.processing }"
+                            class="bg-indigo-900"
+                            @click="falseIncident"
+                        >
                             Mark as False
                         </DangerButton>
-                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900"
-                        @click="verifyIncident">
+                        <PrimaryButton
+                            :disabled="form.processing"
+                            :class="{ 'opacity-25': form.processing }"
+                            class="bg-indigo-900"
+                            @click="verifyIncident"
+                        >
                             Verify as True
                         </PrimaryButton>
                     </div>
@@ -643,6 +686,52 @@ const submit = () => {
                 </form>
             </div>
         </div>
+
+        <Modal :show="showVerifyModal" @close="showVerifyModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Confirm Verification
+                </h2>
+                <p class="mt-3 text-sm text-gray-600">
+                    Are you sure that the report is true and accurate?
+                </p>
+                <div class="mt-6 flex justify-end gap-3">
+                    <PrimaryButton @click="confirmVerify">
+                        Confirm
+                    </PrimaryButton>
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        @click="showVerifyModal = false"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal :show="showFalseModal" @close="showFalseModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Confirm False Report
+                </h2>
+                <p class="mt-3 text-sm text-gray-600">
+                    Are you sure the report is false?
+                </p>
+                <div class="mt-6 flex justify-end gap-3">
+                    <PrimaryButton @click="confirmFalse">
+                        Confirm
+                    </PrimaryButton>
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        @click="showFalseModal = false"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </Modal>
     </Sidebar>
 </template>
 <style scoped>
