@@ -584,4 +584,23 @@ class StrandedIncidentController extends Controller
 
         return response()->json(['status' => $strandedIncident->status]);
     }
+
+    public function markAsFalse($id)
+    {
+        $strandedIncident = StrandedIncident::findOrFail($id);
+        $strandedIncident->report_status = 'false';
+        $strandedIncident->save();
+
+        // Delete previous notifications
+        Notification::where('stranded_incident_id', $id)->delete();
+
+        // Create false report notification
+        $this->createNotification($strandedIncident, 'false');
+
+        // Handle false report for user
+        $this->handleFalseReport($strandedIncident->user_id);
+
+        return redirect()->route('stranded.incident.index')
+            ->with('success', 'You have successfully marked a stranded incident report as false.');
+    }
 }

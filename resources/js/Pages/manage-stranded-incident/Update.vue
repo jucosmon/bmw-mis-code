@@ -146,52 +146,28 @@ const submit = () => {
     }
 };
 
-// location
 // Map references
 const map = ref(null);
 const marker = ref(null);
-const locationSource = ref('original'); // 'original', 'gps', or 'manual'
+const locationSource = ref('original');
 const isGeocodingInProgress = ref(false);
-const showMap = ref(true);
+const showMap = ref(false); // Change initial value to false
 const originalLocation = ref({
-    latitude: props.strandedIncident.latitude,
-    longitude: props.strandedIncident.longitude,
-    municipality_id: props.strandedIncident.municipality_id,
-    barangay_id: props.strandedIncident.barangay_id,
-    detailed_location: props.strandedIncident.detailed_location
+    latitude: props.strandedIncident.latitude || null,
+    longitude: props.strandedIncident.longitude || null,
+    municipality_id: props.strandedIncident.municipality_id || '',
+    barangay_id: props.strandedIncident.barangay_id || '',
+    detailed_location: props.strandedIncident.detailed_location || ''
 });
 
-// Initialize Leaflet map
-onMounted(() => {
-  nextTick(() => {
-    if (!form) {
-      console.error('Form object is null');
-      return;
-    }
-    console.log('Form object:', form); // Debugging line
-    map.value = L.map('map').setView([form.latitude, form.longitude], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map.value);
-
-    marker.value = L.marker([form.latitude, form.longitude], {
-      draggable: true,
-    }).addTo(map.value);
-
-    marker.value.on('dragend', (e) => {
-      const { lat, lng } = e.target.getLatLng();
-      form.latitude = lat;
-      form.longitude = lng;
-    });
-  });
-});
-
-
-// Add helper function to check if locations match (add this before setLocationFromMap)
+// Add helper function for location comparison
 const isSameLocation = (lat1, lng1, lat2, lng2, tolerance = 0.0001) => {
     if (!lat1 || !lng1 || !lat2 || !lng2) return false;
-    return Math.abs(lat1 - lat2) < tolerance && Math.abs(lng1 - lng2) < tolerance;
+    // Compare with form's current values instead of original location
+    if (lat1 === form.latitude && lng1 === form.longitude) {
+        return true;
+    }
+    return false;
 };
 
 // Update setLocationFromMap function
@@ -207,18 +183,13 @@ const setLocationFromMap = async () => {
                     return;
                 }
 
+                form.latitude = latitude;
+                form.longitude = longitude;
                 locationSource.value = 'gps';
                 showMap.value = true;
 
                 await nextTick();
-                if (!map.value) {
-                    initializeMap();
-                }
-
-                form.latitude = latitude;
-                form.longitude = longitude;
-                map.value.setView([latitude, longitude], 13);
-                marker.value.setLatLng([latitude, longitude]);
+                initializeMap();
                 await reverseGeocode(latitude, longitude);
             },
             () => {
@@ -285,97 +256,138 @@ const initializeMap = () => {
 
     if (!defaultLat || !defaultLng) {
         console.error('No valid coordinates available');
+        showMap.value = false;
         return;
     }
 
-    cleanupMap();
+    // Wait for DOM to be ready
+    nextTick(() => {
+        // Check if map container exists
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) {
+            console.error('Map container not found');
+            return;
+        }
 
-    map.value = L.map('map').setView([defaultLat, defaultLng], 13);
+        cleanupMap();
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map.value);
+        try {
+            map.value = L.map('map').setView([defaultLat, defaultLng], 13);
 
-    marker.value = L.marker([defaultLat, defaultLng], {
-        draggable: true,
-    }).addTo(map.value);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+            }).addTo(map.value);
 
-    marker.value.on('dragend', async (e) => {
-        const { lat, lng } = e.target.getLatLng();
-        form.latitude = lat;
-        form.longitude = lng;
-        locationSource.value = 'manual';
-        await reverseGeocode(lat, lng);
+            marker.value = L.marker([defaultLat, defaultLng], {
+                draggable: true,
+            }).addTo(map.value);
+
+            marker.value.on('dragend', async (e) => {
+                const { lat, lng } = e.target.getLatLng();
+                form.latitude = lat;
+                form.longitude = lng;
+                locationSource.value = 'manual';
+                await reverseGeocode(lat, lng);
+            });
+
+            map.value.on('click', async (e) => {
+                const { lat, lng } = e.latlng;
+                form.latitude = lat;
+                form.longitude = lng;
+                marker.value.setLatLng([lat, lng]);
+                locationSource.value = 'manual';
+                await reverseGeocode(lat, lng);
+            });
+
+            showMap.value = true;
+            // Invalidate map size after rendering
+            map.value.invalidateSize();
+        } catch (error) {
+            console.error('Error initializing map:', error);
+            showMap.value = false;
+        }
     });
+};
 
-    map.value.on('click', async (e) => {
-        const { lat, lng } = e.latlng;
-        form.latitude = lat;
-        form.longitude = lng;
-        marker.value.setLatLng([lat, lng]);
-        locationSource.value = 'manual';
-        await reverseGeocode(lat, lng);
-    });
+// Add reset to original location function
+const resetToOriginal = (e) => {
+    e.preventDefault(); // Add this line
+    locationSource.value = 'original';
+
+    // Only show map if original coordinates exist
+    if (originalLocation.value.latitude && originalLocation.value.longitude) {
+        showMap.value = true;
+        nextTick(() => {
+            form.latitude = originalLocation.value.latitude;
+            form.longitude = originalLocation.value.longitude;
+            form.municipality_id = originalLocation.value.municipality_id;
+            form.barangay_id = originalLocation.value.barangay_id;
+            form.detailed_location = originalLocation.value.detailed_location;
+
+            if (originalLocation.value.municipality_id) {
+                fetchBarangays(originalLocation.value.municipality_id);
+            }
+
+            if (!map.value) {
+                initializeMap();
+            } else {
+                map.value.setView([form.latitude, form.longitude], 13);
+                marker.value.setLatLng([form.latitude, form.longitude]);
+            }
+        });
+    } else {
+        showMap.value = false;
+        form.latitude = '';
+        form.longitude = '';
+        form.municipality_id = originalLocation.value.municipality_id;
+        form.barangay_id = originalLocation.value.barangay_id;
+        form.detailed_location = originalLocation.value.detailed_location;
+        cleanupMap();
+    }
 };
 
 // Add remove GPS location function
 const removeGpsLocation = () => {
     locationSource.value = 'manual';
-    showMap.value = false;  // Hide map
+    showMap.value = false;
     form.latitude = '';
     form.longitude = '';
     form.municipality_id = '';
     form.barangay_id = '';
-    form.detailed_location = ''; // Ensure detailed location is emptied
+    form.detailed_location = '';
     cleanupMap();
 };
 
-// Initialize map on mount
-onMounted(() => {
-    nextTick(() => {
-        if (originalLocation.value.latitude && originalLocation.value.longitude) {
-            initializeMap();
-        }
-    });
-});
-
-// Add reset to original location function
-const resetToOriginal = () => {
-    locationSource.value = 'original';
-    showMap.value = true; // Show map when resetting to original
-
-    // Wait for DOM update before initializing map
-    nextTick(() => {
-        form.latitude = originalLocation.value.latitude;
-        form.longitude = originalLocation.value.longitude;
-        form.municipality_id = originalLocation.value.municipality_id;
-        form.barangay_id = originalLocation.value.barangay_id;
-        form.detailed_location = originalLocation.value.detailed_location;
-
-        // Fetch barangays for the original municipality
-        if (originalLocation.value.municipality_id) {
-            fetchBarangays(originalLocation.value.municipality_id);
-        }
-
-        // Initialize map if it doesn't exist
-        if (!map.value) {
-            initializeMap();
-        } else {
-            map.value.setView([form.latitude, form.longitude], 13);
-            marker.value.setLatLng([form.latitude, form.longitude]);
-        }
-    });
-};
-
-// Update cleanup function
+// Add cleanup function
 const cleanupMap = () => {
-  if (map.value) {
-    map.value.remove();
-    map.value = null;
-    marker.value = null;
-  }
+    if (map.value) {
+        map.value.remove();
+        map.value = null;
+        marker.value = null;
+    }
 };
 
+// Fix map initialization
+onMounted(() => {
+    // Only show and initialize map if coordinates exist
+    if (originalLocation.value.latitude && originalLocation.value.longitude) {
+        showMap.value = true;
+        initializeMap();
+    } else {
+        showMap.value = false;
+    }
+
+    // Fetch municipalities after map initialization
+    fetch('/municipalities')
+        .then(response => response.json())
+        .then(data => {
+            municipalities.value = data;
+            if (props.strandedIncident.municipality_id) {
+                return fetchBarangays();
+            }
+        })
+        .catch(error => console.error("Error fetching data:", error));
+});
 </script>
 
 <template>
@@ -489,6 +501,7 @@ const cleanupMap = () => {
                                     <!-- Show Reset to Original if map is not visible or location is not original -->
                                     <button
                                         v-if="!showMap || locationSource !== 'original'"
+                                        type="button"
                                         @click="resetToOriginal"
                                         class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
                                     >

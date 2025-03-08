@@ -6,7 +6,7 @@ import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
@@ -72,11 +72,17 @@ const form = useForm({
   beach_type: props.strandedIncident.beach_type || '',
   detailed_location: props.strandedIncident.detailed_location || '',
   more_information: props.strandedIncident.more_information || '',
-  municipality_id: props.strandedIncident.municipality_id || '',
-  barangay_id: props.strandedIncident.barangay_id || '',
+  municipality_id: props.strandedIncident.municipality_id || null,
+  barangay_id: props.strandedIncident.barangay_id || null,
   report_status: props.strandedIncident.report_status || '',
   mediaFiles: [],
   deletedImages: [],
+  clearErrors() {
+    this.errors = {};
+  },
+  setError(errors) {
+    this.errors = errors;
+  }
 });
 
 const formErrors = ref(null);
@@ -133,13 +139,13 @@ const map = ref(null);
 const marker = ref(null);
 const locationSource = ref('original');
 const isGeocodingInProgress = ref(false);
-const showMap = ref(true);
+const showMap = ref(false); // Change initial value to false
 const originalLocation = ref({
-    latitude: props.strandedIncident.latitude,
-    longitude: props.strandedIncident.longitude,
-    municipality_id: props.strandedIncident.municipality_id,
-    barangay_id: props.strandedIncident.barangay_id,
-    detailed_location: props.strandedIncident.detailed_location
+    latitude: props.strandedIncident.latitude || null,
+    longitude: props.strandedIncident.longitude || null,
+    municipality_id: props.strandedIncident.municipality_id || '',
+    barangay_id: props.strandedIncident.barangay_id || '',
+    detailed_location: props.strandedIncident.detailed_location || ''
 });
 
 // Add helper function for location comparison
@@ -165,18 +171,13 @@ const setLocationFromMap = async () => {
                     return;
                 }
 
+                form.latitude = latitude;
+                form.longitude = longitude;
                 locationSource.value = 'gps';
                 showMap.value = true;
 
                 await nextTick();
-                if (!map.value) {
-                    initializeMap();
-                }
-
-                form.latitude = latitude;
-                form.longitude = longitude;
-                map.value.setView([latitude, longitude], 13);
-                marker.value.setLatLng([latitude, longitude]);
+                initializeMap();
                 await reverseGeocode(latitude, longitude);
             },
             () => {
@@ -243,62 +244,94 @@ const initializeMap = () => {
 
     if (!defaultLat || !defaultLng) {
         console.error('No valid coordinates available');
+        showMap.value = false;
         return;
     }
 
-    cleanupMap();
+    // Wait for DOM to be ready
+    nextTick(() => {
+        // Check if map container exists
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) {
+            console.error('Map container not found');
+            return;
+        }
 
-    map.value = L.map('map').setView([defaultLat, defaultLng], 13);
+        cleanupMap();
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map.value);
+        try {
+            map.value = L.map('map').setView([defaultLat, defaultLng], 13);
 
-    marker.value = L.marker([defaultLat, defaultLng], {
-        draggable: true,
-    }).addTo(map.value);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+            }).addTo(map.value);
 
-    marker.value.on('dragend', async (e) => {
-        const { lat, lng } = e.target.getLatLng();
-        form.latitude = lat;
-        form.longitude = lng;
-        locationSource.value = 'manual';
-        await reverseGeocode(lat, lng);
-    });
+            marker.value = L.marker([defaultLat, defaultLng], {
+                draggable: true,
+            }).addTo(map.value);
 
-    map.value.on('click', async (e) => {
-        const { lat, lng } = e.latlng;
-        form.latitude = lat;
-        form.longitude = lng;
-        marker.value.setLatLng([lat, lng]);
-        locationSource.value = 'manual';
-        await reverseGeocode(lat, lng);
+            marker.value.on('dragend', async (e) => {
+                const { lat, lng } = e.target.getLatLng();
+                form.latitude = lat;
+                form.longitude = lng;
+                locationSource.value = 'manual';
+                await reverseGeocode(lat, lng);
+            });
+
+            map.value.on('click', async (e) => {
+                const { lat, lng } = e.latlng;
+                form.latitude = lat;
+                form.longitude = lng;
+                marker.value.setLatLng([lat, lng]);
+                locationSource.value = 'manual';
+                await reverseGeocode(lat, lng);
+            });
+
+            showMap.value = true;
+            // Invalidate map size after rendering
+            map.value.invalidateSize();
+        } catch (error) {
+            console.error('Error initializing map:', error);
+            showMap.value = false;
+        }
     });
 };
 
 // Add reset to original location function
-const resetToOriginal = () => {
+const resetToOriginal = (e) => {
+    e.preventDefault(); // Add this line
     locationSource.value = 'original';
-    showMap.value = true;
 
-    nextTick(() => {
-        form.latitude = originalLocation.value.latitude;
-        form.longitude = originalLocation.value.longitude;
+    // Only show map if original coordinates exist
+    if (originalLocation.value.latitude && originalLocation.value.longitude) {
+        showMap.value = true;
+        nextTick(() => {
+            form.latitude = originalLocation.value.latitude;
+            form.longitude = originalLocation.value.longitude;
+            form.municipality_id = originalLocation.value.municipality_id;
+            form.barangay_id = originalLocation.value.barangay_id;
+            form.detailed_location = originalLocation.value.detailed_location;
+
+            if (originalLocation.value.municipality_id) {
+                fetchBarangays(originalLocation.value.municipality_id);
+            }
+
+            if (!map.value) {
+                initializeMap();
+            } else {
+                map.value.setView([form.latitude, form.longitude], 13);
+                marker.value.setLatLng([form.latitude, form.longitude]);
+            }
+        });
+    } else {
+        showMap.value = false;
+        form.latitude = '';
+        form.longitude = '';
         form.municipality_id = originalLocation.value.municipality_id;
         form.barangay_id = originalLocation.value.barangay_id;
         form.detailed_location = originalLocation.value.detailed_location;
-
-        if (originalLocation.value.municipality_id) {
-            fetchBarangays(originalLocation.value.municipality_id);
-        }
-
-        if (!map.value) {
-            initializeMap();
-        } else {
-            map.value.setView([form.latitude, form.longitude], 13);
-            marker.value.setLatLng([form.latitude, form.longitude]);
-        }
-    });
+        cleanupMap();
+    }
 };
 
 // Add remove GPS location function
@@ -324,15 +357,12 @@ const cleanupMap = () => {
 
 // Fix map initialization
 onMounted(() => {
-    // Initialize map immediately if coordinates exist
-    if (form.latitude && form.longitude) {
-        nextTick(() => {
-            try {
-                initializeMap();
-            } catch (error) {
-                console.error("Error initializing map:", error);
-            }
-        });
+    // Only show and initialize map if coordinates exist
+    if (originalLocation.value.latitude && originalLocation.value.longitude) {
+        showMap.value = true;
+        initializeMap();
+    } else {
+        showMap.value = false;
     }
 
     // Fetch municipalities after map initialization
@@ -349,13 +379,9 @@ onMounted(() => {
 
 // button status
 const buttonStatus = computed(() => {
-    if (props.strandedIncident.report_status === 'pending' ||
-        props.strandedIncident.report_status === 'false'
-    && currentUserRole !=='public_user'){
-        return true;
-    }else{
-        return false;
-    }
+    return (props.strandedIncident.report_status === 'pending' ||
+            props.strandedIncident.report_status === 'false') &&
+            currentUserRole !== 'public_user';
 });
 
 const showVerifyModal = ref(false);
@@ -365,10 +391,56 @@ const falseIncident = () => {
     showFalseModal.value = true;
 };
 
-// Update submit function to properly handle status changes
+const verifyIncident = () => {
+    if (!validateForm()) {
+        alert('Please fill in all required fields before verifying the incident.');
+        return;
+    }
+    showVerifyModal.value = true;
+};
+
+// Update validateForm function
+const validateForm = () => {
+    const requiredFields = {
+        date: 'Date',
+        time: 'Time',
+        species_involved: 'Species involved',
+        quantity: 'Quantity',
+        certainty_level: 'Certainty level',
+        condition: 'Condition',
+        municipality_id: 'Municipality',
+        barangay_id: 'Barangay',
+        detailed_location: 'Detailed location'
+    };
+
+    let hasErrors = false;
+    const errors = {};
+
+    Object.entries(requiredFields).forEach(([field, label]) => {
+        if (!form[field]) {
+            errors[field] = `${label} is required`;
+            hasErrors = true;
+        }
+    });
+
+    if (hasErrors) {
+        form.setError(errors);
+        return false;
+    }
+
+    return true;
+};
+
+// Update submit handler
 const submit = (e) => {
+    e.preventDefault();
+    form.clearErrors();
+
     if (buttonStatus.value) {
-        e.preventDefault(); // Prevent form submission for verify/false buttons
+        return;
+    }
+
+    if (!validateForm()) {
         return;
     }
 
@@ -394,24 +466,26 @@ const submitForm = () => {
 
 // Update verify/false functions to use new submitForm
 const confirmFalse = () => {
-    form.report_status = 'false';
-    submitForm();
-    showFalseModal.value = false;
+
+    router.patch(route('stranded.incident.false', props.strandedIncident.id), {}, {
+        onSuccess: () => {
+            showFalseModal.value = false;
+            // Optionally redirect or show success message
+        },
+    });
 };
 
-const verifyIncident = () => {
-    showVerifyModal.value = true;
-};
 
 const confirmVerify = () => {
+    if (!validateForm()) {
+        showVerifyModal.value = false;
+        return;
+    }
+
     form.report_status = 'verified';
     submitForm();
     showVerifyModal.value = false;
 };
-
-const isRequired = computed(() => {
-    return !(form.report_status === 'false');
-});
 
 </script>
 
@@ -444,35 +518,35 @@ const isRequired = computed(() => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                         <InputLabel for="date" value="Date of the Incident" />
-                        <TextInput :required="isRequired" id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                        <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
                         <InputError class="mt-2" :message="form.errors.date" />
                         </div>
                         <div>
                         <InputLabel for="time" value="Time of the Incident" />
-                        <TextInput :required="isRequired" id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
+                        <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
                         <InputError class="mt-2" :message="form.errors.time" />
                         </div>
 
                         <div class="sm:col-span-2">
                         <InputLabel for="species_involved" value="Describe what species are involved" />
-                        <TextInput id="species_involved" :required="isRequired" v-model="form.species_involved" class="w-full" placeholder="e.g. Dolphins, Large Whales, Sharks" />
+                        <TextInput id="species_involved" required v-model="form.species_involved" class="w-full" placeholder="e.g. Dolphins, Large Whales, Sharks" />
                         <InputError class="mt-2" :message="form.errors.species_involved" />
                         </div>
 
                         <div>
                         <InputLabel for="quantity" value="How many species are involved in the incident?" />
-                        <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" :required="isRequired"/>
+                        <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" required/>
                         <InputError class="mt-2" :message="form.errors.quantity" />
                         </div>
                         <div>
                         <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
-                        <input :required="isRequired" id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
+                        <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
                         <p class="text-center">{{ form.certainty_level }}</p>
                         <InputError class="mt-2" :message="form.errors.certainty_level" />
                         </div>
                         <div>
                         <InputLabel for="condition" value="Condition" />
-                        <select v-model="form.condition" name="condition" class="w-full" :required="isRequired">
+                        <select v-model="form.condition" name="condition" class="w-full" required>
                             <option value="" disabled>Select an option</option>
                             <option value="alive">Alive</option>
                             <option value="dead">Dead</option>
@@ -515,6 +589,7 @@ const isRequired = computed(() => {
                                 <h3 class="text-lg font-semibold text-gray-900">Location Details</h3>
                                 <div class="flex space-x-2">
                                     <button
+                                        type="button"
                                         @click.prevent="setLocationFromMap"
                                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
                                     >
@@ -524,6 +599,7 @@ const isRequired = computed(() => {
                                     </button>
                                     <button
                                         v-if="!showMap || locationSource !== 'original'"
+                                        type="button"
                                         @click="resetToOriginal"
                                         class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
                                     >
@@ -538,6 +614,7 @@ const isRequired = computed(() => {
                                 <div id="map" class="h-[400px] w-full z-0"></div>
                                 <div class="absolute top-4 right-4 z-10">
                                     <button
+                                        type="button"
                                         @click="removeGpsLocation"
                                         class="px-5 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
                                     >
@@ -558,10 +635,18 @@ const isRequired = computed(() => {
 
                         <div>
                         <InputLabel for="municipality_id" value="Municipality" />
-                        <select :required="isRequired" name="municipality_id" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
-                            <option value="" disabled>Select a municipality</option>
+                        <select
+                            id="municipality_id"
+                            name="municipality_id"
+                            v-model="form.municipality_id"
+                            @change="fetchBarangays(form.municipality_id)"
+                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            :class="{ 'border-red-500': form.errors.municipality_id }"
+                            required
+                        >
+                            <option value="">Select a municipality</option>
                             <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
-                            {{ municipality.name }}
+                                {{ municipality.name }}
                             </option>
                         </select>
                         <InputError class="mt-2" :message="form.errors.municipality_id" />
@@ -569,10 +654,21 @@ const isRequired = computed(() => {
 
                         <div>
                         <InputLabel for="barangay_id" value="Barangay" />
-                        <select :required="isRequired" name="barangay_id" v-model="form.barangay_id" class="w-full">
-                            <option value="" disabled>Select a barangay</option>
-                            <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
-                            {{ barangay.name }}
+                        <select
+                            id="barangay_id"
+                            name="barangay_id"
+                            v-model="form.barangay_id"
+                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            :class="{ 'border-red-500': form.errors.barangay_id }"
+                            required
+                        >
+                            <option :value="null">Select a barangay</option>
+                            <option v-for="barangay in barangays"
+                                    :key="barangay.id"
+                                    :value="barangay.id"
+                                    :selected="form.barangay_id === barangay.id"
+                            >
+                                {{ barangay.name }}
                             </option>
                         </select>
                         <InputError class="mt-2" :message="form.errors.barangay_id" />
@@ -581,7 +677,7 @@ const isRequired = computed(() => {
                         <div class="sm:col-span-2">
                         <InputLabel for="detailed_location" value="Detailed Location" />
                         <textarea
-                            :required="isRequired"
+                            required
                             id="detailed_location"
                             v-model="form.detailed_location"
                             autocomplete="detailed_location"
@@ -611,6 +707,7 @@ const isRequired = computed(() => {
                                 <div v-for="(image, index) in existingImages" :key="index" class="relative">
                                     <img :src="image.url" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
                                     <button
+                                        type="button"
                                         @click.prevent="removeExistingImage(index)"
                                         class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                                     >
@@ -642,6 +739,7 @@ const isRequired = computed(() => {
                                     <div v-for="(image, index) in previewNewImages" :key="index" class="relative">
                                         <img :src="image" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
                                         <button
+                                            type="button"
                                             @click="removeNewImage(index)"
                                             class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                                         >
@@ -670,6 +768,8 @@ const isRequired = computed(() => {
                             :class="{ 'opacity-25': form.processing }"
                             class="bg-indigo-900"
                             @click="falseIncident"
+                            type="button"
+                            formnovalidate
                         >
                             Mark as False
                         </DangerButton>
@@ -677,6 +777,7 @@ const isRequired = computed(() => {
                             :disabled="form.processing"
                             :class="{ 'opacity-25': form.processing }"
                             class="bg-indigo-900"
+                            type="button"
                             @click="verifyIncident"
                         >
                             Verify as True

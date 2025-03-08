@@ -69,6 +69,8 @@ Route::middleware(['auth', 'verified', 'active', 'notRestricted'])->group(functi
             ->name('stranded.incident.update.page');
         Route::post('/update/{id}', [StrandedIncidentController::class, 'update'])
             ->name('stranded.incident.update');
+        Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder,barangay_official'])->patch('/stranded-incident/{id}/false', [StrandedIncidentController::class, 'markAsFalse'])
+            ->name('stranded.incident.false');
 
         // complete
         Route::middleware(['role:bpemo_admin,bpemo_staff,lgu_responder'])->patch('/complete/{id}', [StrandedIncidentController::class, 'complete'])
@@ -122,6 +124,7 @@ Route::middleware(['auth', 'verified', 'active', 'notRestricted'])->group(functi
                 ->name('stranded.species.unarchive');
         });
     });
+
 
     // manage sightings
     Route::prefix('sighting')->group(function () {

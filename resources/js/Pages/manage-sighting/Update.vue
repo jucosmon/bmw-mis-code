@@ -80,8 +80,8 @@ const form = useForm({
     certainty_level: props.sighting.certainty_level || null,
     date: props.sighting.date || new Date().toISOString().split('T')[0],
     time: props.sighting.time || new Date().toTimeString().split(' ')[0],
-    latitude: props.sighting.latitude || 9.57849189779755,
-    longitude: props.sighting.longitude || 123.74536514282228,
+    latitude: props.sighting.latitude || '',
+    longitude: props.sighting.longitude || '',
     detailed_location: props.sighting.detailed_location || '',
     more_information: props.sighting.more_information || '',
     municipality_id: props.sighting.municipality_id || '',
@@ -230,16 +230,31 @@ const removeExistingImage = (index) => {
 
 const map = ref(null);
 const marker = ref(null);
-
 const locationSource = ref('original');
 const isGeocodingInProgress = ref(false);
-const showMap = ref(true);
+const showMap = ref(false); // Change initial value to false
 const originalLocation = ref({
-    latitude: props.sighting.latitude,
-    longitude: props.sighting.longitude,
-    municipality_id: props.sighting.municipality_id,
-    barangay_id: props.sighting.barangay_id,
-    detailed_location: props.sighting.detailed_location
+    latitude: props.sighting.latitude || null,
+    longitude: props.sighting.longitude || null,
+    municipality_id: props.sighting.municipality_id || '',
+    barangay_id: props.sighting.barangay_id || '',
+    detailed_location: props.sighting.detailed_location || ''
+});
+
+// Single onMounted hook for map
+onMounted(() => {
+    // Only show and initialize map if coordinates exist
+    if (originalLocation.value.latitude && originalLocation.value.longitude) {
+        showMap.value = true;
+        nextTick(() => {
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                initializeMap();
+            }
+        });
+    } else {
+        showMap.value = false;
+    }
 });
 
 const initializeMap = () => {
@@ -248,37 +263,54 @@ const initializeMap = () => {
 
     if (!defaultLat || !defaultLng) {
         console.error('No valid coordinates available');
+        showMap.value = false;
         return;
     }
 
     cleanupMap();
 
-    map.value = L.map('map').setView([defaultLat, defaultLng], 13);
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error('Map container not found');
+        return;
+    }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map.value);
+    try {
+        map.value = L.map('map').setView([defaultLat, defaultLng], 13);
 
-    marker.value = L.marker([defaultLat, defaultLng], {
-        draggable: true,
-    }).addTo(map.value);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(map.value);
 
-    marker.value.on('dragend', async (e) => {
-        const { lat, lng } = e.target.getLatLng();
-        form.latitude = lat;
-        form.longitude = lng;
-        locationSource.value = 'manual';
-        await reverseGeocode(lat, lng);
-    });
+        marker.value = L.marker([defaultLat, defaultLng], {
+            draggable: true,
+        }).addTo(map.value);
 
-    map.value.on('click', async (e) => {
-        const { lat, lng } = e.latlng;
-        form.latitude = lat;
-        form.longitude = lng;
-        marker.value.setLatLng([lat, lng]);
-        locationSource.value = 'manual';
-        await reverseGeocode(lat, lng);
-    });
+        marker.value.on('dragend', async (e) => {
+            const { lat, lng } = e.target.getLatLng();
+            form.latitude = lat;
+            form.longitude = lng;
+            locationSource.value = 'manual';
+            await reverseGeocode(lat, lng);
+        });
+
+        map.value.on('click', async (e) => {
+            const { lat, lng } = e.latlng;
+            form.latitude = lat;
+            form.longitude = lng;
+            marker.value.setLatLng([lat, lng]);
+            locationSource.value = 'manual';
+            await reverseGeocode(lat, lng);
+        });
+
+        showMap.value = true;
+        nextTick(() => {
+            map.value.invalidateSize();
+        });
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        showMap.value = false;
+    }
 };
 
 const isSameLocation = (lat1, lng1, lat2, lng2, tolerance = 0.0001) => {
@@ -411,25 +443,6 @@ const cleanupMap = () => {
         marker.value = null;
     }
 };
-
-onMounted(() => {
-    nextTick(() => {
-        map.value = L.map('map').setView([form.latitude, form.longitude], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-        }).addTo(map.value);
-
-        marker.value = L.marker([form.latitude, form.longitude], {
-            draggable: true,
-        }).addTo(map.value);
-
-        marker.value.on('dragend', (e) => {
-            const { lat, lng } = e.target.getLatLng();
-            form.latitude = lat;
-            form.longitude = lng;
-        });
-    });
-});
 
 const buttonStatus = computed(() => {
     return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') &&
