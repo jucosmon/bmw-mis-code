@@ -482,11 +482,9 @@ const cleanupMap = () => {
                                         @click.prevent="setLocationFromMap"
                                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
                                     >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        </svg>
-                                        <span>Use Current Location</span>
+                                    <span class="material-icons material-symbols-outlined">
+                                        my_location
+                                    </span>
                                     </button>
                                     <!-- Show Reset to Original if map is not visible or location is not original -->
                                     <button
@@ -494,7 +492,9 @@ const cleanupMap = () => {
                                         @click="resetToOriginal"
                                         class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
                                     >
-                                        Reset to Original
+                                    <span class="material-icons material-symbols-outlined">
+                                        restart_alt
+                                    </span>
                                     </button>
                                 </div>
                             </div>
@@ -507,10 +507,9 @@ const cleanupMap = () => {
                                         @click="removeGpsLocation"
                                         class="px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
                                     >
-                                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Remove GPS
+                                    <span class="material-icons material-symbols-outlined">
+                                        location_off
+                                    </span>
                                     </button>
                                 </div>
                                 <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
