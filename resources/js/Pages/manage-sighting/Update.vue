@@ -98,6 +98,12 @@ const form = useForm({
     })) || [],
 
     deletedSightedSpecies: [],
+    clearErrors() {
+        this.errors = {};
+    },
+    setError(errors) {
+        this.errors = errors;
+    }
 });
 
 // Function to add a new species entry
@@ -257,7 +263,7 @@ onMounted(() => {
     }
 });
 
-const initializeMap = () => {
+const initializeMap = async () => {
     const defaultLat = form.latitude || originalLocation.value.latitude;
     const defaultLng = form.longitude || originalLocation.value.longitude;
 
@@ -267,7 +273,11 @@ const initializeMap = () => {
         return;
     }
 
+    // Ensure cleanup before creating new map
     cleanupMap();
+
+    // Wait for the DOM to be ready
+    await nextTick();
 
     const mapElement = document.getElementById('map');
     if (!mapElement) {
@@ -276,16 +286,20 @@ const initializeMap = () => {
     }
 
     try {
+        // Create map instance
         map.value = L.map('map').setView([defaultLat, defaultLng], 13);
 
+        // Add tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
         }).addTo(map.value);
 
+        // Add marker
         marker.value = L.marker([defaultLat, defaultLng], {
             draggable: true,
         }).addTo(map.value);
 
+        // Add event listeners
         marker.value.on('dragend', async (e) => {
             const { lat, lng } = e.target.getLatLng();
             form.latitude = lat;
@@ -304,12 +318,14 @@ const initializeMap = () => {
         });
 
         showMap.value = true;
-        nextTick(() => {
-            map.value.invalidateSize();
-        });
+
+        // Ensure map is properly sized
+        await nextTick();
+        map.value.invalidateSize();
     } catch (error) {
         console.error('Error initializing map:', error);
         showMap.value = false;
+        cleanupMap();
     }
 };
 
@@ -332,18 +348,23 @@ const setLocationFromMap = async () => {
                     return;
                 }
 
+                form.latitude = latitude;
+                form.longitude = longitude;
                 locationSource.value = 'gps';
                 showMap.value = true;
 
+                // Wait for the DOM to update
                 await nextTick();
+
+                // Initialize map if needed
                 if (!map.value) {
-                    initializeMap();
+                    await nextTick();
+                    await initializeMap();
+                } else {
+                    map.value.setView([latitude, longitude], 13);
+                    marker.value.setLatLng([latitude, longitude]);
                 }
 
-                form.latitude = latitude;
-                form.longitude = longitude;
-                map.value.setView([latitude, longitude], 13);
-                marker.value.setLatLng([latitude, longitude]);
                 await reverseGeocode(latitude, longitude);
             },
             () => {
@@ -401,28 +422,39 @@ const reverseGeocode = async (latitude, longitude) => {
     }
 };
 
-const resetToOriginal = () => {
+const resetToOriginal = (e) => {
+    e.preventDefault();
     locationSource.value = 'original';
-    showMap.value = true;
 
-    nextTick(() => {
-        form.latitude = originalLocation.value.latitude;
-        form.longitude = originalLocation.value.longitude;
+    if (originalLocation.value.latitude && originalLocation.value.longitude) {
+        showMap.value = true;
+        nextTick(() => {
+            form.latitude = originalLocation.value.latitude;
+            form.longitude = originalLocation.value.longitude;
+            form.municipality_id = originalLocation.value.municipality_id;
+            form.barangay_id = originalLocation.value.barangay_id;
+            form.detailed_location = originalLocation.value.detailed_location;
+
+            if (originalLocation.value.municipality_id) {
+                fetchBarangays(originalLocation.value.municipality_id);
+            }
+
+            if (!map.value) {
+                initializeMap();
+            } else {
+                map.value.setView([form.latitude, form.longitude], 13);
+                marker.value.setLatLng([form.latitude, form.longitude]);
+            }
+        });
+    } else {
+        showMap.value = false;
+        form.latitude = '';
+        form.longitude = '';
         form.municipality_id = originalLocation.value.municipality_id;
         form.barangay_id = originalLocation.value.barangay_id;
         form.detailed_location = originalLocation.value.detailed_location;
-
-        if (originalLocation.value.municipality_id) {
-            fetchBarangays(originalLocation.value.municipality_id);
-        }
-
-        if (!map.value) {
-            initializeMap();
-        } else {
-            map.value.setView([form.latitude, form.longitude], 13);
-            marker.value.setLatLng([form.latitude, form.longitude]);
-        }
-    });
+        cleanupMap();
+    }
 };
 
 const removeGpsLocation = () => {
@@ -455,9 +487,58 @@ const falseIncident = () => {
     showFalseModal.value = true;
 };
 
+const validateForm = () => {
+    const requiredFields = {
+        date: 'Date',
+        time: 'Time',
+        sightedSpecies: 'Species details',
+        certainty_level: 'Certainty level',
+        municipality_id: 'Municipality',
+        barangay_id: 'Barangay',
+        detailed_location: 'Detailed location'
+    };
+
+    let hasErrors = false;
+    const errors = {};
+
+    Object.entries(requiredFields).forEach(([field, label]) => {
+        if (field === 'sightedSpecies') {
+            if (!form.sightedSpecies.length) {
+                errors[field] = 'At least one species must be added';
+                hasErrors = true;
+            } else {
+                // Validate each species entry
+                form.sightedSpecies.forEach((species, index) => {
+                    if (!species.species_id || !species.size || !species.behavior_observed) {
+                        if (!errors.sightedSpecies) errors.sightedSpecies = [];
+                        errors.sightedSpecies[index] = 'All required fields must be filled';
+                        hasErrors = true;
+                    }
+                });
+            }
+        } else if (!form[field]) {
+            errors[field] = `${label} is required`;
+            hasErrors = true;
+        }
+    });
+
+    if (hasErrors) {
+        form.setError(errors); // Fixed the typo here (was f(errors))
+        return false;
+    }
+
+    return true;
+};
+
 const submit = (e) => {
+    e.preventDefault();
+    form.clearErrors();
+
     if (buttonStatus.value) {
-        e.preventDefault(); // Now e is properly defined
+        return;
+    }
+
+    if (!validateForm()) {
         return;
     }
 
@@ -474,7 +555,7 @@ const submitForm = () => {
 
     form.post(updateRoute.value, {
         onSuccess: () => {
-            formErrors.value = null;
+            formErrors.value = null; // Fixed (was s.value)
         },
         onError: (errors) => {
             formErrors.value = errors;
@@ -489,6 +570,10 @@ const confirmFalse = () => {
 };
 
 const verifyIncident = () => {
+    if (!validateForm()) {
+        alert('Please fill in all required fields before verifying the incident.');
+        return;
+    }
     showVerifyModal.value = true;
 };
 
@@ -638,6 +723,7 @@ const handleDropdownClick = (index) => {
                                 <h3 class="text-lg font-semibold text-gray-900">Location Details</h3>
                                 <div class="flex space-x-2">
                                     <button
+                                        type="button"
                                         @click.prevent="setLocationFromMap"
                                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
                                     >
@@ -646,6 +732,7 @@ const handleDropdownClick = (index) => {
                                         </span>
                                     </button>
                                     <button
+                                        type="button"
                                         v-if="!showMap || locationSource !== 'original'"
                                         @click="resetToOriginal"
                                         class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
@@ -661,6 +748,7 @@ const handleDropdownClick = (index) => {
                                 <div id="map" class="h-[400px] w-full z-0"></div>
                                 <div class="absolute top-4 right-4 z-10">
                                     <button
+                                        type="button"
                                         @click="removeGpsLocation"
                                         class="px-5 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
                                     >
@@ -680,7 +768,7 @@ const handleDropdownClick = (index) => {
 
                         <div>
                             <InputLabel for="municipality_id" value="Municipality" />
-                            <select v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
+                            <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
                                 <option value="" disabled>Select a municipality</option>
                                 <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
                                     {{ municipality.name }}
@@ -691,7 +779,7 @@ const handleDropdownClick = (index) => {
 
                         <div>
                             <InputLabel for="barangay_id" value="Barangay" />
-                            <select v-model="form.barangay_id" class="w-full">
+                            <select required v-model="form.barangay_id" class="w-full">
                                 <option value="" disabled>Select a barangay</option>
                                 <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
                                     {{ barangay.name }}
@@ -795,10 +883,10 @@ const handleDropdownClick = (index) => {
                                 </div>
                             </div>
                             <div class="flex justify-end mt-5">
-                                <button v-if="form.sightedSpecies.length > 1" @click.prevent="removeSpeciesEntry(species, index)">
+                                <button type="button" v-if="form.sightedSpecies.length > 1" @click.prevent="removeSpeciesEntry(species, index)">
                                     <span class="material-icons text-xl mr-2 leading-none text-red-600">delete</span>
                                 </button>
-                                <button @click.prevent="addSpeciesEntry">
+                                <button type="button" @click.prevent="addSpeciesEntry">
                                     <span class="material-icons text-xl mr-2 leading-none text-indigo-900">add_circle</span>
                                 </button>
                             </div>
@@ -813,6 +901,7 @@ const handleDropdownClick = (index) => {
                                     <div v-for="(image, index) in existingImages" :key="index" class="relative">
                                         <img :src="image.url" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
                                         <button
+                                            type="button"
                                             @click.prevent="removeExistingImage(index)"
                                             class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                                         >
@@ -828,7 +917,7 @@ const handleDropdownClick = (index) => {
                             <div v-if="previewNewImages.length" class="mt-2 flex gap-4">
                                 <div v-for="(img, index) in previewNewImages" :key="index" class="relative">
                                     <img :src="img" alt="Preview" class="w-20 h-20 object-cover rounded-lg" />
-                                    <button @click="removeNewImage(index)" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">X</button>
+                                    <button type="button" @click="removeNewImage(index)" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">X</button>
                                 </div>
                             </div>
                             <InputError class="mt-2" :message="form.errors.mediaFiles" />
@@ -847,14 +936,17 @@ const handleDropdownClick = (index) => {
                     <!-- False and Verify button for pending cases-->
                     <div v-else class="flex items-center justify-end gap-5 mt-6">
                         <DangerButton
+                            type="button"
                             :disabled="form.processing"
                             :class="{ 'opacity-25': form.processing }"
                             class="bg-indigo-900"
                             @click="falseIncident"
+                            formnovalidate
                         >
                             Mark as False
                         </DangerButton>
                         <PrimaryButton
+                            type="button"
                             :disabled="form.processing"
                             :class="{ 'opacity-25': form.processing }"
                             class="bg-indigo-900"
