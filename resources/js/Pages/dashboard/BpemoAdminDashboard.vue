@@ -153,7 +153,7 @@ const fetchData = async () => {
     const processedSightings = activeSightings?.map(sighting => ({
       id: sighting.id,
       type: 'sighting',
-      species: sighting.species_involved || 'Unknown',
+      species: sighting.sighted_species?.[0]?.species?.name || 'Unknown',
       location: `${sighting.barangay?.name || 'Unknown'}, ${sighting.municipality?.name || 'Unknown'}`,
       date: sighting.date,
       status: sighting.report_status,

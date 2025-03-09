@@ -174,6 +174,7 @@ const fetchUserActivities = async () => {
                     date,
                     report_status,
                     municipality:municipality_id(name),
+                    barangay:barangay_id(name),
                     sighted_species (
                         species (
                             name
@@ -190,6 +191,7 @@ const fetchUserActivities = async () => {
                     date,
                     report_status,
                     municipality:municipality_id(name),
+                    barangay:barangay_id(name),
                     stranded_species (
                         species (
                             name
@@ -207,14 +209,31 @@ const fetchUserActivities = async () => {
         if (sightingsRes.error) throw sightingsRes.error;
         if (strandingsRes.error) throw strandingsRes.error;
 
+        const { data: activeSightings } = await supabase
+            .from('sightings')
+            .select(`
+                id,
+                date,
+                report_status,
+                municipality:municipality_id(name),
+                barangay:barangay_id(name),
+                sighted_species (
+                    species (
+                        name
+                    )
+                )
+            `)
+            .eq('user_id', userId)
+            .eq('is_active', true);
+
         const activities = [
-            ...(sightingsRes.data?.map(sighting => ({
+            ...(activeSightings?.map(sighting => ({
                 id: `sighting-${sighting.id}`,
                 type: 'sighting',
+                species: sighting.sighted_species?.[0]?.species?.name || 'Unknown Species',
+                location: `${sighting.barangay?.name || 'Unknown Location'}, ${sighting.municipality?.name || 'Unknown Location'}`,
                 date: sighting.date,
                 status: sighting.report_status,
-                species: sighting.sighted_species[0]?.species?.name || 'Unknown Species',
-                location: sighting.municipality?.name || 'Unknown Location',
                 viewUrl: route('sighting.view', sighting.id)
             })) || []),
             ...(strandingsRes.data?.map(stranding => ({
@@ -223,7 +242,7 @@ const fetchUserActivities = async () => {
                 date: stranding.date,
                 status: stranding.report_status,
                 species: stranding.stranded_species[0]?.species?.name || 'Unknown Species',
-                location: stranding.municipality?.name || 'Unknown Location',
+                location: `${stranding.barangay?.name || 'Unknown Location'}, ${stranding.municipality?.name || 'Unknown Location'}`,
                 viewUrl: route('stranded.incident.view', stranding.id)
             })) || [])
         ];
