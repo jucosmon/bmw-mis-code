@@ -118,23 +118,32 @@ const barangayName = computed(() => {
 const map = ref(null);
 const marker = ref(null);
 
+const hasValidCoordinates = computed(() => {
+    return props.strandedSpecies.latitude != null &&
+           props.strandedSpecies.longitude != null &&
+           props.strandedSpecies.latitude !== '' &&
+           props.strandedSpecies.longitude !== '';
+});
+
 // Initialize Leaflet map
 onMounted(() => {
-    nextTick(() => {
-        map.value = L.map('map', {
-            dragging: false,
-            scrollWheelZoom: false,
-            touchZoom: false,
-            doubleClickZoom: false,
-            boxZoom: false,
-        }).setView([props.strandedSpecies.latitude, props.strandedSpecies.longitude], 13);
+    if (hasValidCoordinates.value) {
+        nextTick(() => {
+            map.value = L.map('map', {
+                dragging: false,
+                scrollWheelZoom: false,
+                touchZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+            }).setView([props.strandedSpecies.latitude, props.strandedSpecies.longitude], 13);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-        }).addTo(map.value);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+            }).addTo(map.value);
 
-        marker.value = L.marker([props.strandedSpecies.latitude, props.strandedSpecies.longitude]).addTo(map.value);
-    });
+            marker.value = L.marker([props.strandedSpecies.latitude, props.strandedSpecies.longitude]).addTo(map.value);
+        });
+    }
 });
 
 
@@ -243,8 +252,16 @@ const getConditionDescription = (code) => {
             <div class=" bg-white shadow-lg rounded-xl p-6 mb-8">
                 <h2 class="text-xl font-semibold text-indigo-700 mb-4">Incident Location</h2>
                 <p class="mb-2 mx-5"><strong>Location:</strong> {{ barangayName }}, {{ municipalityName }}</p>
-                <div id="map" style="height: 400px; width: 100%;" class="mb-3 z-0"></div>
-                <p class="mt-2 text-gray-500 text-sm text-center">{{ strandedSpecies.latitude }} lat. | {{ strandedSpecies.longitude }} long.</p>
+                <div v-if="hasValidCoordinates" id="map" style="height: 400px; width: 100%;" class="mb-3 z-0"></div>
+                <div v-else class="flex items-center justify-center p-8 bg-gray-100 rounded-lg">
+                    <p class="text-gray-600 text-center">
+                        <span class="block text-lg font-medium mb-2">📍 No GPS Coordinates Available</span>
+                        <span class="text-sm">The exact location for this incident was not recorded.</span>
+                    </p>
+                </div>
+                <p v-if="hasValidCoordinates" class="mt-2 text-gray-500 text-sm text-center">
+                    {{ strandedSpecies.latitude }} lat. | {{ strandedSpecies.longitude }} long.
+                </p>
             </div>
         </div>
              <!-- Action Buttons Section -->
