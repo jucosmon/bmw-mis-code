@@ -91,6 +91,20 @@ const archiveSpecies = () => {
     }
 
 };
+
+// Media preview modal
+const showFileModal = ref(false);
+const currentMediaFile = ref(null);
+
+const openFileModal = (mediaFile) => {
+    currentMediaFile.value = mediaFile;
+    showFileModal.value = true;
+};
+
+const closeFileModal = () => {
+    showFileModal.value = false;
+    currentMediaFile.value = null;
+};
 </script>
 
 <template>
@@ -163,16 +177,38 @@ const archiveSpecies = () => {
                         <div
                             v-for="file in props.species.mediaFiles"
                             :key="file.id"
-                            class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+                            class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+                            @click="openFileModal(file)"
                         >
-                            <img
-                                :src="file.url"
-                                :alt="`Image of ${props.species.name}`"
-                                class="w-full h-48 object-cover"
-                            />
+                            <template v-if="file.type.startsWith('image/')">
+                                <img :src="file.url" :alt="`Image of ${props.species.name}`" class="w-full h-48 object-cover" />
+                            </template>
+                            <template v-else-if="file.type.startsWith('video/')">
+                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                    <span class="text-gray-600">🎥 Video</span>
+                                </div>
+                            </template>
                         </div>
                     </div>
                     <p v-else class="text-gray-500 text-center py-4">No images available</p>
+
+                    <!-- Add preview modal -->
+                    <Modal :show="showFileModal" @close="closeFileModal">
+                        <div class="p-6">
+                            <h2 class="text-lg font-semibold text-gray-800">Preview Media File</h2>
+                            <div class="mt-4" v-if="currentMediaFile">
+                                <template v-if="currentMediaFile.type.startsWith('image/')">
+                                    <img :src="currentMediaFile.url" alt="Preview" class="w-full h-auto rounded-lg" />
+                                </template>
+                                <template v-else-if="currentMediaFile.type.startsWith('video/')">
+                                    <video controls class="w-full h-auto rounded-lg">
+                                        <source :src="currentMediaFile.url" :type="currentMediaFile.type" />
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </template>
+                            </div>
+                        </div>
+                    </Modal>
                 </div>
 
 

@@ -262,10 +262,7 @@ class SightingController extends Controller
     public function updatePage($id)
     {
         $user = Auth::user();
-        $sighting = Sighting::with(['sightedSpecies'])->findOrFail($id); // Ensure sightedSpecies is loaded
-        if ($sighting->report_status !== 'pending' && $user->user_role !== 'bpemo_admin') {
-            abort(403);
-        }
+        $sighting = Sighting::with(['sightedSpecies'])->findOrFail($id);
 
         // Load media files
         $sighting->mediaFiles = $sighting->mediaFiles->map(function ($file) {
@@ -310,7 +307,7 @@ class SightingController extends Controller
         ]);
 
         $user = Auth::user();
-        if ($user->user_role !== 'bpemo_admin' && ($request->report_status !== 'pending' || $request->is_active === 'false')) {
+        if (($user->user_role !== 'bpemo_admin' && $user->user_role !== 'bpemo_staff') && ($request->report_status !== 'pending' || $request->is_active === 'false')) {
             abort(403, 'Unauthorized action. The report is already verified as true.');
         }
 
