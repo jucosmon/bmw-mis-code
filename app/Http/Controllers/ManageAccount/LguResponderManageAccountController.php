@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\ManageAccount;
 
 use App\Http\Controllers\Controller;
+use App\Models\Barangay;
+use App\Models\Municipality;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -37,6 +39,8 @@ class LguResponderManageAccountController extends Controller
     {
         // Fetch the user by ID
         $user = User::find($user_id);
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
 
         // Check if user exists and belongs to the same municipality
         if (!$user || $user->municipality_id !== Auth::user()->municipality_id) {
@@ -46,14 +50,21 @@ class LguResponderManageAccountController extends Controller
         // Return the view with user data
         return Inertia::render('manage-account/View', [
             'user' => $user,
+            'municipalities' => $municipalities,
+            'barangays' => $barangays,
             'success' => session('success'),
         ]);
     }
 
     public function createPage()
     {
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
+
         return Inertia::render('manage-account/Create', [
-            'type' => 'barangay_official'
+            'type' => 'barangay_official',
+            'municipalities' => $municipalities,
+            'barangays' => $barangays
         ]);
     }
 
@@ -100,6 +111,8 @@ class LguResponderManageAccountController extends Controller
     public function updatePage($user_id)
     {
         $user = User::find($user_id);
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
 
         // Check if user exists and belongs to the same municipality
         if (!$user || $user->municipality_id !== Auth::user()->municipality_id) {
@@ -108,6 +121,8 @@ class LguResponderManageAccountController extends Controller
 
         return Inertia::render('manage-account/Update', [
             'user' => $user,
+            'municipalities' => $municipalities,
+            'barangays' => $barangays
         ]);
     }
 

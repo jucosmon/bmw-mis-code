@@ -4,8 +4,7 @@ import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const page = usePage();
 const props = defineProps({
@@ -13,6 +12,8 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    municipalities: Array,
+    barangays: Array,
     success: String,
 });
 
@@ -85,35 +86,18 @@ const userRole = computed(() => {
     }
 });
 
-const municipalityData = ref([]);
-const barangayData = ref([]);
-
 const municipalityName = computed(() => {
-    const municipality = municipalityData.value.find(
+    const municipality = props.municipalities.find(
         (m) => m.id === props.user.municipality_id
     );
     return municipality ? municipality.name : 'Unknown Municipality';
 });
 
 const barangayName = computed(() => {
-    const barangay = barangayData.value.find(
+    const barangay = props.barangays.find(
         (b) => b.id === props.user.barangay_id
     );
     return barangay ? barangay.name : 'Unknown Barangay';
-});
-
-onMounted(async () => {
-    try {
-        const municipalityResponse = await axios.get('/municipalities');
-        municipalityData.value = municipalityResponse.data;
-
-        const barangayResponse = await axios.get(
-            `/barangays?municipality_id=${props.user.municipality_id}`
-        );
-        barangayData.value = barangayResponse.data;
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
 });
 
 const updateUser = ()=> {

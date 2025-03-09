@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\ManageAccount;
 
+use App\Models\Municipality;
 use App\Notifications\CustomVerifyEmail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Models\Barangay;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -39,20 +41,17 @@ class BpemoAdminManageAccountsController extends Controller
 
     public function view($user_id)
     {
-        // Fetch the user by ID
         $user = User::find($user_id);
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
 
-        // Check if user exists
-        if (!$user) {
-            return redirect()->route('bpemo.admin.manage.account.index')->with('error', 'User  not found.');
-        }
-        // Return the view with user data
         return Inertia::render('manage-account/View', [
-            'user' => $user ,
+            'user' => $user,
+            'municipalities' => $municipalities,
+            'barangays' => $barangays,
             'success' => session('success')
         ]);
     }
-
 
     public function createPage($type){
         $validRoles = ['bpemo_admin', 'bpemo_staff', 'lgu_responder', 'barangay_official'];
@@ -61,8 +60,13 @@ class BpemoAdminManageAccountsController extends Controller
             abort(404, 'Invalid user role');
         }
 
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
+
         return Inertia::render('manage-account/Create',[
-            'type' =>$type
+            'type' => $type,
+            'municipalities' => $municipalities,
+            'barangays' => $barangays
         ]);
     }
 
@@ -112,11 +116,14 @@ class BpemoAdminManageAccountsController extends Controller
             abort(404, 'Invalid user role');
         }
 
-        // Fetch the user by ID
         $user = User::find($user_id);
+        $municipalities = Municipality::all();
+        $barangays = Barangay::all();
 
         return Inertia::render('manage-account/Update',[
             'user' => $user,
+            'municipalities' => $municipalities,
+            'barangays' => $barangays
         ]);
     }
 

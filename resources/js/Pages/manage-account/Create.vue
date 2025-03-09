@@ -7,30 +7,31 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
-const municipalities = ref([]);
-const barangays = ref([]);
 const page = usePage();
 const formErrors = ref(null);
 
-onMounted(async () => {
-    const response = await fetch('/municipalities');
-    municipalities.value = await response.json();
+const props = defineProps({
+    type: String,
+    municipalities: {
+        type: Array,
+        required: true
+    },
+    barangays: {
+        type: Array,
+        required: true
+    },
+});
 
-     // Check if the user is an LGU Responder and set the municipality
-     if (page.props.auth?.user?.user_role === 'lgu_responder') {
+onMounted(() => {
+    if (page.props.auth?.user?.user_role === 'lgu_responder') {
         const userMunicipalityId = page.props.auth.user.municipality_id;
-        form.municipality_id = userMunicipalityId; // Set the municipality ID
-        await fetchBarangays(userMunicipalityId); // Fetch barangays for the user's municipality
+        form.municipality_id = userMunicipalityId;
     }
 });
 
-const fetchBarangays = async (municipalityId) => {
-    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
-    barangays.value = await response.json();
-};
-
-const props = defineProps({
-    type: String,
+const filteredBarangays = computed(() => {
+    if (!form.municipality_id) return [];
+    return props.barangays.filter(b => b.municipality_id === form.municipality_id);
 });
 
 const userRole = computed(() => {
@@ -190,11 +191,11 @@ const allowOnlyNumbers = (event) => {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <InputLabel for="municipality_id" value="Municipality" />
-                                <select id="municipality_id" v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)"
+                                <select id="municipality_id" v-model="form.municipality_id"
                                         :disabled="page.props.auth?.user?.user_role === 'lgu_responder'"
                                         required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="" disabled>Select a municipality</option>
-                                    <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                                    <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
                                         {{ municipality.name }}
                                     </option>
                                 </select>
@@ -204,7 +205,7 @@ const allowOnlyNumbers = (event) => {
                                 <InputLabel for="barangay_id" value="Barangay" />
                                 <select id="barangay_id" v-model="form.barangay_id" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="" disabled>Select a barangay</option>
-                                    <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
+                                    <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
                                         {{ barangay.name }}
                                     </option>
                                 </select>
