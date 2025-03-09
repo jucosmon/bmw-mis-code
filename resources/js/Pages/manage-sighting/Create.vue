@@ -13,24 +13,29 @@ const page = usePage();
 
 const formErrors = ref(null);
 const previewImages = ref([]);
-const municipalities = ref([]);
-const barangays = ref([]);
 const props = defineProps({
     species: {
+        type: Array,
+        required: true,
+    },
+    municipalities: {
+        type: Array,
+        required: true,
+    },
+    barangays: {
         type: Array,
         required: true,
     }
 });
 
-onMounted(async () => {
-  const response = await fetch('/municipalities');
-  municipalities.value = await response.json();
+const filteredBarangays = computed(() => {
+    console.log('Municipality ID:', form.municipality_id);
+    console.log('All barangays:', props.barangays);
+    if (!form.municipality_id) return [];
+    const filtered = props.barangays.filter(barangay => barangay.municipality_id === form.municipality_id);
+    console.log('Filtered barangays:', filtered);
+    return filtered;
 });
-
-const fetchBarangays = async (municipalityId) => {
-  const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
-  barangays.value = await response.json();
-};
 
 const backRoute = computed(() => route('sighting.index'));
 const createRoute = computed(() => route('sighting.create'));
@@ -115,16 +120,15 @@ const reverseGeocode = async (latitude, longitude) => {
     form.barangay_id = '';
 
     if (municipalityName) {
-      const matchedMunicipality = municipalities.value.find(m =>
+      const matchedMunicipality = props.municipalities.find(m =>
         m.name.toLowerCase() === municipalityName.toLowerCase()
       );
 
       if (matchedMunicipality) {
         form.municipality_id = matchedMunicipality.id;
-        await fetchBarangays(matchedMunicipality.id);
 
-        if (barangayName && barangays.value.length > 0) {
-          const matchedBarangay = barangays.value.find(b =>
+        if (barangayName && filteredBarangays.value.length > 0) {
+          const matchedBarangay = filteredBarangays.value.find(b =>
             b.name.toLowerCase() === barangayName.toLowerCase()
           );
 
@@ -428,9 +432,9 @@ const sizeOptions = [
 
               <div>
                 <InputLabel for="municipality_id" value="Municipality" />
-                <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
+                <select required v-model="form.municipality_id" class="w-full">
                   <option value="" disabled>Select a municipality</option>
-                  <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                  <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
                     {{ municipality.name }}
                   </option>
                 </select>
@@ -441,7 +445,7 @@ const sizeOptions = [
                 <InputLabel for="barangay_id" value="Barangay" />
                 <select required v-model="form.barangay_id" class="w-full">
                   <option value="" disabled>Select a barangay</option>
-                  <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
+                  <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
                     {{ barangay.name }}
                   </option>
                 </select>

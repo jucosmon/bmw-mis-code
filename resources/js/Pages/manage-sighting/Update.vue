@@ -21,6 +21,14 @@ const props = defineProps({
     species: {
         type: Array,
         required: true,
+    },
+    municipalities: {  // Add this prop
+        type: Array,
+        required: true,
+    },
+    barangays: {      // Add this prop
+        type: Array,
+        required: true,
     }
 });
 
@@ -29,8 +37,10 @@ const currentUser = ref(null);
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const deletedSightedSpecies = ref([]);
-const municipalities = ref([]);
-const barangays = ref([]);
+const filteredBarangays = computed(() => {
+    if (!form.municipality_id) return [];
+    return props.barangays.filter(barangay => barangay.municipality_id === form.municipality_id);
+});
 
 onMounted(async () => {
     // Add defensive check
@@ -48,20 +58,7 @@ onMounted(async () => {
 
     console.log('Component mounted'); // Debugging: Check if the component is mounted
     console.log('The Props:', props.sighting); // Log the entire props object
-
-    const response = await fetch('/municipalities');
-    municipalities.value = await response.json();
-
-    if (props.sighting.municipality_id) {
-        await fetchBarangays();
-    }
 });
-
-const fetchBarangays = async (municipalityId = props.sighting.municipality_id) => {
-    if (!municipalityId) return;
-    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
-    barangays.value = await response.json();
-};
 
 const existingImages = ref(props.sighting.mediaFiles ? props.sighting.mediaFiles : []);
 
@@ -391,16 +388,15 @@ const reverseGeocode = async (latitude, longitude) => {
         form.barangay_id = '';
 
         if (municipalityName) {
-            const matchedMunicipality = municipalities.value.find(m =>
+            const matchedMunicipality = props.municipalities.find(m =>
                 m.name.toLowerCase() === municipalityName.toLowerCase()
             );
 
             if (matchedMunicipality) {
                 form.municipality_id = matchedMunicipality.id;
-                await fetchBarangays(matchedMunicipality.id);
 
-                if (barangayName && barangays.value.length > 0) {
-                    const matchedBarangay = barangays.value.find(b =>
+                if (barangayName && filteredBarangays.value.length > 0) {
+                    const matchedBarangay = filteredBarangays.value.find(b =>
                         b.name.toLowerCase() === barangayName.toLowerCase()
                     );
 
@@ -422,30 +418,24 @@ const reverseGeocode = async (latitude, longitude) => {
     }
 };
 
-const resetToOriginal = (e) => {
+const resetToOriginal = async (e) => {
     e.preventDefault();
     locationSource.value = 'original';
+    cleanupMap(); // Clean up existing map
 
     if (originalLocation.value.latitude && originalLocation.value.longitude) {
         showMap.value = true;
-        nextTick(() => {
-            form.latitude = originalLocation.value.latitude;
-            form.longitude = originalLocation.value.longitude;
-            form.municipality_id = originalLocation.value.municipality_id;
-            form.barangay_id = originalLocation.value.barangay_id;
-            form.detailed_location = originalLocation.value.detailed_location;
+        await nextTick();
+        form.latitude = originalLocation.value.latitude;
+        form.longitude = originalLocation.value.longitude;
+        form.municipality_id = originalLocation.value.municipality_id;
+        form.barangay_id = originalLocation.value.barangay_id;
+        form.detailed_location = originalLocation.value.detailed_location;
 
-            if (originalLocation.value.municipality_id) {
-                fetchBarangays(originalLocation.value.municipality_id);
-            }
-
-            if (!map.value) {
-                initializeMap();
-            } else {
-                map.value.setView([form.latitude, form.longitude], 13);
-                marker.value.setLatLng([form.latitude, form.longitude]);
-            }
-        });
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            await initializeMap();
+        }
     } else {
         showMap.value = false;
         form.latitude = '';
@@ -453,7 +443,6 @@ const resetToOriginal = (e) => {
         form.municipality_id = originalLocation.value.municipality_id;
         form.barangay_id = originalLocation.value.barangay_id;
         form.detailed_location = originalLocation.value.detailed_location;
-        cleanupMap();
     }
 };
 
@@ -768,9 +757,9 @@ const handleDropdownClick = (index) => {
 
                         <div>
                             <InputLabel for="municipality_id" value="Municipality" />
-                            <select required v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full">
+                            <select required v-model="form.municipality_id" class="w-full">
                                 <option value="" disabled>Select a municipality</option>
-                                <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                                <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
                                     {{ municipality.name }}
                                 </option>
                             </select>
@@ -781,7 +770,7 @@ const handleDropdownClick = (index) => {
                             <InputLabel for="barangay_id" value="Barangay" />
                             <select required v-model="form.barangay_id" class="w-full">
                                 <option value="" disabled>Select a barangay</option>
-                                <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
+                                <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
                                     {{ barangay.name }}
                                 </option>
                             </select>
