@@ -10,6 +10,17 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet/dist/leaflet.css';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
+const props = defineProps({
+    municipalities: {
+        type: Array,
+        required: true
+    },
+    barangays: {
+        type: Array,
+        required: true
+    }
+});
+
 const map = ref(null);
 const markers = ref(null);
 const filters = ref({
@@ -27,6 +38,45 @@ const isDownloading = ref(false);
 // Add these refs for channels
 const sightingsChannel = ref(null);
 const strandingsChannel = ref(null);
+
+const showOnlyAccurateGPS = ref(false);
+
+const getLocationName = (id, type) => {
+    if (type === 'municipality') {
+        const municipality = props.municipalities.find(m => m.id === id);
+        return municipality ? municipality.name : '';
+    } else {
+        const barangay = props.barangays.find(b => b.id === id);
+        return barangay ? barangay.name : '';
+    }
+};
+
+const getCoordinatesFromNominatim = async (barangayId, municipalityId) => {
+    try {
+        const barangayName = getLocationName(barangayId, 'barangay');
+        const municipalityName = getLocationName(municipalityId, 'municipality');
+
+        if (!barangayName || !municipalityName) return null;
+
+        const query = `${barangayName}, ${municipalityName}, Bohol, Philippines`;
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+        );
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            return {
+                latitude: parseFloat(data[0].lat),
+                longitude: parseFloat(data[0].lon),
+                isEstimated: true
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching coordinates:', error);
+        return null;
+    }
+};
 
 onMounted(() => {
     // Initialize map first
@@ -119,6 +169,8 @@ const fetchData = async () => {
                     date,
                     latitude,
                     longitude,
+                    municipality_id,
+                    barangay_id,
                     report_status,
                     is_active,
                     sighted_species (
@@ -138,6 +190,8 @@ const fetchData = async () => {
                 .select(`
                     id,
                     date,
+                    municipality_id,
+                    barangay_id,
                     report_status,
                     is_active,
                     stranded_species (
@@ -159,32 +213,62 @@ const fetchData = async () => {
         if (sightingsRes.error) throw sightingsRes.error;
         if (strandingsRes.error) throw strandingsRes.error;
 
-        const processedSightings = sightingsRes.data.flatMap(sighting =>
-            sighting.sighted_species.map(ss => ({
+        // Process sightings with coordinate estimation
+        const processedSightings = await Promise.all(sightingsRes.data.flatMap(async sighting => {
+            let coords = {
                 latitude: sighting.latitude,
                 longitude: sighting.longitude,
+                isEstimated: false,
+                municipality_id: sighting.municipality_id,
+                barangay_id: sighting.barangay_id
+            };
+
+            if (!sighting.latitude || !sighting.longitude) {
+                const estimatedCoords = await getCoordinatesFromNominatim(sighting.barangay_id, sighting.municipality_id);
+                if (estimatedCoords) coords = { ...estimatedCoords, municipality_id: sighting.municipality_id, barangay_id: sighting.barangay_id };
+                else return []; // Skip if no coordinates can be found
+            }
+
+            return sighting.sighted_species.map(ss => ({
+                ...coords,
                 date: sighting.date,
                 type: 'sighting',
                 species_id: ss.species?.id,
                 species_name: ss.species?.name ?? 'Unknown',
                 category: ss.species?.category ?? 'Unknown',
-            }))
-        );
+            }));
+        }));
 
-        const processedStrandedIncidents = strandingsRes.data.flatMap(incident =>
-            incident.stranded_species.map(ss => ({
-                latitude: ss.latitude,
-                longitude: ss.longitude,
-                date: incident.date,
-                type: 'stranded',
-                status: ss.condition_code,
-                species_id: ss.species?.id,
-                species_name: ss.species?.name ?? 'Unknown',
-                category: ss.species?.category ?? 'Unknown',
-            }))
-        );
+        // Process stranded incidents with coordinate estimation
+        const processedStrandedIncidents = await Promise.all(strandingsRes.data.flatMap(async incident => {
+            return Promise.all(incident.stranded_species.map(async ss => {
+                let coords = {
+                    latitude: ss.latitude,
+                    longitude: ss.longitude,
+                    isEstimated: false,
+                    municipality_id: incident.municipality_id,
+                    barangay_id: incident.barangay_id
+                };
 
-        incidents.value = [...processedSightings, ...processedStrandedIncidents];
+                if (!ss.latitude || !ss.longitude) {
+                    const estimatedCoords = await getCoordinatesFromNominatim(incident.barangay_id, incident.municipality_id);
+                    if (estimatedCoords) coords = { ...estimatedCoords, municipality_id: incident.municipality_id, barangay_id: incident.barangay_id };
+                    else return null; // Skip if no coordinates can be found
+                }
+
+                return {
+                    ...coords,
+                    date: incident.date,
+                    type: 'stranded',
+                    status: ss.condition_code,
+                    species_id: ss.species?.id,
+                    species_name: ss.species?.name ?? 'Unknown',
+                    category: ss.species?.category ?? 'Unknown',
+                };
+            }));
+        }));
+
+        incidents.value = [...processedSightings.flat(), ...processedStrandedIncidents.flat()].filter(Boolean);
         loadData();
 
     } catch (error) {
@@ -196,32 +280,40 @@ const loadData = () => {
     markers.value.clearLayers();
 
     incidents.value.forEach(incident => {
+        if (showOnlyAccurateGPS.value && incident.isEstimated) return;
+
         // Apply filters
-        if (filters.value.year && new Date(incident.date).getFullYear() !== parseInt(filters.value.year)) {
-            return;
-        }
-        if (filters.value.category && incident.category !== filters.value.category) {
-            return;
-        }
-        if (filters.value.eventType && incident.type.toLowerCase() !== filters.value.eventType.toLowerCase()) {
-            return;
+        if (filters.value.year && new Date(incident.date).getFullYear() !== parseInt(filters.value.year)) return;
+        if (filters.value.category && incident.category !== filters.value.category) return;
+        if (filters.value.eventType && incident.type.toLowerCase() !== filters.value.eventType.toLowerCase()) return;
+
+        const markerColor = incident.type.toLowerCase() === 'sighting' ? 'green' : 'red';
+        const markerOptions = {
+            icon: L.icon({
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${markerColor}.png`,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            }),
+            opacity: incident.isEstimated ? 0.6 : 1 // Use opacity to indicate estimated locations
+        };
+
+        const marker = L.marker([incident.latitude, incident.longitude], markerOptions);
+
+        let popupContent = `
+            Date: ${incident.date}<br>
+            Species: ${incident.species_name}<br>
+            Type: ${incident.type}<br>
+            Location: ${getLocationName(incident.municipality_id, 'municipality')}, ${getLocationName(incident.barangay_id, 'barangay')}<br>
+            ${incident.isEstimated ? '<strong>(Estimated Location)</strong><br>' : ''}
+        `;
+
+        if (incident.type.toLowerCase() === 'stranded') {
+            popupContent += `Status: ${statusText(incident.status)}`;
         }
 
-        const markerColor = incident.type.toLowerCase() === 'sighting' ? 'blue' : 'red';
-        const markerIcon = L.icon({
-            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${markerColor}.png`,
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        });
-
-        const marker = L.marker([incident.latitude, incident.longitude], { icon: markerIcon });
-        let popupContent = `Date: ${incident.date}<br>Species: ${incident.species_name}<br>Type: ${incident.type}`;
-        if (incident.type.toLowerCase() === 'stranded') { // Ensure case insensitivity
-            popupContent += `<br>Status: ${statusText(incident.status)}`;
-        }
         marker.bindPopup(popupContent);
         markers.value.addLayer(marker);
     });
@@ -237,10 +329,15 @@ const resetFilters = () => {
         category: '',
         eventType: ''
     };
+    showOnlyAccurateGPS.value = false; // Reset the accurate GPS filter
     loadData();
 };
 
-// Show download confirmation modal
+// Add watch for showOnlyAccurateGPS
+watch(showOnlyAccurateGPS, () => {
+    loadData();
+});
+
 const showDownloadConfirmation = () => {
     showDownloadModal.value = true;
 };
@@ -355,32 +452,129 @@ const downloadPDF = async () => {
         </template>
 
         <div class="container mx-auto px-4 py-8">
-            <div class="filters flex flex-wrap items-center gap-4 mb-4">
-                <label for="year" class="font-medium">Year:</label>
-                <select v-model="filters.year" id="year" class="border rounded px-2 py-1">
-                    <option value="">All</option>
-                    <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
-                </select>
+            <!-- Filters with improved layout -->
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="space-y-2">
+                        <label for="year" class="font-medium text-gray-700 block">Year:</label>
+                        <select v-model="filters.year" id="year" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <option value="">All Years</option>
+                            <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+                        </select>
+                    </div>
 
-                <label for="category" class="font-medium">Category:</label>
-                <select v-model="filters.category" id="category" class="border rounded px-2 py-1">
-                    <option value="">All</option>
-                    <option value="marine_mammals">Marine Mammals</option>
-                    <option value="marine_turtles">Marine Turtles</option>
-                    <option value="sharks_rays">Shark and Rays</option>
-                </select>
+                    <div class="space-y-2">
+                        <label for="category" class="font-medium text-gray-700 block">Category:</label>
+                        <select v-model="filters.category" id="category" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <option value="">All Categories</option>
+                            <option value="marine_mammals">Marine Mammals</option>
+                            <option value="marine_turtles">Marine Turtles</option>
+                            <option value="sharks_rays">Shark and Rays</option>
+                        </select>
+                    </div>
 
-                <label for="eventType" class="font-medium">Incident Type:</label>
-                <select v-model="filters.eventType" id="eventType" class="border rounded px-2 py-1">
-                    <option value="">All</option>
-                    <option value="Sighting">Sighting</option>
-                    <option value="Stranded">Stranded</option>
-                </select>
+                    <div class="space-y-2">
+                        <label for="eventType" class="font-medium text-gray-700 block">Incident Type:</label>
+                        <select v-model="filters.eventType" id="eventType" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <option value="">All Types</option>
+                            <option value="Sighting">Sighting</option>
+                            <option value="Stranded">Stranded</option>
+                        </select>
+                    </div>
+                </div>
 
-                <button @click="resetFilters" class="bg-gray-300 px-4 py-2 rounded">Reset</button>
-                <button @click="showDownloadConfirmation" class="bg-green-500 text-white px-4 py-2 rounded">Download</button>
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="accurateGPS"
+                            v-model="showOnlyAccurateGPS"
+                            class="form-checkbox h-5 w-5 text-green-600 rounded"
+                        >
+                        <label for="accurateGPS" class="font-medium text-gray-700">Show only GPS-verified locations</label>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button @click="resetFilters" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                            Reset
+                        </button>
+                        <button @click="showDownloadConfirmation" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors">
+                            Download
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div id="map" style="height: 500px; z-index: 0;"></div>
+
+            <!-- Compact Legend -->
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                <details class="legend-details">
+                    <summary class="font-semibold text-gray-800 cursor-pointer hover:text-green-600 transition-colors">
+                        Map Legend
+                    </summary>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-3">
+                        <div class="flex gap-6">
+                            <!-- Markers -->
+                            <div class="space-y-2">
+                                <h4 class="font-medium text-gray-700">Markers:</h4>
+                                <div class="flex items-center gap-2">
+                                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"
+                                         alt="Sighting" class="h-6">
+                                    <span class="text-sm">Sighting</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
+                                         alt="Stranding" class="h-6">
+                                    <span class="text-sm">Stranding</span>
+                                </div>
+                            </div>
+
+                            <!-- Location Type -->
+                            <div class="space-y-2">
+                                <h4 class="font-medium text-gray-700">Location Type:</h4>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 flex items-center justify-center">
+                                        <div class="w-4 h-4 border-2 border-gray-800"></div>
+                                    </div>
+                                    <span class="text-sm">GPS Verified</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 flex items-center justify-center opacity-50">
+                                        <div class="w-4 h-4 border-2 border-gray-800"></div>
+                                    </div>
+                                    <span class="text-sm">Area Estimated</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clusters -->
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-gray-700">Clusters:</h4>
+                            <div class="flex flex-wrap gap-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-[rgba(181,226,140,0.6)] flex items-center justify-center">
+                                        <span class="text-xs font-bold text-[#006400]">&lt;10</span>
+                                    </div>
+                                    <span class="text-sm">Small</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-[rgba(241,211,87,0.6)] flex items-center justify-center">
+                                        <span class="text-xs font-bold text-[#8B4513]">&lt;50</span>
+                                    </div>
+                                    <span class="text-sm">Medium</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-[rgba(253,156,115,0.6)] flex items-center justify-center">
+                                        <span class="text-xs font-bold text-[#8B0000]">50+</span>
+                                    </div>
+                                    <span class="text-sm">Large</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div id="map" class="rounded-lg shadow-sm overflow-hidden" style="height: 600px; z-index: 0;"></div>
         </div>
     </Sidebar>
 
@@ -442,5 +636,23 @@ const downloadPDF = async () => {
 .marker-cluster span {
     font-size: 12px;
     font-weight: bold;
+}
+.legend-details {
+    user-select: none;
+}
+
+.legend-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.legend-details summary::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.legend-details[open] summary::before {
+    transform: rotate(90deg);
 }
 </style>

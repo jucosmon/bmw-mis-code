@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barangay;
 use App\Models\Municipality;
 use App\Models\Sighting;
 use App\Models\StrandedIncident;
@@ -12,7 +13,10 @@ class GenerateReportController extends Controller
 {
     public function clusterMapIndex()
     {
-        return Inertia::render('generate-report/cluster-map/index');
+        return Inertia::render('generate-report/cluster-map/index',[
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all(),
+        ]);
     }
 
     public function summaryReportIndex()
