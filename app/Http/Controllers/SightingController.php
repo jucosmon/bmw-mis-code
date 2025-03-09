@@ -215,7 +215,7 @@ class SightingController extends Controller
         } else if($action === 'unverify'){
             Notification::create([
                 'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is unverified a verified sighting.",
-                'category' => 'false',
+                'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'sighting',
                 'is_read' => false,

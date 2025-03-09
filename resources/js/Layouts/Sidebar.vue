@@ -196,6 +196,17 @@ const subscribeToNotifications = () => {
     .channel('public:notifications')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, (payload) => {
       console.log('Change received!', payload);
+      if (payload.eventType === 'INSERT') {
+        // Add new notification to both notifications list and show toast
+        const newNotification = payload.new;
+        notifications.value = [newNotification, ...notifications.value];
+        displayedNotifications.value = notifications.value.slice(0, limit.value);
+        showToast(newNotification);
+
+        // Play notification sound (optional)
+        const audio = new Audio('/path/to/notification-sound.mp3'); // Add your sound file
+        audio.play().catch(e => console.log('Audio play failed:', e));
+      }
       fetchNotifications();
     })
     .subscribe((status) => {
@@ -370,6 +381,52 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize);
 });
 
+// Add these new refs for toast notifications
+const toasts = ref([]);
+const newNotifications = ref([]);
+
+// Update the showToast function
+const showToast = async (notification) => {
+  // Play notification sound
+  const audio = new Audio('/sounds/notif2.wav');
+  try {
+    await audio.play();
+  } catch (error) {
+    console.log('Audio playback failed:', error);
+  }
+
+  const toast = {
+    id: Date.now(),
+    content: notification.content,
+    type: notification.type,
+    show: true,
+    notification: notification, // Store the full notification object for click handling
+  };
+
+  toasts.value.push(toast);
+
+  // Remove toast after 7 seconds (increased from 5 to give more time to interact)
+  setTimeout(() => {
+    const index = toasts.value.findIndex(t => t.id === toast.id);
+    if (index !== -1) {
+      toasts.value[index].show = false;
+      setTimeout(() => {
+        toasts.value = toasts.value.filter(t => t.id !== toast.id);
+      }, 300);
+    }
+  }, 7000);
+};
+
+// Add new function to handle toast clicks
+const handleToastClick = (toast) => {
+  const notification = toast.notification;
+  openNotification(notification);
+  // Remove the toast after clicking
+  toast.show = false;
+  setTimeout(() => {
+    toasts.value = toasts.value.filter(t => t.id !== toast.id);
+  }, 300);
+};
 </script>
 
 <template>
@@ -705,6 +762,37 @@ onBeforeUnmount(() => {
                   </div>
               </div>
           </Modal>
+          <!-- Add Toast Container -->
+          <div class="fixed top-4 right-4 z-50 space-y-2 max-w-md w-full">
+            <transition-group name="toast">
+              <div v-for="toast in toasts" :key="toast.id"
+                v-show="toast.show"
+                class="toast-notification bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 mb-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                :class="{
+                  'border-l-4 border-blue-500': toast.type === 'stranding',
+                  'border-l-4 border-green-500': toast.type === 'sighting',
+                  'border-l-4 border-yellow-500': toast.type === 'warning',
+                }"
+                @click="handleToastClick(toast)"
+              >
+                <div class="flex items-center flex-1">
+                  <span class="material-icons mr-2" :class="{
+                    'text-blue-500': toast.type === 'stranding',
+                    'text-green-500': toast.type === 'sighting',
+                    'text-yellow-500': toast.type === 'warning',
+                  }">
+                    {{ toast.type === 'stranding' ? 'warning' :
+                       toast.type === 'sighting' ? 'visibility' : 'info' }}
+                  </span>
+                  <p class="text-sm text-gray-800 dark:text-gray-200">{{ toast.content }}</p>
+                </div>
+                <button @click.stop="toast.show = false"
+                        class="ml-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600">
+                  <span class="material-icons text-sm">close</span>
+                </button>
+              </div>
+            </transition-group>
+          </div>
       </main>
     </div>
   </div>
@@ -808,5 +896,48 @@ onBeforeUnmount(() => {
 
 .sidebar.invisible {
   pointer-events: none;
+}
+
+/* Add Toast Animation Styles */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.toast-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.toast-notification {
+  animation: slideIn 0.3s ease-out;
+  max-width: calc(100vw - 2rem);
+  word-break: break-word;
+  transition: background-color 0.2s ease;
+}
+
+.toast-notification:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Responsive styles for different screen sizes */
+@media (max-width: 640px) {
+  .toast-notification {
+    width: calc(100vw - 2rem);
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+}
+
+@media (min-width: 641px) {
+  .toast-notification {
+    width: 400px;
+  }
 }
 </style>
