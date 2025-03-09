@@ -33,6 +33,17 @@ const getButtonClasses = (status) => {
         : 'px-4 py-2 bg-white text-black border border-gray-300 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500';
 };
 
+// Update the getSpeciesNames function
+const getSpeciesNames = (sighting) => {
+    if (!sighting.sighted_species || sighting.sighted_species.length === 0) {
+        return 'Unknown';
+    }
+    return sighting.sighted_species
+        .map(sightedSpecies => sightedSpecies.species?.name || 'Unknown')
+        .filter(name => name !== 'Unknown')
+        .join(', ') || 'Unknown';
+};
+
 </script>
 
 <template>
@@ -87,7 +98,7 @@ const getButtonClasses = (status) => {
                             <tr v-for="sighting in filteredSightings" :key="sighting.id">
                                 <td class="px-4 py-2 border border-gray-300">{{ sighting.id }}</td>
                                 <td class="px-4 py-2 border border-gray-300">{{ sighting.date }} - {{ sighting.time }}</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ sighting.species_involved }}</td>
+                                <td class="px-4 py-2 border border-gray-300">{{ getSpeciesNames(sighting) }}</td>
                                 <td class="px-4 py-2 border border-gray-300">{{ sighting.report_status }}</td>
                                 <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
                                     <button

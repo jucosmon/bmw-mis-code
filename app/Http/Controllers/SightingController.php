@@ -20,8 +20,8 @@ class SightingController extends Controller
     {
         $user = Auth::user();
 
-        // Retrieve pending sightings based on user role
-        $sightings = Sighting::where('is_active', true);
+        // Retrieve pending sightings based on user role with sightedSpecies relationship
+        $sightings = Sighting::with('sightedSpecies.species')->where('is_active', true);
 
         if ($user->user_role === 'public_user') {
             $sightings->where('user_id', $user->id);
