@@ -6,17 +6,24 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const page = usePage();
 const formErrors = ref(null);
 const previewImages = ref([]);
-const municipalities = ref([]);
-const barangays = ref([]);
 const locationSource = ref('manual'); // 'manual' or 'gps'
 const isGeocodingInProgress = ref(false);
 const showMap = ref(false);
-const props = defineProps({});
+const props = defineProps({
+    municipalities: {
+        type: Array,
+        required: true
+    },
+    barangays: {
+        type: Array,
+        required: true
+    }
+});
 
 const form = useForm({
   certainty_level: 5,
@@ -40,32 +47,9 @@ const form = useForm({
 const backRoute = computed(() => route('stranded.incident.index'));
 const createRoute = computed(() => route('stranded.incident.create'));
 
-onMounted(async () => {
-  console.log("Mounting...");
-  try {
-    const response = await fetch('/municipalities');
-    municipalities.value = await response.json();
-    console.log("Municipalities:", municipalities.value);
-  } catch (error) {
-    console.error("Error fetching municipalities:", error);
-  }
-});
-
-const fetchBarangays = async (municipalityId) => {
-  if (!municipalityId) return;
-
-  try {
-    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
-    barangays.value = await response.json();
-  } catch (error) {
-    console.error("Error fetching barangays:", error);
-  }
-};
-
 // Watch for changes in municipality_id after form is initialized
 watch(() => form.municipality_id, (newValue) => {
   if (newValue) {
-    fetchBarangays(newValue);
     form.barangay_id = ''; // Reset barangay selection when municipality changes
   }
 });
@@ -118,17 +102,16 @@ const reverseGeocode = async (latitude, longitude) => {
 
     // Find matching municipality in our database
     if (municipalityName) {
-      const matchedMunicipality = municipalities.value.find(m =>
+      const matchedMunicipality = props.municipalities.find(m =>
         m.name.toLowerCase() === municipalityName.toLowerCase()
       );
 
       if (matchedMunicipality) {
         form.municipality_id = matchedMunicipality.id;
-        await fetchBarangays(matchedMunicipality.id);
 
         // Find matching barangay in our database
-        if (barangayName && barangays.value.length > 0) {
-          const matchedBarangay = barangays.value.find(b =>
+        if (barangayName) {
+          const matchedBarangay = filteredBarangays.value.find(b =>
             b.name.toLowerCase() === barangayName.toLowerCase()
           );
 
@@ -366,6 +349,40 @@ const isFieldTouched = ref({});
 
 const markFieldAsTouched = (fieldName) => {
   isFieldTouched.value[fieldName] = true;
+};
+
+// Add this computed property for filtered barangays
+const filteredBarangays = computed(() => {
+  if (!form.municipality_id) return [];
+  return props.barangays.filter(barangay =>
+    barangay.municipality_id === form.municipality_id
+  );
+});
+
+// Update resetToOriginal function
+const resetToOriginal = (e) => {
+    e.preventDefault();
+    locationSource.value = 'original';
+
+    if (originalLocation.value.latitude && originalLocation.value.longitude) {
+        showMap.value = true;
+        form.latitude = originalLocation.value.latitude;
+        form.longitude = originalLocation.value.longitude;
+        form.municipality_id = originalLocation.value.municipality_id;
+        form.barangay_id = originalLocation.value.barangay_id;
+        form.detailed_location = originalLocation.value.detailed_location;
+
+        // Ensure map is initialized after setting coordinates
+        nextTick(() => {
+            if (!map.value) {
+                initializeMap();
+            } else {
+                map.value.setView([form.latitude, form.longitude], 13);
+                marker.value.setLatLng([form.latitude, form.longitude]);
+                map.value.invalidateSize();
+            }
+        });
+    }
 };
 </script>
 
@@ -616,7 +633,7 @@ const markFieldAsTouched = (fieldName) => {
               <InputLabel for="municipality_id" value="Municipality" />
               <select v-model="form.municipality_id" @change="fetchBarangays(form.municipality_id)" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a municipality</option>
-                <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
                   {{ municipality.name }}
                 </option>
               </select>
@@ -627,7 +644,7 @@ const markFieldAsTouched = (fieldName) => {
               <InputLabel for="barangay_id" value="Barangay" />
               <select v-model="form.barangay_id" class="w-full" :disabled="locationSource === 'gps' && isGeocodingInProgress">
                 <option value="" disabled>Select a barangay</option>
-                <option v-for="barangay in barangays" :key="barangay.id" :value="barangay.id">
+                <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
                   {{ barangay.name }}
                 </option>
               </select>

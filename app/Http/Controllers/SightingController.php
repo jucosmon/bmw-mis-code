@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barangay;
 use App\Models\MediaFile;
+use App\Models\Municipality;
 use App\Models\Notification;
 use App\Models\SightedSpecies;
 use App\Models\Sighting;
@@ -34,6 +36,8 @@ class SightingController extends Controller
         return Inertia::render('manage-sighting/index', [
             'sightings' => $sightings->get(),
             'success' => session('success'),
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
@@ -42,6 +46,8 @@ class SightingController extends Controller
         $species = Species::get();
         return Inertia::render('manage-sighting/Create', [
             'species' => $species,
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
@@ -247,6 +253,8 @@ class SightingController extends Controller
             'sighting' => $sighting,
             'sightedSpecies' => $sighting->sightedSpecies->toArray(),
             'success' => session('success'),
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
@@ -267,7 +275,12 @@ class SightingController extends Controller
 
 
         $species = Species::get();
-        return Inertia::render('manage-sighting/Update', ['sighting' => $sighting, 'species' => $species]);
+        return Inertia::render('manage-sighting/Update', [
+            'sighting' => $sighting,
+            'species' => $species,
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
+        ]);
     }
 
     // update for responders

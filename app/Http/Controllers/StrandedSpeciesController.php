@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barangay;
+use App\Models\Municipality;
 use App\Models\Species;
 use App\Models\StrandedIncident;
 use App\Models\StrandedSpecies;
@@ -20,6 +22,8 @@ class StrandedSpeciesController extends Controller
         return Inertia::render('manage-stranded-incident/stranded-species/Create', [
             'strandedIncident' => $strandedIncident,
             'species' => $species,
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
@@ -78,7 +82,9 @@ class StrandedSpeciesController extends Controller
 
         return Inertia::render('manage-stranded-incident/stranded-species/View', [
             'strandedSpecies' => $strandedSpecies,
-            'strandedIncident' => $strandedSpecies->strandedIncident, // Access the related strandedIncident
+            'strandedIncident' => $strandedSpecies->strandedIncident,
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all(),
         ]);
     }
 
@@ -86,10 +92,12 @@ class StrandedSpeciesController extends Controller
     {
         $strandedSpecies = StrandedSpecies::findOrFail($id);
         $species = Species::get();
-        return Inertia::render('manage-stranded-incident/stranded-species/Update',
-        ['strandedSpecies' => $strandedSpecies,
-        'species' => $species
-    ]);
+        return Inertia::render('manage-stranded-incident/stranded-species/Update',[
+            'strandedSpecies' => $strandedSpecies,
+            'species' => $species,
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
+        ]);
     }
     public function update(Request $request, $id)
     {

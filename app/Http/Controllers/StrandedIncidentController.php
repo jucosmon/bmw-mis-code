@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barangay;
 use App\Models\MediaFile;
+use App\Models\Municipality;
 use App\Models\Notification;
 use App\Models\RespondAction;
 use App\Models\Species;
@@ -47,6 +49,8 @@ class StrandedIncidentController extends Controller
         return Inertia::render('manage-stranded-incident/index', [
             'strandedIncidents' => $strandedIncidents,
             'success' => session('success'),
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
@@ -75,13 +79,18 @@ class StrandedIncidentController extends Controller
         return Inertia::render('manage-stranded-incident/resolved-incidents/index', [
             'strandedIncidents' => $strandedIncidents,
             'success' => session('success'),
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
 
     public function createPage()
     {
-        return Inertia::render('manage-stranded-incident/Create');
+        return Inertia::render('manage-stranded-incident/Create', [
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
+        ]);
     }
 
     public function create(Request $request)
@@ -313,6 +322,8 @@ class StrandedIncidentController extends Controller
             'userRespondStatus' => $userRespondAction ? $userRespondAction->response_status : null,
             'strandedSpecies' => $strandedIncident->strandedSpecies->toArray(),
             'success' => session('success'),
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
@@ -329,7 +340,11 @@ class StrandedIncidentController extends Controller
         $file->url = asset('storage/' . $file->path);
             return $file;
         });
-        return Inertia::render('manage-stranded-incident/Update', ['strandedIncident' => $strandedIncident]);
+        return Inertia::render('manage-stranded-incident/Update', [
+            'strandedIncident' => $strandedIncident,
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all(),
+        ]);
     }
 
     // update for responders
@@ -354,6 +369,8 @@ class StrandedIncidentController extends Controller
         return Inertia::render('manage-stranded-incident/UpdateResponder', [
             'strandedIncident' => $strandedIncident,
             'userRespondStatus' => $userRespondAction ? $userRespondAction->response_status : null,
+            'municipalities' => Municipality::all(),
+            'barangays' => Barangay::all()
         ]);
     }
 
@@ -389,10 +406,6 @@ class StrandedIncidentController extends Controller
         $strandedIncident = StrandedIncident::findOrFail($id);
 
         $oldReportStatus = $strandedIncident->report_status;
-
-        // if($validated['report_status'] === 'false'){
-        //     $validated['is_active'] = false;
-        // }
 
         $strandedIncident->update($validated);
 

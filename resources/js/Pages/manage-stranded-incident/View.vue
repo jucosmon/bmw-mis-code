@@ -29,6 +29,14 @@ const props = defineProps({
         default: () => [],
     },
     success: String,
+    municipalities: {
+        type: Array,
+        default: () => [],
+    },
+    barangays: {
+        type: Array,
+        default: () => [],
+    },
 });
 const comments = ref(props.strandedIncident.comments || []);
 const editingCommentId = ref(null);
@@ -414,35 +422,18 @@ const handleSpeciesClick = ($id) => {
 }
 
 // location data
-const municipalityData = ref([]);
-const barangayData = ref([]);
-
 const municipalityName = computed(() => {
-    const municipality = municipalityData.value.find(
+    const municipality = props.municipalities.find(
         (m) => m.id === props.strandedIncident.municipality_id
     );
     return municipality ? municipality.name : 'Unknown Municipality';
 });
 
 const barangayName = computed(() => {
-    const barangay = barangayData.value.find(
+    const barangay = props.barangays.find(
         (b) => b.id === props.strandedIncident.barangay_id
     );
     return barangay ? barangay.name : 'Unknown Barangay';
-});
-
-onMounted(async () => {
-    try {
-        const municipalityResponse = await axios.get('/municipalities');
-        municipalityData.value = municipalityResponse.data;
-
-        const barangayResponse = await axios.get(
-            `/barangays?municipality_id=${props.strandedIncident.municipality_id}`
-        );
-        barangayData.value = barangayResponse.data;
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
 });
 
 // Map references

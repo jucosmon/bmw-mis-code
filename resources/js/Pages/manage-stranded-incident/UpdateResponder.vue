@@ -22,30 +22,20 @@ const props = defineProps({
         type: String,
         default: '',
 
+    },
+    municipalities: {
+        type: Array,
+        required: true
+    },
+    barangays: {
+        type: Array,
+        required: true
     }
 });
 
 const currentUserRole = page.props.auth.user.user_role;
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
-const municipalities = ref([]);
-const barangays = ref([]);
-
-onMounted(async () => {
-    const response = await fetch('/municipalities');
-    municipalities.value = await response.json();
-
-    if (props.strandedIncident.municipality_id) {
-        await fetchBarangays();
-    }
-});
-
-const fetchBarangays = async (municipalityId = props.strandedIncident.municipality_id) => {
-    if (!municipalityId) return;
-    const response = await fetch(`/barangays?municipality_id=${municipalityId}`);
-    barangays.value = await response.json();
-};
-
 const existingImages = ref(props.strandedIncident.mediaFiles ? props.strandedIncident.mediaFiles : []);
 
 const backRoute = computed(() => {
@@ -206,16 +196,15 @@ const reverseGeocode = async (latitude, longitude) => {
     form.barangay_id = '';
 
     if (municipalityName) {
-      const matchedMunicipality = municipalities.value.find(m =>
+      const matchedMunicipality = props.municipalities.find(m =>
         m.name.toLowerCase() === municipalityName.toLowerCase()
       );
 
       if (matchedMunicipality) {
         form.municipality_id = matchedMunicipality.id;
-        await fetchBarangays(matchedMunicipality.id);
 
-        if (barangayName && barangays.value.length > 0) {
-          const matchedBarangay = barangays.value.find(b =>
+        if (barangayName) {
+          const matchedBarangay = filteredBarangays.value.find(b =>
             b.name.toLowerCase() === barangayName.toLowerCase()
           );
 
@@ -299,51 +288,43 @@ const initializeMap = () => {
 
 // Add reset to original location function
 const resetToOriginal = (e) => {
-    e.preventDefault(); // Add this line
+    e.preventDefault();
     locationSource.value = 'original';
 
-    // Only show map if original coordinates exist
     if (originalLocation.value.latitude && originalLocation.value.longitude) {
         showMap.value = true;
+        form.latitude = originalLocation.value.latitude;
+        form.longitude = originalLocation.value.longitude;
+        form.municipality_id = originalLocation.value.municipality_id;
+        form.barangay_id = originalLocation.value.barangay_id;
+        form.detailed_location = originalLocation.value.detailed_location;
+
+        // Ensure map is initialized after setting coordinates
         nextTick(() => {
-            form.latitude = originalLocation.value.latitude;
-            form.longitude = originalLocation.value.longitude;
-            form.municipality_id = originalLocation.value.municipality_id;
-            form.barangay_id = originalLocation.value.barangay_id;
-            form.detailed_location = originalLocation.value.detailed_location;
-
-            if (originalLocation.value.municipality_id) {
-                fetchBarangays(originalLocation.value.municipality_id);
-            }
-
             if (!map.value) {
                 initializeMap();
             } else {
                 map.value.setView([form.latitude, form.longitude], 13);
                 marker.value.setLatLng([form.latitude, form.longitude]);
+                map.value.invalidateSize();
             }
         });
-    } else {
-        showMap.value = false;
-        form.latitude = '';
-        form.longitude = '';
-        form.municipality_id = originalLocation.value.municipality_id;
-        form.barangay_id = originalLocation.value.barangay_id;
-        form.detailed_location = originalLocation.value.detailed_location;
-        cleanupMap();
     }
 };
 
 // Add remove GPS location function
 const removeGpsLocation = () => {
     locationSource.value = 'manual';
-    showMap.value = false;
     form.latitude = '';
     form.longitude = '';
     form.municipality_id = '';
     form.barangay_id = '';
     form.detailed_location = '';
+
+    // First cleanup the map
     cleanupMap();
+    // Then hide the map container
+    showMap.value = false;
 };
 
 // Add cleanup function
@@ -351,6 +332,8 @@ const cleanupMap = () => {
     if (map.value) {
         map.value.remove();
         map.value = null;
+    }
+    if (marker.value) {
         marker.value = null;
     }
 };
@@ -364,17 +347,6 @@ onMounted(() => {
     } else {
         showMap.value = false;
     }
-
-    // Fetch municipalities after map initialization
-    fetch('/municipalities')
-        .then(response => response.json())
-        .then(data => {
-            municipalities.value = data;
-            if (props.strandedIncident.municipality_id) {
-                return fetchBarangays();
-            }
-        })
-        .catch(error => console.error("Error fetching data:", error));
 });
 
 // button status
@@ -486,6 +458,14 @@ const confirmVerify = () => {
     submitForm();
     showVerifyModal.value = false;
 };
+
+// Add this computed property for filtered barangays
+const filteredBarangays = computed(() => {
+  if (!form.municipality_id) return [];
+  return props.barangays.filter(barangay =>
+    barangay.municipality_id === form.municipality_id
+  );
+});
 
 </script>
 
@@ -645,7 +625,7 @@ const confirmVerify = () => {
                             required
                         >
                             <option value="">Select a municipality</option>
-                            <option v-for="municipality in municipalities" :key="municipality.id" :value="municipality.id">
+                            <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
                                 {{ municipality.name }}
                             </option>
                         </select>
@@ -662,11 +642,10 @@ const confirmVerify = () => {
                             :class="{ 'border-red-500': form.errors.barangay_id }"
                             required
                         >
-                            <option :value="null">Select a barangay</option>
-                            <option v-for="barangay in barangays"
+                            <option value="" disabled>Select a barangay</option>
+                            <option v-for="barangay in filteredBarangays"
                                     :key="barangay.id"
                                     :value="barangay.id"
-                                    :selected="form.barangay_id === barangay.id"
                             >
                                 {{ barangay.name }}
                             </option>
