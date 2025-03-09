@@ -6,7 +6,7 @@ import { ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Le
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import * as XLSX from 'xlsx';
 
 
@@ -40,6 +40,9 @@ const showExportModal = ref(false);
 const isDownloading = ref(false);
 const isExporting = ref(false);
 const filteredData = ref([]);
+
+// Add new refs for chart loading states
+const chartsLoading = ref(true);
 
 let yearlyTrendsChart, categoryTrendsChart, municipalityDistributionChart, conditionFrequencyChart;
 
@@ -184,28 +187,31 @@ const applyFilters = (data) => {
     });
 };
 
-const updateSummaryData = (
+const updateSummaryData = async (
     verifiedAndResolvedData,
     falseReportsData,
     filteredData
 ) => {
-    // Process and update summaryData
-    const uniqueEvents = new Set(filteredData.map(item => `${item.type}-${item.type === 'sighting' ? item.sighting_id : item.stranded_incident_id}`));
-    console.log('Unique Events:', Array.from(uniqueEvents));
-    summaryData.value.totalEvents = uniqueEvents.size;
-    summaryData.value.totalSpecies = filteredData.length;
-    summaryData.value.topCommonSpecies = getTopCommonSpecies(filteredData);
-    summaryData.value.falseReports = falseReportsData.length;
+    try {
+        // Process and update summaryData
+        const uniqueEvents = new Set(filteredData.map(item => `${item.type}-${item.type === 'sighting' ? item.sighting_id : item.stranded_incident_id}`));
+        summaryData.value.totalEvents = uniqueEvents.size;
+        summaryData.value.totalSpecies = filteredData.length;
+        summaryData.value.topCommonSpecies = getTopCommonSpecies(filteredData);
+        summaryData.value.falseReports = falseReportsData.length;
 
-    // Further processing for charts and distributions
-    summaryData.value.yearlyTrends = getYearlyTrends(filteredData);
-    summaryData.value.categoryDistribution =
-        getCategoryDistribution(filteredData);
-    summaryData.value.municipalityDistribution =
-        getMunicipalityDistribution(filteredData);
-    summaryData.value.conditionFrequency = getConditionFrequency(filteredData);
+        // Further processing for charts and distributions
+        summaryData.value.yearlyTrends = getYearlyTrends(filteredData);
+        summaryData.value.categoryDistribution = getCategoryDistribution(filteredData);
+        summaryData.value.municipalityDistribution = getMunicipalityDistribution(filteredData);
+        summaryData.value.conditionFrequency = getConditionFrequency(filteredData);
 
-    renderCharts();
+        // Wait for next tick before rendering charts
+        await nextTick();
+        await renderCharts();
+    } catch (error) {
+        console.error('Error updating summary data:', error);
+    }
 };
 
 const getYearlyTrends = (data) => {
@@ -271,208 +277,173 @@ const getTopCommonSpecies = (data) => {
         .map(([name, count]) => ({ name, count }));
 };
 
-const renderCharts = () => {
-    if (yearlyTrendsChart) {
-        yearlyTrendsChart.destroy();
-        yearlyTrendsChart = null;
-    }
-    if (categoryTrendsChart) {
-        categoryTrendsChart.destroy();
-        categoryTrendsChart = null;
-    }
-    if (municipalityDistributionChart) {
-        municipalityDistributionChart.destroy();
-        municipalityDistributionChart = null;
-    }
-    if (conditionFrequencyChart) {
-        conditionFrequencyChart.destroy();
-        conditionFrequencyChart = null;
-    }
-
-    yearlyTrendsChart = new Chart(document.getElementById('yearlyTrendsChart'), {
+const chartConfig = {
+    'Yearly Trends': {
         type: 'line',
-        data: {
+        id: 'yearlyTrendsChart',
+        getData: () => ({
             labels: summaryData.value.yearlyTrends.map(item => item.year),
-            datasets: [{
-                label: 'Yearly Trends',
-                data: summaryData.value.yearlyTrends.map(item => item.count),
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    display: true,
-                    color: 'black',
-                    align: 'top',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    formatter: (value) => value
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: 'black',
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: 'black',
-                        font: {
-                            size: 12
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    categoryTrendsChart = new Chart(document.getElementById('categoryTrendsChart'), {
+            data: summaryData.value.yearlyTrends.map(item => item.count)
+        })
+    },
+    'Category Trends': {
         type: 'bar',
-        data: {
+        id: 'categoryTrendsChart',
+        getData: () => ({
             labels: summaryData.value.categoryDistribution.map(item => item.category),
-            datasets: [{
-                label: 'Category Trends',
-                data: summaryData.value.categoryDistribution.map(item => item.count),
-                backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                borderColor: 'rgba(153, 102, 255, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    display: true,
-                    color: 'black',
-                    align: 'top',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    formatter: (value) => value
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: 'black',
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: 'black',
-                        font: {
-                            size: 12
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    municipalityDistributionChart = new Chart(document.getElementById('municipalityDistributionChart'), {
+            data: summaryData.value.categoryDistribution.map(item => item.count)
+        })
+    },
+    'Municipality Distribution': {
         type: 'pie',
-        data: {
+        id: 'municipalityDistributionChart',
+        getData: () => ({
             labels: summaryData.value.municipalityDistribution.map(item => item.municipality),
-            datasets: [{
-                label: 'Municipality Distribution',
-                data: summaryData.value.municipalityDistribution.map(item => item.count),
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: {
-                datalabels: {
-                    display: true,
-                    color: 'black',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    formatter: (value) => value
-                }
-            }
-        }
-    });
-
-    conditionFrequencyChart = new Chart(document.getElementById('conditionFrequencyChart'), {
+            data: summaryData.value.municipalityDistribution.map(item => item.count)
+        })
+    },
+    'Condition Frequency': {
         type: 'bar',
-        data: {
+        id: 'conditionFrequencyChart',
+        getData: () => ({
             labels: summaryData.value.conditionFrequency.map(item => item.status),
-            datasets: [{
-                label: 'Condition Frequency',
-                data: summaryData.value.conditionFrequency.map(item => item.count),
-                backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                borderColor: 'rgba(255, 159, 64, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    display: true,
-                    color: 'black',
-                    align: 'top',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    formatter: (value) => value
+            data: summaryData.value.conditionFrequency.map(item => item.count)
+        })
+    }
+};
+
+// Add these new refs
+const maxRetries = ref(3);
+const retryCount = ref(0);
+
+// Update the renderCharts function
+const renderCharts = async () => {
+    try {
+        chartsLoading.value = true;
+
+        // Wait longer for initial render
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await nextTick();
+
+        // Destroy existing charts with null check
+        [yearlyTrendsChart, categoryTrendsChart, municipalityDistributionChart, conditionFrequencyChart].forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+
+        // Reset chart instances
+        yearlyTrendsChart = null;
+        categoryTrendsChart = null;
+        municipalityDistributionChart = null;
+        conditionFrequencyChart = null;
+
+        // Create charts only if we have data and elements exist
+        for (const [name, chart] of Object.entries(chartConfig)) {
+            const chartData = chart.getData();
+            if (chartData.data.length > 0) {
+                const element = document.getElementById(chart.id);
+                if (!element) {
+                    console.warn(`Chart element ${chart.id} not found`);
+                    continue; // Skip this chart and try the next one
                 }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: 'black',
-                        font: {
-                            size: 12
-                        }
+
+                // Create chart based on type
+                const chartInstance = new Chart(element, {
+                    type: chart.type,
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: name,
+                            data: chartData.data,
+                            borderColor: chart.type === 'line' ? 'rgba(75, 192, 192, 1)' : undefined,
+                            backgroundColor: chart.type === 'line'
+                                ? 'rgba(75, 192, 192, 0.2)'
+                                : chart.type === 'pie'
+                                    ? [
+                                        'rgba(255, 99, 132, 0.2)',
+                                        'rgba(54, 162, 235, 0.2)',
+                                        'rgba(255, 206, 86, 0.2)',
+                                        'rgba(75, 192, 192, 0.2)',
+                                        'rgba(153, 102, 255, 0.2)',
+                                        'rgba(255, 159, 64, 0.2)'
+                                    ]
+                                    : 'rgba(153, 102, 255, 0.2)',
+                            borderWidth: 1,
+                            fill: chart.type === 'line'
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: chart.type !== 'pie',
+                        plugins: {
+                            datalabels: {
+                                display: true,
+                                color: 'black',
+                                align: 'top',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                formatter: (value) => value
+                            }
+                        },
+                        scales: chart.type !== 'pie' ? {
+                            x: {
+                                ticks: {
+                                    color: 'black',
+                                    font: { size: 12 }
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: 'black',
+                                    font: { size: 12 }
+                                }
+                            }
+                        } : undefined
                     }
-                },
-                y: {
-                    ticks: {
-                        color: 'black',
-                        font: {
-                            size: 12
-                        }
-                    }
+                });
+
+                // Store chart instance
+                switch (chart.id) {
+                    case 'yearlyTrendsChart':
+                        yearlyTrendsChart = chartInstance;
+                        break;
+                    case 'categoryTrendsChart':
+                        categoryTrendsChart = chartInstance;
+                        break;
+                    case 'municipalityDistributionChart':
+                        municipalityDistributionChart = chartInstance;
+                        break;
+                    case 'conditionFrequencyChart':
+                        conditionFrequencyChart = chartInstance;
+                        break;
                 }
             }
         }
-    });
+    } catch (error) {
+        console.error('Error rendering charts:', error);
+    } finally {
+        chartsLoading.value = false;
+    }
 };
 
 // Add these refs for channels
 const sightingsChannel = ref(null);
 const strandingsChannel = ref(null);
+
+const isLoading = ref(true);
+
+// Add municipalities prop
+const props = defineProps({
+    municipalities: {
+        type: Array,
+        required: true
+    }
+});
+
+// Update municipalities ref to use props
+municipalities.value = props.municipalities;
 
 onMounted(() => {
     // Register cleanup first, before any async operations
@@ -516,14 +487,13 @@ onMounted(() => {
 
 const initializeData = async () => {
     try {
-        // Fetch municipalities first
-        const response = await fetch('/municipalities');
-        municipalities.value = await response.json();
-
+        isLoading.value = true;
         // Initial data fetch
         await fetchData();
     } catch (error) {
         console.error('Error in initialization:', error);
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -681,6 +651,22 @@ const exportToExcel = () => {
         alert('Error exporting data. Please try again.');
     }
 };
+
+// Add this function in the script section
+const hasDataForChart = (chartName) => {
+    switch (chartName) {
+        case 'Yearly Trends':
+            return summaryData.value.yearlyTrends.length > 0;
+        case 'Category Trends':
+            return summaryData.value.categoryDistribution.length > 0;
+        case 'Municipality Distribution':
+            return summaryData.value.municipalityDistribution.length > 0;
+        case 'Condition Frequency':
+            return summaryData.value.conditionFrequency.length > 0;
+        default:
+            return false;
+    }
+};
 </script>
 
 <template>
@@ -694,7 +680,14 @@ const exportToExcel = () => {
             </div>
         </template>
 
-        <div class="container mx-auto px-4 py-8" id="dashboard-content">
+        <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="loading-spinner-large"></div>
+                <p class="mt-4 text-gray-600">Loading data...</p>
+            </div>
+        </div>
+
+        <div v-else class="container mx-auto px-4 py-8" id="dashboard-content">
             <div class="filters flex flex-wrap items-center gap-4 mb-4">
                 <label for="year" class="font-medium">Year:</label>
                 <select v-model="filters.year" id="year" class="border rounded px-2 py-1">
@@ -756,23 +749,30 @@ const exportToExcel = () => {
 
             <!-- Summary Charts -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                <div>
-                    <h3 class="text-lg font-semibold">Yearly Trends</h3>
-                    <canvas id="yearlyTrendsChart"></canvas>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold">Category Trends</h3>
-                    <canvas id="categoryTrendsChart"></canvas>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold">Municipality Distribution</h3>
-                    <div class="relative" style="height: 300px;">
-                        <canvas id="municipalityDistributionChart"></canvas>
+                <div v-for="(chart, name) in chartConfig"
+                     :key="name"
+                     class="bg-white p-4 rounded shadow">
+                    <h3 class="text-lg font-semibold">{{ name }}</h3>
+                    <div class="relative min-h-[300px]">
+                        <div v-if="chartsLoading"
+                             class="absolute inset-0 flex items-center justify-center">
+                            <div class="loading-spinner-large"></div>
+                        </div>
+                        <div v-else-if="!hasDataForChart(name)"
+                             class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-gray-500 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p>No data available</p>
+                                <p class="text-sm">Try adjusting your filters</p>
+                            </div>
+                        </div>
+                        <canvas v-show="!chartsLoading && hasDataForChart(name)"
+                               :id="chart.id"
+                               class="w-full h-full">
+                        </canvas>
                     </div>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold">Condition Frequency</h3>
-                    <canvas id="conditionFrequencyChart"></canvas>
                 </div>
             </div>
         </div>
@@ -848,5 +848,17 @@ canvas {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Add larger loading spinner style */
+.loading-spinner-large {
+    display: inline-block;
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #4f46e5;
+    animation: spin 1s ease-in-out infinite;
+}
+
 </style>
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Municipality;
 use App\Models\Sighting;
 use App\Models\StrandedIncident;
 use Illuminate\Http\Request;
@@ -16,7 +17,9 @@ class GenerateReportController extends Controller
 
     public function summaryReportIndex()
     {
-        return Inertia::render('generate-report/summary-report/index');
+        return Inertia::render('generate-report/summary-report/index', [
+            'municipalities' => Municipality::all(),
+        ]);
     }
 
     public function preprocesseddata(){
