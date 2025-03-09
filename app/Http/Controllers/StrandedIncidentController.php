@@ -480,11 +480,20 @@ class StrandedIncidentController extends Controller
     {
         $strandedIncident = StrandedIncident::findOrFail($id);
 
+        // Check if there are any active stranded species forms
+        $hasActiveSpeciesForms = $strandedIncident->strandedSpecies()
+            ->where('is_active', true)
+            ->exists();
+
+        if (!$hasActiveSpeciesForms) {
+            return back()->withErrors([
+                'species_forms' => 'Cannot mark as complete. At least one detailed species form is required.'
+            ]);
+        }
+
         if ($strandedIncident->report_status === 'verified') {
             $strandedIncident->update(['report_status' => 'completed']);
-
             $this->createNotification($strandedIncident, 'completed');
-
             return redirect()->route('stranded.incident.view', $id)
                 ->with('success', 'You have successfuly marked a stranded incident as complete.');
         } else {
@@ -495,6 +504,17 @@ class StrandedIncidentController extends Controller
     public function resolve($id)
     {
         $strandedIncident = StrandedIncident::findOrFail($id);
+
+        // Check if there are any active stranded species forms
+        $hasActiveSpeciesForms = $strandedIncident->strandedSpecies()
+            ->where('is_active', true)
+            ->exists();
+
+        if (!$hasActiveSpeciesForms) {
+            return back()->withErrors([
+                'species_forms' => 'Cannot mark as resolved. At least one detailed species form is required.'
+            ]);
+        }
 
         if ($strandedIncident->report_status === 'completed') {
             $strandedIncident->update(['report_status' => 'resolved']);

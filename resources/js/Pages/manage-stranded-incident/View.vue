@@ -211,13 +211,19 @@ const handleRespondAction = (response) => {
 
 // completed button
 const completeButtonStatus = computed(() => {
+    const hasActiveSpecies = activeStrandedSpecies.value.length > 0;
     return props.strandedIncident.report_status === 'verified' &&
-           (isBpemoAdmin.value || isBpemoStaff.value || isLguResponder.value);
+           (isBpemoAdmin.value || isBpemoStaff.value || isLguResponder.value) &&
+           hasActiveSpecies;
 });
 
 const completeModalVisible = ref(false);
 
 const showCompleteModal = () => {
+    if (activeStrandedSpecies.value.length === 0) {
+        errors.value.species_forms = 'Cannot mark as complete. At least one detailed species form is required.';
+        return;
+    }
     completeModalVisible.value = true;
 };
 
@@ -243,13 +249,19 @@ const handleCompleteAction = (response) => {
 
 // resolved button
 const resolveButtonStatus = computed(() => {
+    const hasActiveSpecies = activeStrandedSpecies.value.length > 0;
     return props.strandedIncident.report_status === 'completed' &&
-           (isBpemoAdmin.value || isBpemoStaff.value);
+           (isBpemoAdmin.value || isBpemoStaff.value) &&
+           hasActiveSpecies;
 });
 
 const resolveModalVisible = ref(false);
 
 const showResolveModal = () => {
+    if (activeStrandedSpecies.value.length === 0) {
+        errors.value.species_forms = 'Cannot mark as resolved. At least one detailed species form is required.';
+        return;
+    }
     resolveModalVisible.value = true;
 };
 
@@ -470,6 +482,9 @@ const initializeMap = () => {
 
     marker.value = L.marker([props.strandedIncident.latitude, props.strandedIncident.longitude]).addTo(map.value);
 };
+
+// Add error state
+const errors = ref({});
 </script>
 
 <template>
@@ -664,6 +679,44 @@ const initializeMap = () => {
             </div>
 
             <div class="space-y-8">
+                <!-- Role-specific warnings -->
+                <div v-if="((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
+                            (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff))) &&
+                            !activeStrandedSpecies.length"
+                     class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4 rounded">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                Please complete at least one detailed species form to mark this incident as
+                                {{ props.strandedIncident.report_status === 'verified' ? 'complete' : 'resolved' }}.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else-if="((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
+                                 (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff))) &&
+                                 activeStrandedSpecies.length > 0"
+                     class="bg-green-50 border-l-4 border-green-400 p-4 mb-4 rounded">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-green-700">
+                                You can now mark this incident as {{ props.strandedIncident.report_status === 'verified' ? 'complete' : 'resolved' }}.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Main details card -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition-shadow">
@@ -792,6 +845,27 @@ const initializeMap = () => {
                 </div>
                 <!--Detailed Species Form section -->
                 <div v-if="isBpemoAdmin || isBpemoStaff || isLguResponder" class="bg-white shadow-lg rounded-xl p-6 relative z-10">
+                    <div v-if="errors.species_forms &&
+                               ((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
+                                (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff)))"
+                         class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded"
+                         role="alert">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    {{ errors.species_forms }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+
+
                     <div class="flex justify-between">
                         <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-10" viewBox="0 0 20 20" fill="currentColor">
