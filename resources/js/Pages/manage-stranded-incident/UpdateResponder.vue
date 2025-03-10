@@ -9,7 +9,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 const page = usePage();
 
@@ -154,20 +154,19 @@ const setLocationFromMap = async () => {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
-
-                // Only check if coordinates match current form values
-                if (isSameLocation(latitude, longitude, form.latitude, form.longitude)) {
-                    alert("You're already using these coordinates!");
-                    return;
-                }
+                locationSource.value = 'manual'; // Changed from 'gps' to 'manual'
 
                 form.latitude = latitude;
                 form.longitude = longitude;
-                locationSource.value = 'gps';
                 showMap.value = true;
 
                 await nextTick();
-                initializeMap();
+                if (!map.value) {
+                    await initializeMap();
+                } else {
+                    map.value.setView([latitude, longitude], 13);
+                    marker.value.setLatLng([latitude, longitude]);
+                }
                 await reverseGeocode(latitude, longitude);
             },
             () => {
@@ -467,6 +466,81 @@ const filteredBarangays = computed(() => {
   );
 });
 
+// Add geocodeLocation function before the watchers
+const geocodeLocation = async (municipality, barangay) => {
+    try {
+        const query = `${barangay ? barangay + ', ' : ''}${municipality}, Bohol, Philippines`;
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const { lat, lon } = data[0];
+            form.latitude = parseFloat(lat);
+            form.longitude = parseFloat(lon);
+            form.detailed_location = data[0].display_name || '';
+
+            cleanupMap();
+            showMap.value = true;
+
+            await nextTick();
+            await initializeMap();
+        } else {
+            showMap.value = false;
+            form.latitude = '';
+            form.longitude = '';
+            form.detailed_location = '';
+            cleanupMap();
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        showMap.value = false;
+        form.latitude = '';
+        form.longitude = '';
+        form.detailed_location = '';
+        cleanupMap();
+    }
+};
+
+// Update the watch section for municipality and barangay
+watch([() => form.municipality_id, () => form.barangay_id],
+    async ([newMunicipality, newBarangay]) => {
+        if (newMunicipality) {
+            const municipality = props.municipalities.find(m => m.id === newMunicipality);
+            const barangay = newBarangay ? props.barangays.find(b => b.id === newBarangay) : null;
+
+            if (municipality) {
+                locationSource.value = 'manual';
+                await geocodeLocation(municipality.name, barangay?.name);
+            } else {
+                showMap.value = false;
+                form.latitude = '';
+                form.longitude = '';
+                form.detailed_location = '';
+                cleanupMap();
+            }
+        } else {
+            showMap.value = false;
+            form.latitude = '';
+            form.longitude = '';
+            form.detailed_location = '';
+            cleanupMap();
+        }
+    },
+    { immediate: false }
+);
+
+// Add watch for map visibility
+watch(showMap, async (newValue) => {
+    if (!newValue) {
+        cleanupMap();
+    } else {
+        await nextTick();
+        if (form.latitude && form.longitude) {
+            await initializeMap();
+        }
+    }
+});
+
 </script>
 
 <template>
@@ -619,7 +693,6 @@ const filteredBarangays = computed(() => {
                             id="municipality_id"
                             name="municipality_id"
                             v-model="form.municipality_id"
-                            @change="fetchBarangays(form.municipality_id)"
                             class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             :class="{ 'border-red-500': form.errors.municipality_id }"
                             required
