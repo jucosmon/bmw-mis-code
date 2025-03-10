@@ -56,52 +56,146 @@ const submit = () => {
 const map = ref(null);
 const marker = ref(null);
 
-// Initialize Leaflet map
+// Map state controls
+const showMap = ref(false);
+
+const originalCoordinates = {
+    latitude: props.strandedIncident.latitude,
+    longitude: props.strandedIncident.longitude
+};
+
+// Initialize map function
+const initializeMap = () => {
+    if (!showMap.value || !form.latitude || !form.longitude) return;
+
+    try {
+        if (map.value) {
+            map.value.remove();
+            map.value = null;
+        }
+
+        map.value = L.map('map').setView([form.latitude, form.longitude], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map.value);
+
+        if (marker.value) {
+            marker.value.remove();
+        }
+
+        marker.value = L.marker([form.latitude, form.longitude], {
+            draggable: true
+        }).addTo(map.value);
+
+        marker.value.on('dragend', (e) => {
+            const { lat, lng } = e.target.getLatLng();
+            form.latitude = lat;
+            form.longitude = lng;
+        });
+
+        // Force a map refresh
+        map.value.invalidateSize();
+    } catch (error) {
+        console.error('Error initializing map:', error);
+    }
+};
+
+// Modified map initialization
 onMounted(() => {
-  nextTick(() => {
-    console.log('Form object:', form); // Debugging line
-    map.value = L.map('map').setView([form.latitude, form.longitude], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map.value);
-
-    marker.value = L.marker([form.latitude, form.longitude], {
-      draggable: true,
-    }).addTo(map.value);
-
-    marker.value.on('dragend', (e) => {
-      const { lat, lng } = e.target.getLatLng();
-      form.latitude = lat;
-      form.longitude = lng;
-    });
-  });
+    // Check if we have valid coordinates
+    if (form.latitude && form.longitude) {
+        showMap.value = true;
+        nextTick(() => {
+            initializeMap();
+        });
+    }
 });
 
+// Show map handler
+const handleShowMap = async () => {
+    if (!form.latitude || !form.longitude) {
+        alert('No coordinates available to show on map');
+        return;
+    }
 
-// Use current location
-const setLocationFromMap = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-
-        // Update the form's latitude and longitude
-        form.latitude = latitude; // No .value needed
-        form.longitude = longitude; // No .value needed
-
-        // Update the map view and marker position
-        map.value.setView([latitude, longitude], 13);
-        marker.value.setLatLng([latitude, longitude]);
-      },
-      () => {
-        alert('Failed to fetch current location. Please allow location access.');
-      }
-    );
-  } else {
-    alert('Geolocation is not supported by your browser.');
-  }
+    showMap.value = true;
+    await nextTick();
+    setTimeout(() => {
+        if (map.value) {
+            map.value.remove();
+            map.value = null;
+        }
+        initializeMap();
+        if (map.value) {
+            map.value.invalidateSize();
+        }
+    }, 100);
 };
+
+// Remove map handler
+const handleRemoveMap = () => {
+    showMap.value = false;
+    form.latitude = null;
+    form.longitude = null;
+
+    if (map.value) {
+        map.value.remove();
+        map.value = null;
+    }
+    if (marker.value) {
+        marker.value.remove();
+        marker.value = null;
+    }
+};
+
+// Modified setLocationFromMap
+const setLocationFromMap = () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                form.latitude = latitude;
+                form.longitude = longitude;
+                showMap.value = true;
+                nextTick(() => {
+                    initializeMap();
+                });
+            },
+            () => {
+                alert('Failed to fetch current location. Please allow location access.');
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser.');
+    }
+};
+
+const handleResetCoordinates = () => {
+    if (originalCoordinates.latitude && originalCoordinates.longitude) {
+        form.latitude = originalCoordinates.latitude;
+        form.longitude = originalCoordinates.longitude;
+        showMap.value = true;
+        nextTick(() => {
+            initializeMap();
+        });
+    } else {
+        handleRemoveMap();
+    }
+};
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+    if (map.value) {
+        map.value.remove();
+        map.value = null;
+    }
+    if (marker.value) {
+        marker.value.remove();
+        marker.value = null;
+    }
+    document.removeEventListener('click', closeDropdown);
+});
 
 // Search and Select for species
 const search = ref('');
@@ -246,21 +340,54 @@ onBeforeUnmount(() => {
               <InputError class="mt-2" :message="form.errors.is_released" />
             </div>
             <!--Map-->
-            <div class="mt-4 sm:col-span-2">
+            <div class="sm:col-span-2 flex justify-end gap-3">
                 <button
+                    type="button"
                     @click.prevent="setLocationFromMap"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm w-full"
+                    class="px-3 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-lg"
                 >
-                    Use Current Location
+                    <span class="material-icons material-symbols-outlined">
+                        my_location
+                    </span>
                 </button>
-                <p class="text-sm text-gray-600 mt-2">
-                    Latitude: {{ form.latitude || 'Not Set' }}, Longitude: {{ form.longitude || 'Not Set' }}
-                </p>
-                <div
-                    id="map"
-                    style="height: 400px; width: 100%; margin-top: 10px;"
-                    class="rounded-lg border shadow z-0"
-                ></div>
+                <button
+                    type="button"
+                    @click="handleResetCoordinates"
+                    class="px-3 py-2 bg-white text-yellow-600 rounded-lg hover:bg-yellow-50 transition-colors shadow-lg"
+                >
+                    <span class="material-icons material-symbols-outlined">
+                        restart_alt
+                    </span>
+                </button>
+            </div>
+            <div class="mt-4 sm:col-span-2">
+                <div v-if="!showMap" class="text-center py-4 bg-gray-100 rounded-lg">
+                    No GPS coordinates available
+                </div>
+
+                <template v-else>
+                    <div class="relative rounded-xl overflow-hidden shadow-lg">
+                        <div id="map" class="h-[400px] w-full z-0"></div>
+                        <!-- Map Controls -->
+                        <div class="absolute top-4 right-4 z-10 flex space-x-2">
+                            <button
+                                type="button"
+                                @click="handleRemoveMap"
+                                class="px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
+                            >
+                                <span class="material-icons material-symbols-outlined">
+                                    location_off
+                                </span>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
+                            <p class="text-sm font-medium text-gray-700">
+                                Latitude: {{ form.latitude || 'Not Set' }}<br>
+                                Longitude: {{ form.longitude || 'Not Set' }}
+                            </p>
+                        </div>
+                    </div>
+                </template>
             </div>
 
             <div class="sm:col-span-2">
