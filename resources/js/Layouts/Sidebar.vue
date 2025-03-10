@@ -350,7 +350,8 @@ const closeSidebar = () => {
 const handleClickOutside = (event) => {
   if (state.sidebarOpen &&
       !event.target.closest('.sidebar') &&
-      !event.target.closest('.hamburger-btn')) {
+      !event.target.closest('.hamburger-btn') &&
+      !event.target.closest('.dropdown-container')) {
     closeSidebar();
   }
 };
@@ -430,13 +431,14 @@ const handleToastClick = (toast) => {
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden">
-    <!-- Sidebar -->
+  <!-- Change the root div to have a relative position -->
+  <div class="relative flex h-screen overflow-hidden">
+    <!-- Update sidebar classes -->
     <div
-      class="sidebar flex flex-col flex-shrink-0 text-indigo-700 bg-white dark:text-indigo-200 dark:bg-indigo-900 h-screen fixed md:sticky top-0 transition-all duration-300 overflow-hidden"
+      class="sidebar flex flex-col flex-shrink-0 text-indigo-700 bg-white dark:text-indigo-200 dark:bg-indigo-900 h-screen fixed md:relative top-0 transition-all duration-300 z-40"
       :class="{
-        'w-64 opacity-100 visible': state.sidebarOpen,
-        'w-0 opacity-0 invisible': !state.sidebarOpen
+        'w-64': state.sidebarOpen,
+        'w-0': !state.sidebarOpen
       }"
     >
       <!-- Sidebar header with close button -->
@@ -686,7 +688,7 @@ const handleToastClick = (toast) => {
     </div>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-h-screen w-full">
+    <div class="flex-1 flex flex-col min-h-screen w-full relative">
       <!-- Header with hamburger button -->
       <header class="sticky top-0 bg-white shadow-md z-30">
         <div class="mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
@@ -749,50 +751,74 @@ const handleToastClick = (toast) => {
         </div>
       </header>
 
-      <main class="flex-1 overflow-y-auto">
+      <!-- Update main content area -->
+      <main class="flex-1 overflow-y-auto relative">
         <slot />
-        <Modal v-if="isFalseNotificationModalOpen" :show="isFalseNotificationModalOpen" @close="closeFalseNotificationModal" class="fixed inset-0 z-50 flex items-center justify-center">
-              <div class="p-6 bg-white rounded shadow-lg">
-                  <h2 class="text-lg font-semibold text-slate-800">
-                      Notification Details
-                  </h2>
-                  <p>{{ modalContent }}</p>
-                  <div class="mt-6 space-x-4 flex justify-end">
-                      <PrimaryButton @click="closeFalseNotificationModal">Ok</PrimaryButton>
+
+        <!-- Move modals and toasts outside the main scrollable area -->
+        <Modal v-if="isFalseNotificationModalOpen"
+               :show="isFalseNotificationModalOpen"
+               @close="closeFalseNotificationModal"
+               class="fixed inset-0 z-50">
+          <div class="p-6 bg-white rounded shadow-lg">
+            <h2 class="text-lg font-semibold text-slate-800">
+              Notification Details
+            </h2>
+            <p>{{ modalContent }}</p>
+            <div class="mt-6 space-x-4 flex justify-end">
+              <PrimaryButton @click="closeFalseNotificationModal">Ok</PrimaryButton>
+            </div>
+          </div>
+        </Modal>
+
+        <!-- Update toast container positioning -->
+        <div class="fixed top-4 right-4 z-40 space-y-2 max-w-md w-full pointer-events-none">
+          <transition-group name="toast">
+            <div v-for="toast in toasts" :key="toast.id"
+              v-show="toast.show"
+              class="toast-notification pointer-events-auto"
+              :class="{
+                'bg-blue-50 border-l-4 border-blue-500': toast.type === 'stranding',
+                'bg-green-50 border-l-4 border-green-500': toast.type === 'sighting',
+                'bg-yellow-50 border-l-4 border-yellow-500': toast.type === 'warning'
+              }"
+              @click="handleToastClick(toast)"
+            >
+              <div class="p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3 flex-grow">
+                  <div class="flex-shrink-0">
+                    <span class="material-icons text-xl"
+                      :class="{
+                        'text-blue-600': toast.type === 'stranding',
+                        'text-green-600': toast.type === 'sighting',
+                        'text-yellow-600': toast.type === 'warning'
+                      }">
+                      {{ toast.type === 'stranding' ? 'warning' :
+                         toast.type === 'sighting' ? 'visibility' : 'info' }}
+                    </span>
                   </div>
-              </div>
-          </Modal>
-          <!-- Add Toast Container -->
-          <div class="fixed top-4 right-4 z-50 space-y-2 max-w-md w-full">
-            <transition-group name="toast">
-              <div v-for="toast in toasts" :key="toast.id"
-                v-show="toast.show"
-                class="toast-notification bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 mb-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                :class="{
-                  'border-l-4 border-blue-500': toast.type === 'stranding',
-                  'border-l-4 border-green-500': toast.type === 'sighting',
-                  'border-l-4 border-yellow-500': toast.type === 'warning',
-                }"
-                @click="handleToastClick(toast)"
-              >
-                <div class="flex items-center flex-1">
-                  <span class="material-icons mr-2" :class="{
-                    'text-blue-500': toast.type === 'stranding',
-                    'text-green-500': toast.type === 'sighting',
-                    'text-yellow-500': toast.type === 'warning',
-                  }">
-                    {{ toast.type === 'stranding' ? 'warning' :
-                       toast.type === 'sighting' ? 'visibility' : 'info' }}
-                  </span>
-                  <p class="text-sm text-gray-800 dark:text-gray-200">{{ toast.content }}</p>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold mb-1"
+                      :class="{
+                        'text-blue-800': toast.type === 'stranding',
+                        'text-green-800': toast.type === 'sighting',
+                        'text-yellow-800': toast.type === 'warning'
+                      }">
+                      {{ toast.type.charAt(0).toUpperCase() + toast.type.slice(1) }} Notification
+                    </p>
+                    <p class="text-sm text-gray-700 line-clamp-2">
+                      {{ toast.content }}
+                    </p>
+                  </div>
                 </div>
                 <button @click.stop="toast.show = false"
-                        class="ml-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600">
+                        class="flex-shrink-0 ml-4 text-gray-500 hover:text-gray-700 focus:outline-none">
                   <span class="material-icons text-sm">close</span>
                 </button>
               </div>
-            </transition-group>
-          </div>
+            </div>
+          </transition-group>
+        </div>
       </main>
     </div>
   </div>
@@ -939,5 +965,122 @@ const handleToastClick = (toast) => {
   .toast-notification {
     width: 400px;
   }
+}
+
+/* Update existing styles */
+.sidebar {
+  transition: all 0.3s ease-in-out;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Remove any invisible class handling that might interfere with clicking */
+.sidebar.w-0 {
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Ensure dropdowns are clickable */
+.dropdown-container {
+  position: absolute;
+  z-index: 60;
+  pointer-events: auto;
+}
+
+/* Update toast container styles */
+.toast-notification {
+  position: relative;
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+  max-width: calc(100vw - 2rem);
+  word-break: break-word;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+/* Ensure proper stacking context */
+.z-40 {
+  z-index: 40;
+}
+
+.z-30 {
+  z-index: 30;
+}
+
+/* Remove any conflicting pointer-events styles */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    pointer-events: auto;
+  }
+
+  .sidebar.w-0 {
+    pointer-events: none;
+  }
+}
+
+/* Update toast notification styles */
+.toast-notification {
+  width: 384px; /* w-96 equivalent */
+  transform-origin: top right;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.toast-notification:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Toast animations */
+.toast-enter-active {
+  animation: toast-in-right 0.3s ease-out forwards;
+}
+
+.toast-leave-active {
+  animation: toast-out-right 0.3s ease-in forwards;
+}
+
+@keyframes toast-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Responsive toast width */
+@media (max-width: 640px) {
+  .toast-notification {
+    width: calc(100vw - 2rem);
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+}
+
+/* Add text truncation */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>
