@@ -49,96 +49,152 @@ const updatePassword = () => {
 </script>
 
 <template>
-    <section>
-        <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Update Password
-            </h2>
+    <section class="modal-wrapper">
+        <div class="password-update-container">
+            <header>
+                <h2 class="title-gradient mb-6">
+                    Update Password
+                </h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Ensure your account is using a long, random password to stay
-                secure.
-            </p>
-        </header>
+                <p class="text-sm text-gray-300 text-center">
+                    Ensure your account is using a long, random password to stay secure.
+                </p>
+            </header>
 
-        <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
-            <div>
-                <InputLabel for="current_password" value="Current Password" />
+            <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
+                <div class="form-group">
+                    <InputLabel for="current_password" value="Current Password" class="text-white" />
+                    <TextInput
+                        id="current_password"
+                        ref="currentPasswordInput"
+                        v-model="form.current_password"
+                        type="password"
+                        class="input-field"
+                        autocomplete="current-password"
+                    />
+                    <InputError :message="form.errors.current_password" class="mt-2" />
+                </div>
 
-                <TextInput
-                    id="current_password"
-                    ref="currentPasswordInput"
-                    v-model="form.current_password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    autocomplete="current-password"
-                />
+                <div class="form-group">
+                    <InputLabel for="password" value="New Password" class="text-white" />
+                    <TextInput
+                        id="password"
+                        ref="passwordInput"
+                        v-model="form.password"
+                        type="password"
+                        class="input-field"
+                        autocomplete="new-password"
+                    />
+                    <InputError :message="form.errors.password" class="mt-2" />
+                </div>
 
-                <InputError
-                    :message="form.errors.current_password"
-                    class="mt-2"
-                />
-            </div>
+                <div class="form-group">
+                    <InputLabel for="password_confirmation" value="Confirm Password" class="text-white" />
+                    <TextInput
+                        id="password_confirmation"
+                        v-model="form.password_confirmation"
+                        type="password"
+                        class="input-field"
+                        autocomplete="new-password"
+                    />
+                    <InputError :message="form.errors.password_confirmation" class="mt-2" />
+                </div>
 
-            <div>
-                <InputLabel for="password" value="New Password" />
-
-                <TextInput
-                    id="password"
-                    ref="passwordInput"
-                    v-model="form.password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                />
-
-                <InputError :message="form.errors.password" class="mt-2" />
-            </div>
-
-            <div>
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    v-model="form.password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    :message="form.errors.password_confirmation"
-                    class="mt-2"
-                />
-            </div>
-
-            <div class="flex items-center justify-between gap-4">
-                <button
-                    type="button"
-                    class="text-sm text-gray-500 hover:text-gray-700 underline"
-                    @click="onCancel"
-                >
-                    Cancel
-                </button>
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
-
-                <Transition
-                    enter-active-class="transition ease-in-out"
-                    enter-from-class="opacity-0"
-                    leave-active-class="transition ease-in-out"
-                    leave-to-class="opacity-0"
-                >
-                    <p
-                        v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600"
+                <div class="flex items-center justify-between gap-4">
+                    <button
+                        type="button"
+                        class="text-sm text-gray-300 hover:text-white transition-colors duration-200"
+                        @click="onCancel"
                     >
-                        Saved.
-                    </p>
-                </Transition>
-            </div>
-        </form>
+                        Cancel
+                    </button>
+                    <PrimaryButton :disabled="form.processing" class="nav-button login-btn">
+                        Save
+                    </PrimaryButton>
+
+                    <Transition
+                        enter-active-class="transition ease-in-out"
+                        enter-from-class="opacity-0"
+                        leave-active-class="transition ease-in-out"
+                        leave-to-class="opacity-0"
+                    >
+                        <p v-if="form.recentlySuccessful" class="text-sm text-green-400">
+                            Saved.
+                        </p>
+                    </Transition>
+                </div>
+            </form>
+        </div>
     </section>
 </template>
+
+<style scoped>
+.modal-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    width: 100%;
+    padding: 1rem;
+}
+
+.password-update-container {
+    background: rgba(0, 95, 175, 0.25);
+    backdrop-filter: blur(12px);
+    padding: 2.5rem;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.title-gradient {
+    font-size: 2.2rem;
+    font-weight: 600;
+    text-align: center;
+    background: linear-gradient(to right, #ffffff, #0077be);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.5px;
+}
+
+.input-field {
+    @apply mt-2 block w-full rounded-xl border-0 shadow-sm;
+    background: rgba(0, 95, 175, 0.15);
+    backdrop-filter: blur(4px);
+    color: white;
+    padding: 0.75rem 1rem;
+    height: 2.75rem;
+    transition: all 0.3s ease;
+}
+
+.input-field:focus {
+    @apply ring-1 ring-blue-500;
+    background: rgba(0, 95, 175, 0.25);
+    transform: translateY(-1px);
+}
+
+.nav-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #005f9f, #0077be);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 119, 190, 0.3);
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 119, 190, 0.4);
+}
+</style>
