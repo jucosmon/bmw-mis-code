@@ -9,7 +9,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const page = usePage(); // Ensure page is initialized
 
@@ -261,37 +261,31 @@ onMounted(() => {
 });
 
 const initializeMap = async () => {
-    const defaultLat = form.latitude || originalLocation.value.latitude;
-    const defaultLng = form.longitude || originalLocation.value.longitude;
-
-    if (!defaultLat || !defaultLng) {
-        console.error('No valid coordinates available');
-        showMap.value = false;
-        return;
-    }
-
-    // Ensure cleanup before creating new map
-    cleanupMap();
-
-    // Wait for the DOM to be ready
-    await nextTick();
-
-    const mapElement = document.getElementById('map');
-    if (!mapElement) {
-        console.error('Map container not found');
-        return;
-    }
-
     try {
-        // Create map instance
-        map.value = L.map('map').setView([defaultLat, defaultLng], 13);
+        const defaultLat = form.latitude || originalLocation.value.latitude;
+        const defaultLng = form.longitude || originalLocation.value.longitude;
 
-        // Add tile layer
+        if (!defaultLat || !defaultLng) {
+            console.error('No valid coordinates available');
+            showMap.value = false;
+            return;
+        }
+
+        await nextTick();
+        const mapElement = document.getElementById('map');
+        if (!mapElement) {
+            console.error('Map container not found');
+            return;
+        }
+
+        // Always cleanup before creating new map
+        cleanupMap();
+
+        map.value = L.map('map').setView([defaultLat, defaultLng], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
         }).addTo(map.value);
 
-        // Add marker
         marker.value = L.marker([defaultLat, defaultLng], {
             draggable: true,
         }).addTo(map.value);
@@ -301,8 +295,9 @@ const initializeMap = async () => {
             const { lat, lng } = e.target.getLatLng();
             form.latitude = lat;
             form.longitude = lng;
-            locationSource.value = 'manual';
-            await reverseGeocode(lat, lng);
+            if (locationSource.value === 'gps') {
+                await reverseGeocode(lat, lng);
+            }
         });
 
         map.value.on('click', async (e) => {
@@ -310,11 +305,10 @@ const initializeMap = async () => {
             form.latitude = lat;
             form.longitude = lng;
             marker.value.setLatLng([lat, lng]);
-            locationSource.value = 'manual';
-            await reverseGeocode(lat, lng);
+            if (locationSource.value === 'gps') {
+                await reverseGeocode(lat, lng);
+            }
         });
-
-        showMap.value = true;
 
         // Ensure map is properly sized
         await nextTick();
@@ -339,6 +333,7 @@ const setLocationFromMap = async () => {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
+                locationSource.value = 'manual'; // Changed from 'gps' to 'manual'
 
                 if (isSameLocation(latitude, longitude, form.latitude, form.longitude)) {
                     alert("You're already using these coordinates!");
@@ -347,21 +342,15 @@ const setLocationFromMap = async () => {
 
                 form.latitude = latitude;
                 form.longitude = longitude;
-                locationSource.value = 'gps';
                 showMap.value = true;
 
-                // Wait for the DOM to update
                 await nextTick();
-
-                // Initialize map if needed
                 if (!map.value) {
-                    await nextTick();
                     await initializeMap();
                 } else {
                     map.value.setView([latitude, longitude], 13);
                     marker.value.setLatLng([latitude, longitude]);
                 }
-
                 await reverseGeocode(latitude, longitude);
             },
             () => {
@@ -394,6 +383,7 @@ const reverseGeocode = async (latitude, longitude) => {
 
             if (matchedMunicipality) {
                 form.municipality_id = matchedMunicipality.id;
+                locationSource.value = 'gps';
 
                 if (barangayName && filteredBarangays.value.length > 0) {
                     const matchedBarangay = filteredBarangays.value.find(b =>
@@ -461,9 +451,87 @@ const cleanupMap = () => {
     if (map.value) {
         map.value.remove();
         map.value = null;
+    }
+    if (marker.value) {
         marker.value = null;
     }
 };
+
+// Add new functions for geocoding
+const geocodeLocation = async (municipality, barangay) => {
+    try {
+        const query = `${barangay ? barangay + ', ' : ''}${municipality}, Bohol, Philippines`;
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const { lat, lon } = data[0];
+            form.latitude = parseFloat(lat);
+            form.longitude = parseFloat(lon);
+            form.detailed_location = data[0].display_name || '';
+
+            cleanupMap();
+            showMap.value = true;
+
+            await nextTick();
+            await initializeMap();
+        } else {
+            showMap.value = false;
+            form.latitude = '';
+            form.longitude = '';
+            form.detailed_location = '';
+            cleanupMap();
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        showMap.value = false;
+        form.latitude = '';
+        form.longitude = '';
+        form.detailed_location = '';
+        cleanupMap();
+    }
+};
+
+// Update watcher for municipality and barangay
+watch([() => form.municipality_id, () => form.barangay_id],
+    async ([newMunicipality, newBarangay]) => {
+        // Remove locationSource check to allow updates in all modes
+        if (newMunicipality) {
+            const municipality = props.municipalities.find(m => m.id === newMunicipality);
+            const barangay = newBarangay ? props.barangays.find(b => b.id === newBarangay) : null;
+
+            if (municipality) {
+                locationSource.value = 'manual';
+                await geocodeLocation(municipality.name, barangay?.name);
+            } else {
+                showMap.value = false;
+                form.latitude = '';
+                form.longitude = '';
+                form.detailed_location = '';
+                cleanupMap();
+            }
+        } else {
+            showMap.value = false;
+            form.latitude = '';
+            form.longitude = '';
+            form.detailed_location = '';
+            cleanupMap();
+        }
+    },
+    { immediate: false }
+);
+
+// Update watchers
+watch(showMap, async (newValue) => {
+    if (!newValue) {
+        cleanupMap();
+    } else {
+        await nextTick();
+        if (form.latitude && form.longitude) {
+            await initializeMap();
+        }
+    }
+});
 
 const buttonStatus = computed(() => {
     return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') &&
