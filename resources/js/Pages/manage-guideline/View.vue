@@ -99,80 +99,65 @@ const updateButton = () => {
             </div>
         </template>
 
-        <div class="max-w-4xl mx-auto p-6">
-            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded">
-                <strong>Success! </strong> {{ props?.success }}
+        <div class="relative min-h-screen">
+            <!-- Background image with oceanic overlay -->
+            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" style="background-image: url('/images/landing.jpg');">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
             </div>
-            <div class="space-x-2 flex mt-4 justify-end items-end">
-                <DangerButton v-if="props.guideline.is_active" @click="showArchiveModal()">Archive</DangerButton>
-                <DangerButton v-else @click="showArchiveModal()">Unarchive</DangerButton>
-                <Modal :show="archiveModal" @close="closeArchiveModal">
-                        <div class="p-6">
-                            <h2 class="text-lg font-semibold text-slate-800">
-                                {{ props.guideline.is_active ? 'Are you sure you want to archive this guideline?' : 'Are you sure you want to unarchive this guideline?' }}
-                            </h2>
-
-                            <!-- Password Input -->
-                            <div class="mt-4">
-                                <label for="admin-password" class="text-sm text-gray-500 mt-2">
-                                    Please confirm by entering your password
-                                </label>
-                                <input
-                                    type="password"
-                                    id="admin-password"
-                                    v-model="form.password"
-                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                    placeholder="Enter your password"
-                                />
-                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
-                                    {{ form.errors.password }}
-                                </p>
-                            </div>
-                            <!-- Actions -->
-                            <div class="mt-6 space-x-4 flex justify-end">
-                                <SecondaryButton @click="closeArchiveModal">Cancel</SecondaryButton>
-                                <DangerButton @click="archive()">Confirm</DangerButton>
-                            </div>
-                        </div>
-                    </Modal>
-                <PrimaryButton v-if="props.guideline.is_active" @click="updateButton">Update</PrimaryButton>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-lg mb-6 ">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ props.guideline.title }}</h1>
-                    <p class="text-gray-600 mt-2">{{ props.guideline.description }}</p>
-                    <div class="text-sm text-gray-500 mt-2 ">
-                        <span class="mr-4">Category: {{ props.guideline.category }}</span>
-                        <span> User Role: {{ props.guideline.user_role }}</span>
-                    </div>
-                    <p class="mt-2 text-sm font-semibold" :class="{'text-green-600': props.guideline.is_active, 'text-red-600': !props.guideline.is_active}">
-                        {{ props.guideline.is_active ? 'Active' : 'Inactive' }}
-                    </p>
+            
+            <!-- Content overlay -->
+            <div class="relative z-10 max-w-4xl mx-auto p-6">
+                <div v-if="props?.success" class="bg-blue-100/80 border border-blue-400 text-blue-700 px-4 py-3 mb-4 rounded backdrop-blur-sm">
+                    <strong>Success! </strong> {{ props?.success }}
+                </div>
+                <div class="space-x-2 flex mt-4 justify-end items-end">
+                    <DangerButton v-if="props.guideline.is_active" 
+                        class="action-button-gradient danger" 
+                        @click="showArchiveModal()">Archive</DangerButton>
+                    <DangerButton v-else 
+                        class="action-button-gradient danger" 
+                        @click="showArchiveModal()">Unarchive</DangerButton>
+                    <PrimaryButton v-if="props.guideline.is_active" 
+                        class="action-button-gradient primary" 
+                        @click="updateButton">Update</PrimaryButton>
                 </div>
 
-            </div>
-
-            <div class="mt-6">
-                <h2 class="text-xl font-bold text-gray-800">Guidelines</h2>
-                <div v-for="(item, index) in sortedItems" :key="item.id" class="bg-gray-50 p-4 rounded-lg shadow-sm mt-4">
-                    <h3 class="text-lg font-semibold">• {{ item.text }}</h3>
-                    <div v-if="item.mediaFiles.length > 0" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div v-for="mediaFile in item.mediaFiles" :key="mediaFile.id" class="cursor-pointer" @click="openFileModal(mediaFile)">
-                            <template v-if="mediaFile.type.startsWith('image/')">
-                                <img :src="`/storage/${mediaFile.path}`" alt="Media" class="w-full h-32 object-cover rounded-lg shadow-md" />
-                            </template>
-                            <template v-else>
-                                <div class="flex items-center justify-center h-32 bg-gray-200 rounded-lg shadow-md">
-                                    <span class="text-gray-600">{{ mediaFile.type.includes('video') ? '🎥 Video' : '📄 Document' }}</span>
-                                </div>
-                            </template>
+                <!-- Main info container -->
+                <div class="bg-blue-900/30 backdrop-blur-sm p-6 rounded-lg shadow-lg mb-6 text-white">
+                    <div>
+                        <h1 class="text-2xl font-bold font-poppins tracking-tight">{{ props.guideline.title }}</h1>
+                        <p class="text-blue-50 mt-2 font-inter">{{ props.guideline.description }}</p>
+                        <div class="text-sm text-blue-100 mt-2 font-inter">
+                            <span class="mr-4">Category: {{ props.guideline.category }}</span>
+                            <span> User Role: {{ props.guideline.user_role }}</span>
                         </div>
+                        <p class="mt-2 text-sm font-semibold" :class="{'text-green-400': props.guideline.is_active, 'text-red-400': !props.guideline.is_active}">
+                            {{ props.guideline.is_active ? 'Active' : 'Inactive' }}
+                        </p>
                     </div>
-                    <p v-else class="text-gray-500 mt-2">No media files available.</p>
+                </div>
+
+                <div class="mt-6">
+                    <h2 class="text-xl font-bold text-white mb-4 font-poppins tracking-tight">Guidelines</h2>
+                    <div v-for="(item, index) in sortedItems" :key="item.id" 
+                         class="bg-blue-900/30 backdrop-blur-sm p-4 rounded-lg shadow-lg mt-4 text-white hover:bg-blue-800/40 transition-all">
+                        <h3 class="text-lg font-semibold text-blue-50 font-inter">• {{ item.text }}</h3>
+                        <div v-if="item.mediaFiles.length > 0" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div v-for="mediaFile in item.mediaFiles" :key="mediaFile.id" class="cursor-pointer" @click="openFileModal(mediaFile)">
+                                <template v-if="mediaFile.type.startsWith('image/')">
+                                    <img :src="`/storage/${mediaFile.path}`" alt="Media" class="w-full h-32 object-cover rounded-lg shadow-md" />
+                                </template>
+                                <template v-else>
+                                    <div class="flex items-center justify-center h-32 bg-gray-200 rounded-lg shadow-md">
+                                        <span class="text-gray-600">{{ mediaFile.type.includes('video') ? '🎥 Video' : '📄 Document' }}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <p v-else class="text-blue-200 mt-2">No media files available.</p>
+                    </div>
                 </div>
             </div>
-
         </div>
 
         <Modal :show="showFileModal" @close="closeFileModal">
@@ -203,5 +188,109 @@ const updateButton = () => {
     .grid-cols-2 {
         grid-template-columns: 1fr !important;
     }
+}
+
+/* Oceanic Theme */
+.bg-gradient-overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 51, 102, 0.9) 0%,
+        rgba(0, 64, 128, 0.8) 50%,
+        rgba(0, 31, 63, 0.9) 100%
+    );
+}
+
+.backdrop-blur-sm {
+    backdrop-filter: blur(6px);
+}
+
+/* Add container hover effect */
+.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.shadow-lg:hover {
+    box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Button Gradients */
+.gradient-primary {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+}
+
+.gradient-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+}
+
+/* Font styles */
+.font-poppins {
+    font-family: 'Poppins', sans-serif;
+}
+
+.font-inter {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Button Gradients */
+.action-button-gradient {
+    @apply px-6 py-3 rounded-lg flex items-center transition-all duration-300 text-base;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 500;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.action-button-gradient.primary {
+    background: linear-gradient(135deg, #4f46e5, #3730a3) !important;
+    font-size: 1rem;
+}
+
+.action-button-gradient.danger {
+    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+    font-size: 1rem;
+}
+
+/* Updated Button Styles */
+button {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 51, 102, 0.9) 0%,
+        rgba(0, 64, 128, 0.8) 100%
+    ) !important;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 0.5rem 1.5rem;
+}
+
+button:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 64, 128, 0.95) 0%,
+        rgba(0, 51, 102, 0.85) 100%
+    ) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.2);
 }
 </style>
