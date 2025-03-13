@@ -3,7 +3,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -246,7 +246,7 @@ const disableUser = ()=> {
                     </div>
 
                     <!-- Actions -->
-                    <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-4">
+                    <div v-if="props.user.user_role!=='bpemo_admin'" class="px-6 py-4 bg-gray-50 flex justify-end space-x-4">
                         <button
                             v-if="props.user.is_active===true"
                             class="px-4 py-2 bg-red-gradient text-white rounded-lg hover:bg-red-700 transition duration-200 flex items-center group"
@@ -265,7 +265,7 @@ const disableUser = ()=> {
                         </button>
                         <button
                             class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center group"
-                            @click="updateUser"
+                            @click="updateUser()"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">edit</span>
                             Update Account
