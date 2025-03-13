@@ -12,6 +12,51 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
+// First, modify your roleConfig to add debugging
+const roleConfig = computed(() => {
+  const config = {
+    // Determine if user can see specific sections
+    canViewTotalUsers: ['bpemo_admin'].includes(user.value.user_role),
+    canViewAllData: ['bpemo_admin', 'bpemo_staff'].includes(user.value.user_role),
+    // Set filter parameters based on role
+    locationFilter: getLocationFilter(),
+  };
+
+  // Debug logging
+  console.log('User role:', user.value.user_role);
+  console.log('Role config:', config);
+
+  return config;
+});
+
+// Helper function to determine location filters based on user role
+function getLocationFilter() {
+  if (['bpemo_admin', 'bpemo_staff'].includes(user.value.user_role)) {
+    console.log('Admin/Staff role detected - no location filter');
+    return {}; // No location filter for BPEMO roles - they see everything
+  } else if (user.value.user_role === 'barangay_official' && user.value.barangay_id) {
+    console.log('Barangay official detected - filtering by barangay:', user.value.barangay_id);
+    return { barangay_id: user.value.barangay_id }; // Filter by user's barangay
+  } else if (user.value.user_role === 'lgu_responder' && user.value.municipality_id) {
+    console.log('LGU responder detected - filtering by municipality:', user.value.municipality_id);
+    return { municipality_id: user.value.municipality_id }; // Filter by user's municipality
+  }
+  console.log('No specific role filter applied');
+  return {}; // Default case
+}
+
+
+// Role-based titles and descriptions
+const dashboardTitle = computed(() => {
+  switch(user.value.user_role) {
+    case 'bpemo_admin': return 'BPEMO Admin Dashboard';
+    case 'bpemo_staff': return 'BPEMO Staff Dashboard';
+    case 'barangay_official': return 'Barangay Management Dashboard';
+    case 'lgu_responder': return 'LGU Response Dashboard';
+    default: return 'Marine Wildlife Monitoring Dashboard';
+  }
+});
+
 const map = ref(null);
 const markers = ref([]);
 
@@ -50,20 +95,44 @@ const currentPage = ref(1);
 const perPage = ref(10);
 const totalReports = ref(0);
 
-// Fetch all data
+// Modify your fetchData function to consistently apply location filters
 const fetchData = async () => {
-  // Fetch total users (just count, no role breakdown)
-  const { count: usersCount } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true });
+  console.log('Fetching data with role:', user.value.user_role);
 
-  stats.value.totalUsers = usersCount || 0;
+  // Apply role-based filters
+  const locationFilter = roleConfig.value.locationFilter;
+  console.log('Using location filter:', locationFilter);
 
+  // Only fetch user count if the role has permission
+  if (roleConfig.value.canViewTotalUsers) {
+    console.log('Fetching total users count');
+    const { count: usersCount } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+
+    stats.value.totalUsers = usersCount || 0;
+  } else {
+    console.log('Skipping total users count - no permission');
+  }
+
+  // Apply location filters to all queries consistently
   // Fetch stranding stats (count main records, not species)
-  const { data: strandings } = await supabase
+  let strandingQuery = supabase
     .from('stranded_incidents')
     .select('*')
     .eq('is_active', true);
+
+  // Apply location filters for role-restricted users
+  if (locationFilter.barangay_id) {
+    console.log('Applying barangay filter to stranding query:', locationFilter.barangay_id);
+    strandingQuery = strandingQuery.eq('barangay_id', locationFilter.barangay_id);
+  } else if (locationFilter.municipality_id) {
+    console.log('Applying municipality filter to stranding query:', locationFilter.municipality_id);
+    strandingQuery = strandingQuery.eq('municipality_id', locationFilter.municipality_id);
+  }
+
+  const { data: strandings } = await strandingQuery;
+  console.log('Fetched strandings:', strandings?.length);
 
   if (strandings) {
     // Count total unresolved (pending + verified)
@@ -78,27 +147,59 @@ const fetchData = async () => {
     };
   }
 
-  // Fetch pending sightings (count main records, not species)
-  const { data: pendingSightings } = await supabase
+  // Fetch pending sightings with location filters
+  let sightingsQuery = supabase
     .from('sightings')
     .select('*')
     .eq('is_active', true)
     .eq('report_status', 'pending');
 
+  // Apply location filters to sightings query
+  if (locationFilter.barangay_id) {
+    console.log('Applying barangay filter to sightings query:', locationFilter.barangay_id);
+    sightingsQuery = sightingsQuery.eq('barangay_id', locationFilter.barangay_id);
+  } else if (locationFilter.municipality_id) {
+    console.log('Applying municipality filter to sightings query:', locationFilter.municipality_id);
+    sightingsQuery = sightingsQuery.eq('municipality_id', locationFilter.municipality_id);
+  }
+
+  const { data: pendingSightings } = await sightingsQuery;
+  console.log('Fetched pending sightings:', pendingSightings?.length);
+
   stats.value.pendingSightings = pendingSightings?.length || 0;
 
-  // Fetch completed reports
-  const { data: completedStrandings } = await supabase
+  // Fetch completed reports with location filters
+  let completedStrandingsQuery = supabase
     .from('stranded_incidents')
     .select('*')
     .eq('is_active', true)
     .eq('report_status', 'resolved');
 
-  const { data: completedSightings } = await supabase
+  // Apply location filters to completed strandings
+  if (locationFilter.barangay_id) {
+    completedStrandingsQuery = completedStrandingsQuery.eq('barangay_id', locationFilter.barangay_id);
+  } else if (locationFilter.municipality_id) {
+    completedStrandingsQuery = completedStrandingsQuery.eq('municipality_id', locationFilter.municipality_id);
+  }
+
+  let completedSightingsQuery = supabase
     .from('sightings')
     .select('*')
     .eq('is_active', true)
     .eq('report_status', 'verified');
+
+  // Apply location filters to completed sightings
+  if (locationFilter.barangay_id) {
+    completedSightingsQuery = completedSightingsQuery.eq('barangay_id', locationFilter.barangay_id);
+  } else if (locationFilter.municipality_id) {
+    completedSightingsQuery = completedSightingsQuery.eq('municipality_id', locationFilter.municipality_id);
+  }
+
+  const { data: completedStrandings } = await completedStrandingsQuery;
+  const { data: completedSightings } = await completedSightingsQuery;
+
+  console.log('Fetched completed strandings:', completedStrandings?.length);
+  console.log('Fetched completed sightings:', completedSightings?.length);
 
   stats.value.completedReports = {
     total: (completedStrandings?.length || 0) + (completedSightings?.length || 0),
@@ -109,7 +210,7 @@ const fetchData = async () => {
   };
 
   // Fetch active reports for table and map with location details
-  const { data: activeStrandings } = await supabase
+  let activeStrandingsQuery = supabase
     .from('stranded_incidents')
     .select(`
       *,
@@ -123,7 +224,14 @@ const fetchData = async () => {
     .eq('is_active', true)
     .not('report_status', 'eq', 'resolved');
 
-  const { data: activeSightings } = await supabase
+  // Apply location filters to active strandings
+  if (locationFilter.barangay_id) {
+    activeStrandingsQuery = activeStrandingsQuery.eq('barangay_id', locationFilter.barangay_id);
+  } else if (locationFilter.municipality_id) {
+    activeStrandingsQuery = activeStrandingsQuery.eq('municipality_id', locationFilter.municipality_id);
+  }
+
+  let activeSightingsQuery = supabase
     .from('sightings')
     .select(`
       *,
@@ -136,6 +244,19 @@ const fetchData = async () => {
     `)
     .eq('is_active', true)
     .eq('report_status', 'pending');
+
+  // Apply location filters to active sightings
+  if (locationFilter.barangay_id) {
+    activeSightingsQuery = activeSightingsQuery.eq('barangay_id', locationFilter.barangay_id);
+  } else if (locationFilter.municipality_id) {
+    activeSightingsQuery = activeSightingsQuery.eq('municipality_id', locationFilter.municipality_id);
+  }
+
+  const { data: activeStrandings } = await activeStrandingsQuery;
+  const { data: activeSightings } = await activeSightingsQuery;
+
+  console.log('Fetched active strandings:', activeStrandings?.length);
+  console.log('Fetched active sightings:', activeSightings?.length);
 
   if (activeStrandings || activeSightings) {
     const processedStrandings = activeStrandings?.map(incident => ({
@@ -438,12 +559,12 @@ const getMarkerColor = (status) => {
 </script>
 
 <template>
-  <Head title="Dashboard" />
+  <Head :title="dashboardTitle" />
 
   <Sidebar>
     <template #header>
       <h2 class="text-xl font-semibold leading-tight text-gray-800">
-        Dashboard
+        {{ dashboardTitle }}
       </h2>
     </template>
 
@@ -468,9 +589,14 @@ const getMarkerColor = (status) => {
           </div>
 
           <!-- Stats Cards -->
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-            <!-- Total Users Card -->
-            <div class="glass-container">
+          <div
+            :class="[
+              'grid grid-cols-1 gap-5 sm:grid-cols-2 mb-6',
+              roleConfig.canViewTotalUsers ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+            ]"
+          >
+            <!-- Total Users Card - Only shown for BPEMO admin -->
+            <div v-if="roleConfig.canViewTotalUsers" class="glass-container">
               <div class="p-5">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
@@ -551,7 +677,11 @@ const getMarkerColor = (status) => {
             <!-- Map Section - Takes up 2/3 of the width on large screens -->
             <div class="glass-container lg:col-span-2">
               <div class="px-6 py-5 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Urgent Stranded Reports in Map</h3>
+                <h3 class="text-lg font-medium text-gray-900">
+                  {{ page.props.auth.user.user_role === 'barangay_official' ? 'Barangay Stranded Reports' :
+                     page.props.auth.user.user_role === 'lgu_responder' ? 'Municipal Stranded Reports' :
+                     'Urgent Stranded Reports in Map' }}
+                </h3>
               </div>
               <div class="p-6">
                 <!-- Map placeholder - In a real implementation, this would be replaced with a map component -->
