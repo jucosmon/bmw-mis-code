@@ -205,6 +205,14 @@ const submit = () => {
 <template>
   <Head title="Update Guideline" />
   <Sidebar>
+    <template #header>
+      <div>
+        <button class="oceanic-button">
+          <Link :href="backRoute" class="flex items-center">Back</Link>
+        </button>
+      </div>
+    </template>
+
     <div class="relative min-h-screen">
       <!-- Background image with oceanic overlay -->
       <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" style="background-image: url('/images/landing.jpg');">
@@ -213,21 +221,12 @@ const submit = () => {
 
       <!-- Main content -->
       <div class="relative z-10">
-        <!-- Header section -->
-        <div class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center">
-            <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-              <Link :href="backRoute" class="flex items-center">Back</Link>
-            </button>
-          </div>
-        </div>
-
         <!-- Form sections container -->
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <h2 class="text-3xl font-bold text-center text-gradient mb-6">Update Guideline</h2>
           
           <!-- Main Details Section -->
-          <div class="bg-white/70 backdrop-blur-sm overflow-hidden shadow-xl rounded-lg max-w-2xl mx-auto">
+          <div class="bg-white/70 backdrop-blur-sm overflow-hidden shadow-xl rounded-lg">
             <div class="p-6">
               <form @submit.prevent="submit" class="space-y-6">
                 <!-- Error Messages -->
@@ -289,8 +288,8 @@ const submit = () => {
           </div>
 
           <!-- Items Section -->
-          <div class="space-y-4 max-w-2xl mx-auto">
-            <h3 class="text-xl font-semibold text-white">Guideline Items</h3>
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white"></h3>
             <div v-for="(item, index) in form.items" :key="index" 
                  class="bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
               <div class="flex items-center justify-between mb-4">
@@ -339,8 +338,16 @@ const submit = () => {
                   <!-- New Media Files -->
                   <div>
                     <InputLabel :for="'mediaFiles' + index" value="" />
-                    <input type="file" multiple @change="(event) => handleFileChange(event, index)" 
-                           class="file-input" />
+                    <label :for="'file-upload-' + index" class="browse-button">
+                      Browse Files
+                    </label>
+                    <input 
+                      :id="'file-upload-' + index"
+                      type="file" 
+                      multiple 
+                      @change="(event) => handleFileChange(event, index)" 
+                      class="hidden"
+                    />
                   </div>
                 </div>
 
@@ -375,39 +382,72 @@ const submit = () => {
 </template>
 
 <style scoped>
-.file-input {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  height: 40px;
-  color: transparent; /* Hide default text */
+/* Gradient overlay update */
+.bg-gradient-overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 40, 80, 0.8) 0%,
+        rgba(0, 96, 128, 0.75) 50%,
+        rgba(0, 48, 96, 0.8) 100%
+    );
 }
 
-.file-input::-webkit-file-upload-button {
-  visibility: hidden;
+/* Update container background */
+.bg-white\/70 {
+    background: rgba(0, 51, 102, 0.25);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.file-input::before {
-  content: "Choose Files";
-  display: inline-block;
-  background: linear-gradient(135deg, #003366 0%, #004080 50%, #001f3f 100%);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  text-align: center;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-size: 0.875rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Update text gradient */
+.text-gradient {
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(147, 197, 253, 0.5);
 }
 
-.file-input:hover::before {
-  background: linear-gradient(135deg, #004080 0%, #005cb8 50%, #003366 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+/* Update button gradient */
+.gradient-primary {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.9), rgba(0, 64, 128, 0.8));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Update background for media files section */
+.bg-gray-50\/80 {
+    background: rgba(0, 51, 102, 0.25);
+    backdrop-filter: blur(12px);
+}
+
+/* Update action buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-button {
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-button {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+.add-button {
+    color: #00ccff;
+    background: rgba(0, 204, 255, 0.1);
 }
 
 /* Oceanic Theme */
@@ -447,12 +487,18 @@ const submit = () => {
 }
 
 /* Container max widths */
+.max-w-4xl {
+    max-width: 56rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .max-w-3xl {
-  max-width: 48rem;
+    max-width: 48rem;
 }
 
 .max-w-2xl {
-  max-width: 42rem;
+    max-width: 42rem;
 }
 
 /* Adjust inner padding for better content display */
@@ -617,5 +663,32 @@ input[type="text"] {
   font-size: 1.125rem;
   line-height: 1.75;
   padding: 0.75rem 1rem;
+}
+
+/* Remove old file input styles */
+.file-input {
+    display: none;
+}
+
+/* Add new browse button styling */
+.browse-button {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.9), rgba(0, 64, 128, 0.8));
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.browse-button:hover {
+    background: linear-gradient(135deg, rgba(0, 64, 128, 0.95), rgba(0, 51, 102, 0.85));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
 }
 </style>
