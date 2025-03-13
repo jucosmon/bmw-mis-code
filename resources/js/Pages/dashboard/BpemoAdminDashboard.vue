@@ -412,7 +412,7 @@ const getStatusColor = (status) => {
   const colors = {
     'pending': 'text-red-600 bg-red-100',
     'verified': 'text-yellow-600 bg-yellow-100',
-    'resolved': 'text-green-600 bg-green-100'
+    'completed': 'text-green-600 bg-green-100'
   };
   return colors[status] || 'text-gray-600 bg-gray-100';
 };
@@ -447,297 +447,280 @@ const getMarkerColor = (status) => {
       </h2>
     </template>
 
-    <div class="py-6">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <!-- Welcome message -->
-        <div class="mb-6">
-          <h3 class="text-lg font-medium text-gray-700">
-            Welcome {{ user.first_name }} {{ user.last_name }}
-          </h3>
-          <p class="text-sm text-gray-500">
-            Marine Wildlife Monitoring Dashboard
-          </p>
-        </div>
+    <div class="relative min-h-screen">
+      <!-- Background -->
+      <div class="absolute inset-0">
+        <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
+        <div class="absolute inset-0 bg-gradient-overlay"></div>
+      </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-          <!-- Total Users Card -->
-          <div class="bg-white overflow-hidden rounded-lg shadow">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                  <i class="fas fa-users text-blue-600 text-xl"></i>
+      <!-- Content -->
+      <div class="relative py-6">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <!-- Welcome message -->
+          <div class="mb-6">
+            <h3 class="profile-title-gradient">
+              Welcome {{ user.first_name }} {{ user.last_name }}
+            </h3>
+            <p class="text-white text-opacity-80">
+              Marine Wildlife Monitoring Dashboard
+            </p>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+            <!-- Total Users Card -->
+            <div class="glass-container">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
+                      <dd>
+                        <div class="text-lg font-semibold text-gray-900">{{ stats.totalUsers }}</div>
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                    <dd>
-                      <div class="text-lg font-semibold text-gray-900">{{ stats.totalUsers }}</div>
-                    </dd>
-                  </dl>
+              </div>
+            </div>
+
+            <!-- Total Unresolved Strandings -->
+            <div class="glass-container">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
+                    <i class="fas fa-life-ring text-red-600 text-xl"></i>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Unresolved Strandings</dt>
+                      <dd>
+                        <div class="text-lg font-semibold text-gray-900">{{ stats.totalStrandings.total }}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Sightings -->
+            <div class="glass-container">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                    <i class="fas fa-binoculars text-yellow-600 text-xl"></i>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Pending Sightings</dt>
+                      <dd>
+                        <div class="text-lg font-semibold text-gray-900">{{ stats.pendingSightings }}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Completed Reports -->
+            <div class="glass-container">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Completed Reports</dt>
+                      <dd>
+                        <div class="text-lg font-semibold text-gray-900">{{ stats.completedReports.total }}</div>
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Total Unresolved Strandings -->
-          <div class="bg-white overflow-hidden rounded-lg shadow">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
-                  <i class="fas fa-life-ring text-red-600 text-xl"></i>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Unresolved Strandings</dt>
-                    <dd>
-                      <div class="text-lg font-semibold text-gray-900">{{ stats.totalStrandings.total }}</div>
-                    </dd>
-                  </dl>
+          <!-- Map and Alerts Section -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- Map Section - Takes up 2/3 of the width on large screens -->
+            <div class="glass-container lg:col-span-2">
+              <div class="px-6 py-5 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Urgent Stranded Reports in Map</h3>
+              </div>
+              <div class="p-6">
+                <!-- Map placeholder - In a real implementation, this would be replaced with a map component -->
+                <div id="map" class="bg-gray-100 rounded-lg h-96 relative overflow-hidden z-0"></div>
+                <div class="mt-4 flex justify-start text-sm gap-5">
+                  <div v-for="(status, index) in ['Pending', 'Verified', 'Completed']" :key="index"
+                       class="legend-item flex items-center gap-2">
+                    <div :class="`status-indicator ${status.toLowerCase()}-status`"></div>
+                    <span class="text-white/90">{{ status }}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Pending Sightings -->
-          <div class="bg-white overflow-hidden rounded-lg shadow">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
-                  <i class="fas fa-binoculars text-yellow-600 text-xl"></i>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Pending Sightings</dt>
-                    <dd>
-                      <div class="text-lg font-semibold text-gray-900">{{ stats.pendingSightings }}</div>
-                    </dd>
-                  </dl>
-                </div>
+            <!-- Alerts Section - Takes up 1/3 of the width on large screens -->
+            <div class="glass-container">
+              <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">Urgent Cases</h3>
+                <Link
+                  :href="route('stranded.incident.index')"
+                  class="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  View All
+                </Link>
               </div>
-            </div>
-          </div>
-
-          <!-- Completed Reports -->
-          <div class="bg-white overflow-hidden rounded-lg shadow">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                  <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Completed Reports</dt>
-                    <dd>
-                      <div class="text-lg font-semibold text-gray-900">{{ stats.completedReports.total }}</div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Map and Alerts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <!-- Map Section - Takes up 2/3 of the width on large screens -->
-          <div class="bg-white rounded-lg shadow lg:col-span-2">
-            <div class="px-6 py-5 border-b border-gray-200">
-              <h3 class="text-lg font-medium text-gray-900">Urgent Stranded Reports in Map</h3>
-            </div>
-            <div class="p-6">
-              <!-- Map placeholder - In a real implementation, this would be replaced with a map component -->
-              <div id="map" class="bg-gray-100 rounded-lg h-96 relative overflow-hidden z-0"></div>
-              <div class="mt-4 flex justify-start text-sm gap-5">
-                <div class="flex items-center gap-2">
-                    <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
-                        <i class="fas fa-users text-blue-600 text-xl"></i>
+              <div class="divide-y divide-white/10">
+                <div v-for="alert in recentAlerts" :key="alert.id"
+                     class="p-4 transition-all duration-200 hover:bg-white/5">
+                  <div class="flex items-start">
+                    <div :class="getStatusColor(alert.status)" class="flex-shrink-0 mt-1">
+                      <i class="fas fa-exclamation-circle text-lg"></i>
                     </div>
-                    <span>Pending</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    <div class="ml-3 w-0 flex-1">
+                      <div class="flex justify-between items-center mb-1">
+                        <h4 class="text-sm font-medium text-gray-900">
+                          {{ alert.species }} ({{ alert.type }})
+                        </h4>
+                        <span
+                          :class="getStatusColor(alert.status)"
+                          class="px-2 py-0.5 rounded-full text-xs font-medium"
+                        >
+                          {{ alert.status }}
+                        </span>
+                      </div>
+                      <div class="mt-1 text-sm text-gray-500">
+                        <p>Location: {{ alert.location }}</p>
+                        <p>Reported: {{ formatDate(alert.date) }}</p>
+                      </div>
+                      <div class="mt-2">
+                        <a :href="alert.viewUrl" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                          View details
+                        </a>
+                      </div>
                     </div>
-                  <span>Verified</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                        <i class="fas fa-users text-blue-600 text-xl"></i>
-                    </div>
-                  <span>Completed</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Alerts Section - Takes up 1/3 of the width on large screens -->
-          <div class="bg-white rounded-lg shadow">
+          <!-- Active Reports Table -->
+          <div class="glass-container mb-6">
             <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-              <h3 class="text-lg font-medium text-gray-900">Urgent Cases</h3>
-              <Link
-                :href="route('stranded.incident.index')"
-                class="text-sm text-blue-600 hover:text-blue-800"
-              >
-                View All
-              </Link>
-            </div>
-            <div class="divide-y divide-gray-200">
-              <div v-for="alert in recentAlerts" :key="alert.id" class="p-4 hover:bg-gray-50">
-                <div class="flex items-start">
-                  <div :class="getStatusColor(alert.status)" class="flex-shrink-0 mt-1">
-                    <i class="fas fa-exclamation-circle text-lg"></i>
-                  </div>
-                  <div class="ml-3 w-0 flex-1">
-                    <div class="flex justify-between items-center mb-1">
-                      <h4 class="text-sm font-medium text-gray-900">
-                        {{ alert.species }} ({{ alert.type }})
-                      </h4>
-                      <span
-                        :class="getStatusColor(alert.status)"
-                        class="px-2 py-0.5 rounded-full text-xs font-medium"
-                      >
-                        {{ alert.status }}
-                      </span>
-                    </div>
-                    <div class="mt-1 text-sm text-gray-500">
-                      <p>Location: {{ alert.location }}</p>
-                      <p>Reported: {{ formatDate(alert.date) }}</p>
-                    </div>
-                    <div class="mt-2">
-                      <a :href="alert.viewUrl" class="text-sm font-medium text-blue-600 hover:text-blue-800">
-                        View details
-                      </a>
-                    </div>
-                  </div>
-                </div>
+              <h3 class="text-lg font-medium text-gray-900">Active Reports</h3>
+              <div class="flex space-x-2">
+                  <button
+                  @click="setView('all')"
+                  :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
+                    currentView === 'all'
+                      ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
+                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
+                >
+                  All
+                </button>
+                <button
+                  @click="setView('stranding')"
+                  :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
+                    currentView === 'stranding'
+                      ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
+                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
+                >
+                  All Strandings
+                </button>
+                <button
+                  @click="setView('sighting')"
+                  :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
+                    currentView === 'sighting'
+                      ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
+                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
+                >
+                  All Sightings
+                </button>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Active Reports Table -->
-        <div class="bg-white rounded-lg shadow mb-6">
-          <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-            <h3 class="text-lg font-medium text-gray-900">Active Reports</h3>
-            <div class="flex space-x-2">
-                <button
-                @click="setView('all')"
-                :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                  currentView === 'all'
-                    ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
-                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-              >
-                All
-              </button>
-              <button
-                @click="setView('stranding')"
-                :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                  currentView === 'stranding'
-                    ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
-                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-              >
-                All Strandings
-              </button>
-              <button
-                @click="setView('sighting')"
-                :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                  currentView === 'sighting'
-                    ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
-                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-              >
-                All Sightings
-              </button>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-white/10">
+                <thead class="bg-white/5">
+                  <tr>
+                    <th v-for="header in ['ID', 'Type', 'Species', 'Location', 'Reported', 'Status', 'Actions']"
+                        :key="header"
+                        class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
+                      {{ header }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/10">
+                  <tr v-for="report in displayedReports"
+                      :key="report.id"
+                      class="hover:bg-white/5 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      #{{ report.id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                      {{ report.type }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ report.species }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ report.location }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ formatDate(report.date) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span
+                        :class="getStatusColor(report.status)"
+                        class="px-2 py-1 rounded-full text-xs font-medium capitalize"
+                      >
+                        {{ report.status }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <Link :href="report.viewUrl" class="text-blue-600 hover:text-blue-900">
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Species
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Location
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reported
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="report in displayedReports" :key="report.id" class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    #{{ report.id }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                    {{ report.type }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ report.species }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ report.location }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ formatDate(report.date) }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span
-                      :class="getStatusColor(report.status)"
-                      class="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                    >
-                      {{ report.status }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link :href="report.viewUrl" class="text-blue-600 hover:text-blue-900">
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-            <span class="text-sm text-gray-500">
-              Showing {{ ((currentPage - 1) * perPage) + 1 }} to
-              {{ Math.min(currentPage * perPage, totalReports) }}
-              of {{ totalReports }} reports
-            </span>
-            <div class="flex space-x-2">
-              <button
-                @click="previousPage"
-                :disabled="currentPage === 1"
-                :class="['px-3 py-1 border text-sm font-medium rounded-md',
-                  currentPage === 1
-                    ? 'border-gray-200 text-gray-400 bg-gray-50'
-                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-              >
-                Previous
-              </button>
-              <button
-                @click="nextPage"
-                :disabled="currentPage >= totalPages"
-                :class="['px-3 py-1 border text-sm font-medium rounded-md',
-                  currentPage >= totalPages
-                    ? 'border-gray-200 text-gray-400 bg-gray-50'
-                    : 'border-transparent text-white bg-blue-600 hover:bg-blue-700']"
-              >
-                Next
-              </button>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+              <span class="text-sm text-gray-500">
+                Showing {{ ((currentPage - 1) * perPage) + 1 }} to
+                {{ Math.min(currentPage * perPage, totalReports) }}
+                of {{ totalReports }} reports
+              </span>
+              <div class="flex space-x-2">
+                <button
+                  @click="previousPage"
+                  :disabled="currentPage === 1"
+                  :class="['px-3 py-1 border text-sm font-medium rounded-md',
+                    currentPage === 1
+                      ? 'border-gray-200 text-gray-400 bg-gray-50'
+                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
+                >
+                  Previous
+                </button>
+                <button
+                  @click="nextPage"
+                  :disabled="currentPage >= totalPages"
+                  :class="['px-3 py-1 border text-sm font-medium rounded-md',
+                    currentPage >= totalPages
+                      ? 'border-gray-200 text-gray-400 bg-gray-50'
+                      : 'border-transparent text-white bg-blue-600 hover:bg-blue-700']"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -745,3 +728,344 @@ const getMarkerColor = (status) => {
     </div>
   </Sidebar>
 </template>
+
+<style scoped>
+/* Ocean theme styling */
+.bg-gradient-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 51, 102, 0.9) 0%,
+    rgba(0, 64, 128, 0.8) 50%,
+    rgba(0, 31, 63, 0.9) 100%
+  );
+}
+
+.glass-container {
+  background: rgba(0, 51, 102, 0.25);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.glass-container:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.profile-title-gradient {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  background: linear-gradient(to right, #ffffff, #00ccff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Stats cards styling */
+.glass-container .flex-shrink-0 {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.glass-container:hover .flex-shrink-0 {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.glass-container .text-gray-500 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.glass-container .text-gray-900 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Table styling */
+.glass-container thead {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.glass-container tbody tr {
+  transition: all 0.2s ease;
+}
+
+.glass-container tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+.glass-container th {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.glass-container td {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Button styling */
+button {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 51, 102, 0.9) 0%,
+    rgba(0, 64, 128, 0.8) 100%
+  ) !important;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  transition: all 0.3s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+button:not(:disabled):hover {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 64, 128, 0.95) 0%,
+    rgba(0, 51, 102, 0.85) 100%
+  ) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Map container specific styling */
+#map {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  filter: saturate(0.8) brightness(0.95);
+}
+
+/* Enhance table styling */
+.glass-container table {
+  background: transparent;
+}
+
+.glass-container td {
+  color: rgba(255, 255, 255, 0.8) !important;
+  transition: color 0.2s ease;
+}
+
+.glass-container tr:hover td {
+  color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Status badges enhancement */
+.rounded-full {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+}
+
+/* Status colors with glass effect */
+.text-red-600.bg-red-100 {
+  background: rgba(255, 107, 107, 0.15) !important;
+  color: #ff8f8f !important;
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.text-yellow-600.bg-yellow-100 {
+  background: rgba(255, 217, 61, 0.15) !important;
+  color: #ffe074 !important;
+  border-color: rgba(255, 217, 61, 0.3);
+}
+
+.text-green-600.bg-green-100 {
+  background: rgba(109, 213, 167, 0.15) !important;
+  color: #84e4b8 !important;
+  border-color: rgba(109, 213, 167, 0.3);
+}
+
+/* Table header and content alignment */
+th, td {
+  padding: 1rem 1.5rem;
+}
+
+/* Pagination enhancement */
+.pagination-text {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Button states */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Links in table */
+.glass-container a {
+  color: #4dabf7;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.glass-container a:hover {
+  color: #00ccff;
+  text-shadow: 0 0 8px rgba(0, 204, 255, 0.5);
+}
+
+.glass-container a::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background: linear-gradient(to right, #4dabf7, #00ccff);
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+
+.glass-container a:hover::after {
+  transform: scaleX(1);
+}
+
+/* Map markers enhancement */
+.leaflet-marker-icon {
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(0, 51, 102, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.leaflet-popup-tip {
+  background: rgba(0, 51, 102, 0.95);
+}
+
+.leaflet-popup-content {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.leaflet-popup-content a {
+  color: #00ccff;
+}
+
+/* Custom scrollbar for table container */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+/* Legend items enhancement */
+.legend-item {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.status-indicator {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+}
+
+.pending-status {
+  background: rgb(255, 93, 18);
+  border: 1px solid rgba(255, 107, 107, 1);
+}
+
+.verified-status {
+  background: rgb(218, 226, 2);
+  border: 1px solid rgba(255, 217, 61, 1);
+}
+
+.completed-status {
+  background: rgb(10, 144, 37);
+  border: 1px solid rgba(109, 213, 167, 1);
+}
+
+/* Table loading state */
+.loading-row {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Status colors adjustment for better visibility */
+.text-red-600 { color: #ff6b6b !important; }
+.text-yellow-600 { color: #ffd93d !important; }
+.text-green-600 { color: #6dd5a7 !important; }
+.text-blue-600 { color: #4dabf7 !important; }
+
+.bg-red-100 { background: rgba(255, 107, 107, 0.2) !important; }
+.bg-yellow-100 { background: rgba(255, 217, 61, 0.2) !important; }
+.bg-green-100 { background: rgba(109, 213, 167, 0.2) !important; }
+.bg-blue-100 { background: rgba(77, 171, 247, 0.2) !important; }
+
+/* Pagination section */
+.bg-gray-50 {
+  background: rgba(0, 51, 102, 0.2) !important;
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Links */
+a {
+  color: #00ccff;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #4dabf7;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .glass-container {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  .profile-title-gradient {
+    font-size: 1.5rem;
+  }
+}
+</style>
