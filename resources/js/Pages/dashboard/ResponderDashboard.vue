@@ -556,6 +556,52 @@ const getMarkerColor = (status) => {
     default: return 'gray';
   }
 };
+
+const displayStats = computed(() => {
+  // Base stats that all roles can see
+  const baseStats = [
+    {
+      label: 'Unresolved Strandings',
+      value: stats.value.totalStrandings.total,
+      icon: 'fas fa-life-ring',
+      iconClass: 'bg-red-500/20 text-red-400 p-3 rounded-lg'
+    },
+    {
+      label: 'Pending Sightings',
+      value: stats.value.pendingSightings,
+      icon: 'fas fa-binoculars',
+      iconClass: 'bg-yellow-500/20 text-yellow-400 p-3 rounded-lg'
+    },
+    {
+      label: 'Completed Reports',
+      value: stats.value.completedReports.total,
+      icon: 'fas fa-check-circle',
+      iconClass: 'bg-green-500/20 text-green-400 p-3 rounded-lg'
+    }
+  ];
+
+  // Add total users card only for bpemo_admin
+  if (user.value.user_role === 'bpemo_admin') {
+    baseStats.unshift({
+      label: 'Total Users',
+      value: stats.value.totalUsers,
+      icon: 'fas fa-users',
+      iconClass: 'bg-blue-500/20 text-blue-400 p-3 rounded-lg'
+    });
+  }
+
+  return baseStats;
+});
+
+const getStatusBadgeClass = (status) => {
+  const baseClasses = 'px-2 py-1 rounded-full text-xs font-medium';
+  const statusColors = {
+    pending: 'bg-red-500/20 text-red-400',
+    verified: 'bg-yellow-500/20 text-yellow-400',
+    completed: 'bg-green-500/20 text-green-400'
+  };
+  return `${baseClasses} ${statusColors[status] || 'bg-gray-500/20 text-gray-400'}`;
+};
 </script>
 
 <template>
@@ -588,152 +634,74 @@ const getMarkerColor = (status) => {
             </p>
           </div>
 
-          <!-- Stats Cards -->
-          <div
-            :class="[
-              'grid grid-cols-1 gap-5 sm:grid-cols-2 mb-6',
-              roleConfig.canViewTotalUsers ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
-            ]"
-          >
-            <!-- Total Users Card - Only shown for BPEMO admin -->
-            <div v-if="roleConfig.canViewTotalUsers" class="glass-container">
-              <div class="p-5">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                    <i class="fas fa-users text-blue-600 text-xl"></i>
-                  </div>
-                  <div class="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                      <dd>
-                        <div class="text-lg font-semibold text-gray-900">{{ stats.totalUsers }}</div>
-                      </dd>
-                    </dl>
+          <!-- Stats Cards with dynamic grid -->
+          <div :class="[
+            'grid gap-4 md:gap-6 mb-8',
+            user.user_role === 'bpemo_admin'
+              ? 'grid-cols-2 xl:grid-cols-4'
+              : 'grid-cols-1 md:grid-cols-3'
+          ]">
+            <div v-for="(stat, index) in displayStats" :key="index"
+                 class="stat-card transform transition-all duration-300 hover:scale-105">
+              <div class="p-6 h-full flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                  <div :class="stat.iconClass">
+                    <i :class="stat.icon"></i>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Total Unresolved Strandings -->
-            <div class="glass-container">
-              <div class="p-5">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
-                    <i class="fas fa-life-ring text-red-600 text-xl"></i>
-                  </div>
-                  <div class="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt class="text-sm font-medium text-gray-500 truncate">Unresolved Strandings</dt>
-                      <dd>
-                        <div class="text-lg font-semibold text-gray-900">{{ stats.totalStrandings.total }}</div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Pending Sightings -->
-            <div class="glass-container">
-              <div class="p-5">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
-                    <i class="fas fa-binoculars text-yellow-600 text-xl"></i>
-                  </div>
-                  <div class="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt class="text-sm font-medium text-gray-500 truncate">Pending Sightings</dt>
-                      <dd>
-                        <div class="text-lg font-semibold text-gray-900">{{ stats.pendingSightings }}</div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Completed Reports -->
-            <div class="glass-container">
-              <div class="p-5">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                  </div>
-                  <div class="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt class="text-sm font-medium text-gray-500 truncate">Completed Reports</dt>
-                      <dd>
-                        <div class="text-lg font-semibold text-gray-900">{{ stats.completedReports.total }}</div>
-                      </dd>
-                    </dl>
-                  </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-white/70 mb-1">{{ stat.label }}</p>
+                  <p class="text-2xl font-bold text-white">{{ stat.value }}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Map and Alerts Section -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- Map Section - Takes up 2/3 of the width on large screens -->
-            <div class="glass-container lg:col-span-2">
-              <div class="px-6 py-5 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
-                  {{ page.props.auth.user.user_role === 'barangay_official' ? 'Barangay Stranded Reports' :
-                     page.props.auth.user.user_role === 'lgu_responder' ? 'Municipal Stranded Reports' :
-                     'Urgent Stranded Reports in Map' }}
-                </h3>
-              </div>
+          <!-- Map and Alerts with better spacing -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="glass-panel lg:col-span-2">
               <div class="p-6">
-                <!-- Map placeholder - In a real implementation, this would be replaced with a map component -->
-                <div id="map" class="bg-gray-100 rounded-lg h-96 relative overflow-hidden z-0"></div>
-                <div class="mt-4 flex justify-start text-sm gap-5">
-                  <div v-for="(status, index) in ['Pending', 'Verified', 'Completed']" :key="index"
-                       class="legend-item flex items-center gap-2">
-                    <div :class="`status-indicator ${status.toLowerCase()}-status`"></div>
-                    <span class="text-white/90">{{ status }}</span>
+                <h3 class="text-xl font-semibold text-white mb-4">Location Overview</h3>
+                <div class="map-container">
+                  <div id="map" class="h-[400px] md:h-[500px] rounded-lg"></div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                  <div v-for="status in ['Pending', 'Verified', 'Completed']"
+                       :key="status"
+                       class="status-badge">
+                    <span :class="`status-dot ${status.toLowerCase()}`"></span>
+                    <span>{{ status }}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Alerts Section - Takes up 1/3 of the width on large screens -->
-            <div class="glass-container">
-              <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-lg font-medium text-gray-900">Urgent Cases</h3>
-                <Link
-                  :href="route('stranded.incident.index')"
-                  class="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  View All
-                </Link>
-              </div>
-              <div class="divide-y divide-white/10">
-                <div v-for="alert in recentAlerts" :key="alert.id"
-                     class="p-4 transition-all duration-200 hover:bg-white/5">
-                  <div class="flex items-start">
-                    <div :class="getStatusColor(alert.status)" class="flex-shrink-0 mt-1">
-                      <i class="fas fa-exclamation-circle text-lg"></i>
-                    </div>
-                    <div class="ml-3 w-0 flex-1">
-                      <div class="flex justify-between items-center mb-1">
-                        <h4 class="text-sm font-medium text-gray-900">
-                          {{ alert.species }} ({{ alert.type }})
-                        </h4>
-                        <span
-                          :class="getStatusColor(alert.status)"
-                          class="px-2 py-0.5 rounded-full text-xs font-medium"
-                        >
-                          {{ alert.status }}
-                        </span>
+            <div class="glass-panel">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-xl font-semibold text-white">Recent Alerts</h3>
+                  <Link :href="route('stranded.incident.index')"
+                        class="text-blue-400 hover:text-blue-300 text-sm">
+                    View All
+                  </Link>
+                </div>
+                <div class="space-y-4">
+                  <div v-for="alert in recentAlerts" :key="alert.id"
+                       class="alert-card">
+                    <div class="flex items-start space-x-4">
+                      <div :class="getStatusColor(alert.status)"
+                           class="alert-icon">
+                        <i class="fas fa-exclamation-circle"></i>
                       </div>
-                      <div class="mt-1 text-sm text-gray-500">
-                        <p>Location: {{ alert.location }}</p>
-                        <p>Reported: {{ formatDate(alert.date) }}</p>
-                      </div>
-                      <div class="mt-2">
-                        <a :href="alert.viewUrl" class="text-sm font-medium text-blue-600 hover:text-blue-800">
-                          View details
-                        </a>
+                      <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                          <h4 class="text-white font-medium">{{ alert.species }}</h4>
+                          <span :class="getStatusBadgeClass(alert.status)">
+                            {{ alert.status }}
+                          </span>
+                        </div>
+                        <p class="text-white/70 text-sm mt-1">{{ alert.location }}</p>
+                        <p class="text-white/60 text-xs mt-1">{{ formatDate(alert.date) }}</p>
                       </div>
                     </div>
                   </div>
@@ -742,114 +710,95 @@ const getMarkerColor = (status) => {
             </div>
           </div>
 
-          <!-- Active Reports Table -->
-          <div class="glass-container mb-6">
-            <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-              <h3 class="text-lg font-medium text-gray-900">Active Reports</h3>
-              <div class="flex space-x-2">
-                  <button
-                  @click="setView('all')"
-                  :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                    currentView === 'all'
-                      ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
-                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-                >
-                  All
-                </button>
-                <button
-                  @click="setView('stranding')"
-                  :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                    currentView === 'stranding'
-                      ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
-                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-                >
-                  All Strandings
-                </button>
-                <button
-                  @click="setView('sighting')"
-                  :class="['inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                    currentView === 'sighting'
-                      ? 'border-transparent text-white bg-blue-600 hover:bg-blue-700'
-                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-                >
-                  All Sightings
-                </button>
+          <!-- Active Reports Table with responsive design -->
+          <div class="glass-panel mb-8">
+            <div class="p-6">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h3 class="text-xl font-semibold text-white">Active Reports</h3>
+                <div class="flex flex-wrap gap-2">
+                  <button v-for="view in ['all', 'stranding', 'sighting']"
+                          :key="view"
+                          @click="setView(view)"
+                          :class="['view-button', currentView === view ? 'active' : '']">
+                    {{ view.charAt(0).toUpperCase() + view.slice(1) }}
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-white/10">
-                <thead class="bg-white/5">
-                  <tr>
-                    <th v-for="header in ['ID', 'Type', 'Species', 'Location', 'Reported', 'Status', 'Actions']"
-                        :key="header"
-                        class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
-                      {{ header }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-white/10">
-                  <tr v-for="report in displayedReports"
-                      :key="report.id"
-                      class="hover:bg-white/5 transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      #{{ report.id }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                      {{ report.type }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ report.species }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ report.location }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatDate(report.date) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        :class="getStatusColor(report.status)"
-                        class="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                      >
-                        {{ report.status }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Link :href="report.viewUrl" class="text-blue-600 hover:text-blue-900">
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-              <span class="text-sm text-gray-500">
-                Showing {{ ((currentPage - 1) * perPage) + 1 }} to
-                {{ Math.min(currentPage * perPage, totalReports) }}
-                of {{ totalReports }} reports
-              </span>
-              <div class="flex space-x-2">
-                <button
-                  @click="previousPage"
-                  :disabled="currentPage === 1"
-                  :class="['px-3 py-1 border text-sm font-medium rounded-md',
-                    currentPage === 1
-                      ? 'border-gray-200 text-gray-400 bg-gray-50'
-                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
-                >
-                  Previous
-                </button>
-                <button
-                  @click="nextPage"
-                  :disabled="currentPage >= totalPages"
-                  :class="['px-3 py-1 border text-sm font-medium rounded-md',
-                    currentPage >= totalPages
-                      ? 'border-gray-200 text-gray-400 bg-gray-50'
-                      : 'border-transparent text-white bg-blue-600 hover:bg-blue-700']"
-                >
-                  Next
-                </button>
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-white/10">
+                  <thead class="bg-white/5">
+                    <tr>
+                      <th v-for="header in ['ID', 'Type', 'Species', 'Location', 'Reported', 'Status', 'Actions']"
+                          :key="header"
+                          class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
+                        {{ header }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/10">
+                    <tr v-for="report in displayedReports"
+                        :key="report.id"
+                        class="hover:bg-white/5 transition-colors">
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-300">
+                        #{{ report.id }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 capitalize">
+                        {{ report.type }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {{ report.species }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {{ report.location }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {{ formatDate(report.date) }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span
+                          :class="getStatusColor(report.status)"
+                          class="px-2 py-1 rounded-full text-xs font-medium capitalize"
+                        >
+                          {{ report.status }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <Link :href="report.viewUrl" class="text-blue-600 hover:text-blue-900">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                <span class="text-sm text-gray-500">
+                  Showing {{ ((currentPage - 1) * perPage) + 1 }} to
+                  {{ Math.min(currentPage * perPage, totalReports) }}
+                  of {{ totalReports }} reports
+                </span>
+                <div class="flex space-x-2">
+                  <button
+                    @click="previousPage"
+                    :disabled="currentPage === 1"
+                    :class="['px-3 py-1 border text-sm font-medium rounded-md',
+                      currentPage === 1
+                        ? 'border-gray-200 text-gray-400 bg-gray-50'
+                        : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    @click="nextPage"
+                    :disabled="currentPage >= totalPages"
+                    :class="['px-3 py-1 border text-sm font-medium rounded-md',
+                      currentPage >= totalPages
+                        ? 'border-gray-200 text-gray-400 bg-gray-50'
+                        : 'border-transparent text-white bg-blue-600 hover:bg-blue-700']"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1197,5 +1146,106 @@ a:hover {
   .profile-title-gradient {
     font-size: 1.5rem;
   }
+}
+
+/* Base Styles */
+.glass-panel {
+  @apply rounded-xl bg-white/5 backdrop-blur-md border border-white/10;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.stat-card {
+  @apply glass-panel overflow-hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+.alert-card {
+  @apply p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Status Indicators */
+.status-badge {
+  @apply flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/10 text-sm text-white;
+}
+
+.status-dot {
+  @apply w-2.5 h-2.5 rounded-full;
+}
+
+.status-dot.pending { @apply bg-red-500; }
+.status-dot.verified { @apply bg-yellow-500; }
+.status-dot.completed { @apply bg-green-500; }
+
+/* Action Buttons */
+.view-button {
+  @apply px-4 py-2 rounded-lg text-sm font-medium transition-all;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.view-button:hover {
+  @apply transform -translate-y-0.5;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.view-button.active {
+  @apply bg-blue-500 text-white border-blue-400;
+}
+
+/* Table Enhancements */
+.table-container {
+  @apply overflow-x-auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.table-container::-webkit-scrollbar {
+  @apply h-1.5;
+}
+
+.table-container::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  @apply bg-white/30 rounded-full;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .stat-card {
+    @apply p-4;
+  }
+
+  .table-container {
+    @apply -mx-4;
+  }
+
+  .view-button {
+    @apply px-3 py-1.5 text-xs;
+  }
+}
+
+@media (max-width: 768px) {
+  .map-container {
+    @apply h-[300px];
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .glass-panel {
+    background: rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Animation utilities */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>
