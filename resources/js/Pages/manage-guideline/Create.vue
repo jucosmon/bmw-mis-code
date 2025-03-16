@@ -288,9 +288,9 @@ const getFileName = (file) => {
           </div>
 
           <!-- Form buttons -->
-          <div class="flex justify-between mt-6 m-3">
+          <div class="flex justify-between items-center mt-6 m-3">
             <Link :href="backRoute"
-                  class="text-sm text-white hover:text-gray-200 transition-colors duration-200">
+                  class="cancel-button">
               Cancel
             </Link>
             <PrimaryButton type="submit"
@@ -715,6 +715,23 @@ select:focus {
     box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
 }
 
+.cancel-button {
+    @apply px-6 py-2.5 text-sm font-medium inline-flex items-center justify-center;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+    min-width: 140px;
+    text-align: center;
+}
+
+.cancel-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
 select,
 input[type="text"] {
