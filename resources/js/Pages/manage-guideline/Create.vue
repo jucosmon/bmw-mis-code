@@ -224,7 +224,17 @@ const getFileName = (file) => {
 
                 <div class="media-section">
                   <InputLabel :for="'mediaFiles' + index" value="Upload Media Files" class="text-lg font-medium" />
-                  <input type="file" multiple @change="(event) => handleFileChange(event, index)" class="file-input mt-2" />
+                  <label :for="'file-upload-' + index" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                    Browse Files
+                  </label>
+                  <input
+                    :id="'file-upload-' + index"
+                    type="file"
+                    multiple
+                    @change="(event) => handleFileChange(event, index)"
+                    class="hidden"
+                    accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                  />
                 </div>
 
                 <!-- Preview Section -->
@@ -857,5 +867,40 @@ input[type="text"]:focus {
 
 .remove-button:hover {
     transform: scale(1.1);
+}
+
+/* Update browse button styles */
+.browse-button {
+    display: inline-block;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.browse-button:hover,
+.browse-button:focus {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+    outline: none;
+}
+
+.browse-button:focus-visible {
+    outline: 2px solid #00ccff;
+    outline-offset: 2px;
+}
+
+/* Remove old file input styles */
+.file-input {
+    display: none;
 }
 </style>

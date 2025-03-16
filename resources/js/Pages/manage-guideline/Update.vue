@@ -58,19 +58,30 @@ const form = useForm({
 
 const handleFileChange = (event, index) => {
     const files = event.target.files;
-    const newFiles = Array.from(files); // Store the selected files
+    const newFiles = Array.from(files).map(file => ({
+        file: file,
+        type: file.type,
+        name: file.name,
+        preview: URL.createObjectURL(file)
+    }));
 
-    // Update the specific item's mediaFiles
-    form.items[index].mediaFiles = newFiles;
+    // Store the actual files for form submission
+    form.items[index].mediaFiles = [
+        ...form.items[index].mediaFiles,
+        ...files
+    ];
 
-    // Create preview URLs for the new files
-    form.items[index].previewFiles = newFiles.map((file) => URL.createObjectURL(file));
+    // Store the preview data
+    form.items[index].previewFiles = [
+        ...form.items[index].previewFiles,
+        ...newFiles
+    ];
 };
 
 const removeExistingFile = (itemIndex, fileIndex) => {
     const mediaFile = form.items[itemIndex].existingMediaFiles[fileIndex];
     if (mediaFile && mediaFile.id) {
-        form.items[itemIndex].deletedFiles.push(mediaFile.id); // Track deleted file
+        form.items[itemIndex].deletedFiles.push(mediaFile.id);
     }
     form.items[itemIndex].existingMediaFiles.splice(fileIndex, 1);
 };
@@ -200,6 +211,35 @@ const submit = () => {
         alert('No changes detected in the form.');
     }
 };
+
+// Add these helper functions from Create.vue
+const isImageFile = (file) => {
+    const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    return imageTypes.includes(file.type);
+};
+
+const isVideoFile = (file) => {
+    const videoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+    return videoTypes.includes(file.type);
+};
+
+const getDocumentIcon = (file) => {
+    const fileType = file.type || '';
+    if (fileType.includes('pdf')) return 'picture_as_pdf';
+    if (fileType.includes('word') || fileType.includes('document')) return 'description';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'table_chart';
+    if (fileType.includes('presentation')) return 'slideshow';
+    return 'insert_drive_file';
+};
+
+const getFileName = (file) => {
+    if (file.file) {
+        // For new files
+        return file.file.name;
+    }
+    // For existing files
+    return file.name || file.path.split('/').pop() || 'Unknown File';
+};
 </script>
 
 <template>
@@ -221,160 +261,206 @@ const submit = () => {
 
       <!-- Main content -->
       <div class="relative z-10">
-        <!-- Form sections container -->
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <h2 class="text-3xl font-bold text-center text-gradient mb-6">Update Guideline</h2>
-          
-          <!-- Main Details Section -->
-          <div class="bg-white/70 backdrop-blur-sm overflow-hidden shadow-xl rounded-lg">
-            <div class="p-6">
-              <form @submit.prevent="submit" class="space-y-6">
-                <!-- Error Messages -->
-                <div v-if="formErrors" class="p-4 bg-red-100 border border-red-400 rounded-lg text-red-600">
-                  <ul class="list-disc ml-4">
-                    <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
-                  </ul>
-                </div>
+        <div class="container mx-auto px-4 py-8">
+          <h2 class="title-gradient mb-6">Update Guideline</h2>
 
-                <!-- Main Form Fields -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div class="sm:col-span-2">
-                    <InputLabel for="title" value="Title" />
-                    <TextInput 
-                      id="title" 
-                      v-model="form.title" 
-                      type="text" 
-                      required
-                      class="w-full min-w-[300px] text-lg border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-opacity-10 bg-white text-white" 
-                    />
-                    <InputError :message="formErrors?.title" class="mt-2" />
-                  </div>
-
-                  <div class="sm:col-span-2">
-                    <InputLabel for="description" value="Description" />
-                    <textarea
-                      id="description"
-                      v-model="form.description"
-                      required
-                      class="w-full h-32 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-opacity-10 bg-white text-white"
-                    ></textarea>
-                    <InputError :message="formErrors?.description" class="mt-2" />
-                  </div>
-
-                  <div>
-                    <InputLabel for="category" value="Marine Wildlife Category" />
-                    <select v-model="form.category" id="category" class="w-full" required>
-                      <option value="" disabled>Select an option</option>
-                      <option value="marine_turtles">Marine Turtles</option>
-                      <option value="marine_mammals">Marine Mammals</option>
-                      <option value="sharks_rays">Sharks and Rays</option>
-                    </select>
-                    <InputError class="mt-2" :message="formErrors?.category" />
-                  </div>
-
-                  <div>
-                    <InputLabel for="user_role" value="User Role" />
-                    <select v-model="form.user_role" id="user_role" class="w-full" required disabled>
-                      <option value="" disabled>Select an option</option>
-                      <option value="lgu_responder">LGU Responder</option>
-                      <option value="barangay_official">Barangay Official</option>
-                      <option value="public_user">Public User</option>
-                    </select>
-                    <InputError class="mt-2" :message="formErrors?.user_role" />
-                  </div>
-                </div>
-              </form>
+          <form @submit.prevent="submit" class="space-y-8 max-w-4xl mx-auto">
+            <!-- Error Messages -->
+            <div v-if="formErrors" class="error-container">
+              <ul class="list-disc ml-4">
+                <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
+              </ul>
             </div>
-          </div>
 
-          <!-- Items Section -->
-          <div class="space-y-4">
-            <h3 class="text-xl font-semibold text-white"></h3>
-            <div v-for="(item, index) in form.items" :key="index" 
-                 class="bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
-              <div class="flex items-center justify-between mb-4">
-                <h4 class="text-lg font-semibold text-gray-800">Item {{ item.count }}</h4>
-                <div class="flex space-x-2">
-                  <button v-if="form.items.length > 1" @click.prevent="removeItemEntry(index)"
-                          class="text-red-600 hover:text-red-800 transition-colors">
-                    <span class="material-icons">delete</span>
-                  </button>
-                  <button @click.prevent="addItemEntry"
-                          class="text-indigo-900 hover:text-indigo-700 transition-colors">
-                    <span class="material-icons">add_circle</span>
-                  </button>
+            <!-- Guidelines Information Section -->
+            <div class="guideline-info-container">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="sm:col-span-2">
+                  <InputLabel for="title" value="Title" />
+                  <TextInput
+                    id="title"
+                    v-model="form.title"
+                    type="text"
+                    required
+                    class="w-full text-lg border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <InputError :message="formErrors?.title" class="mt-2" />
+                </div>
+
+                <div class="sm:col-span-2">
+                  <InputLabel for="description" value="Description" />
+                  <textarea
+                    id="description"
+                    v-model="form.description"
+                    required
+                    class="w-full h-32 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  ></textarea>
+                  <InputError :message="formErrors?.description" class="mt-2" />
+                </div>
+
+                <div>
+                  <InputLabel for="category" value="Marine Wildlife Category" />
+                  <select v-model="form.category" id="category" class="w-full" required>
+                    <option value="" disabled>Select an option</option>
+                    <option value="marine_turtles">Marine Turtles</option>
+                    <option value="marine_mammals">Marine Mammals</option>
+                    <option value="sharks_rays">Sharks and Rays</option>
+                  </select>
+                  <InputError class="mt-2" :message="form.errors.category" />
+                </div>
+
+                <div>
+                  <InputLabel for="user_role" value="User Role" />
+                  <select v-model="form.user_role" id="user_role" class="w-full" required disabled>
+                    <option value="" disabled>Select an option</option>
+                    <option value="lgu_responder">LGU Responder</option>
+                    <option value="barangay_official">Barangay Official</option>
+                    <option value="public_user">Public User</option>
+                  </select>
+                  <InputError class="mt-2" :message="form.errors.user_role" />
                 </div>
               </div>
+            </div>
 
-              <div class="space-y-4">
-                <div>
-                  <InputLabel :for="'text' + index" :value="'Text for Item ' + item.count" />
-                  <textarea
-                    :id="'text' + index"
-                    v-model="item.text"
-                    required
-                    class="w-full h-24 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-opacity-10 bg-white text-white"
-                  ></textarea>
-                  <InputError :message="formErrors?.items?.[index]?.text" class="mt-2" />
+            <!-- Items Section -->
+            <div class="space-y-6">
+              <div v-for="(item, index) in form.items" :key="index"
+                   class="item-card">
+                <div class="item-header mb-4">
+                  <h3 class="text-lg font-semibold">Item {{ item.count }}</h3>
                 </div>
 
-                <!-- Media Files Sections -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="item-content space-y-4">
+                  <div>
+                    <InputLabel :for="'text' + index" :value="'Text for Item ' + item.count" />
+                    <textarea
+                      :id="'text' + index"
+                      v-model="item.text"
+                      required
+                      class="w-full h-24 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    ></textarea>
+                    <InputError :message="formErrors?.items?.[index]?.text" class="mt-2" />
+                  </div>
+
                   <!-- Existing Media Files -->
-                  <div v-if="item.existingMediaFiles.length" class="bg-gray-50/80 p-4 rounded-md">
-                    <h5 class="font-medium text-gray-700 mb-2">Existing Media Files</h5>
-                    <div class="flex flex-wrap gap-2">
-                      <div v-for="(file, fileIndex) in item.existingMediaFiles" :key="fileIndex" 
-                           class="relative group">
-                        <img :src="`/storage/${file.path}`" class="w-20 h-20 object-cover rounded-md" />
-                        <button @click.prevent="removeExistingFile(index, fileIndex)" 
-                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span class="material-icons text-sm">close</span>
+                  <div v-if="item.existingMediaFiles.length" class="preview-section">
+                    <h4 class="preview-title">Existing Media Files</h4>
+                    <div class="preview-grid">
+                      <div v-for="(file, fileIndex) in item.existingMediaFiles" :key="fileIndex"
+                           class="preview-item">
+                        <!-- Image Preview -->
+                        <img v-if="isImageFile(file)"
+                             :src="`/storage/${file.path}`"
+                             class="preview-image"
+                             :alt="file.name" />
+
+                        <!-- Video Preview -->
+                        <video v-else-if="isVideoFile(file)"
+                               class="preview-video"
+                               controls>
+                          <source :src="`/storage/${file.path}`" :type="file.type">
+                          Your browser does not support video playback.
+                        </video>
+
+                        <!-- Document Preview -->
+                        <div v-else class="document-preview">
+                          <span class="material-icons document-icon">
+                            {{ getDocumentIcon(file) }}
+                          </span>
+                          <span class="document-name">{{ getFileName(file) }}</span>
+                        </div>
+
+                        <button @click.prevent="removeExistingFile(index, fileIndex)"
+                                class="remove-button"
+                                title="Remove">
+                          <span class="material-icons">close</span>
                         </button>
                       </div>
                     </div>
                   </div>
 
                   <!-- New Media Files -->
-                  <div>
-                    <InputLabel :for="'mediaFiles' + index" value="" />
-                    <label :for="'file-upload-' + index" class="browse-button">
+                  <div class="preview-section">
+                    <h4 class="preview-title">Add New Media Files</h4>
+                    <label :for="'file-upload-' + index" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
                       Browse Files
                     </label>
-                    <input 
+                    <input
                       :id="'file-upload-' + index"
-                      type="file" 
-                      multiple 
-                      @change="(event) => handleFileChange(event, index)" 
+                      type="file"
+                      multiple
+                      @change="(event) => handleFileChange(event, index)"
                       class="hidden"
+                      accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                     />
+                    <div v-if="item.previewFiles.length" class="preview-grid mt-4">
+                      <div v-for="(file, imgIndex) in item.previewFiles" :key="imgIndex"
+                           class="preview-item">
+                        <!-- Image Preview -->
+                        <img v-if="isImageFile(file.file)"
+                             :src="file.preview"
+                             class="preview-image"
+                             :alt="file.name" />
+
+                        <!-- Video Preview -->
+                        <video v-else-if="isVideoFile(file.file)"
+                               class="preview-video"
+                               controls>
+                          <source :src="file.preview" :type="file.type">
+                          Your browser does not support video playback.
+                        </video>
+
+                        <!-- Document Preview -->
+                        <div v-else class="document-preview">
+                          <span class="material-icons document-icon">
+                            {{ getDocumentIcon(file) }}
+                          </span>
+                          <span class="document-name">{{ getFileName(file) }}</span>
+                        </div>
+
+                        <button @click.prevent="removeNewFile(index, imgIndex)"
+                                class="remove-button"
+                                title="Remove">
+                          <span class="material-icons">close</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Preview Section -->
-                <div v-if="item.previewFiles.length" class="bg-gray-50/80 p-4 rounded-md">
-                  <h5 class="font-medium text-gray-700 mb-2">Preview</h5>
-                  <div class="flex flex-wrap gap-2">
-                    <div v-for="(file, imgIndex) in item.previewFiles" :key="imgIndex" 
-                         class="relative group">
-                      <img :src="file" class="w-20 h-20 object-cover rounded-md" />
-                      <button @click.prevent="removeNewFile(index, imgIndex)" 
-                              class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span class="material-icons text-sm">close</span>
-                      </button>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="item-actions">
+                  <div class="flex justify-end gap-2">
+                    <button v-if="form.items.length > 1"
+                            @click.prevent="removeItemEntry(index)"
+                            type="button"
+                            class="action-button delete-button">
+                      <span class="material-icons">delete</span>
+                    </button>
+                    <button @click.prevent="addItemEntry"
+                            type="button"
+                            class="action-button add-button">
+                      <span class="material-icons">add_circle</span>
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Submit Button -->
-            <div class="flex justify-center pt-4">
-              <PrimaryButton type="submit" class="gradient-primary px-6 py-2">
+            <!-- Form buttons -->
+            <div class="flex justify-between items-center mt-6">
+              <Link :href="backRoute"
+                    class="cancel-button">
+                Cancel
+              </Link>
+              <PrimaryButton type="submit"
+                            :disabled="form.processing"
+                            class="create-button"
+                            :class="{ 'opacity-25': form.processing }">
                 Update Guideline
               </PrimaryButton>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -382,62 +468,214 @@ const submit = () => {
 </template>
 
 <style scoped>
-/* Gradient overlay update */
+/* Oceanic Theme Base */
+.title-gradient {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.5px;
+    margin-bottom: 2.5rem;
+}
+
 .bg-gradient-overlay {
     background: linear-gradient(
         135deg,
-        rgba(0, 40, 80, 0.8) 0%,
-        rgba(0, 96, 128, 0.75) 50%,
-        rgba(0, 48, 96, 0.8) 100%
+        rgba(0, 51, 102, 0.92) 0%,
+        rgba(0, 75, 150, 0.9) 50%,
+        rgba(0, 51, 102, 0.92) 100%
     );
 }
 
-/* Update container background */
-.bg-white\/70 {
-    background: rgba(0, 51, 102, 0.25);
-    backdrop-filter: blur(12px);
+.guideline-info-container {
+    background: rgba(0, 51, 102, 0.35);
+    backdrop-filter: blur(10px);
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 2rem;
 }
 
-/* Update text gradient */
-.text-gradient {
-    background: linear-gradient(to right, #ffffff, #00ccff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 0 30px rgba(147, 197, 253, 0.5);
+.item-card {
+    background: rgba(0, 51, 102, 0.35);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
 }
 
-/* Update button gradient */
-.gradient-primary {
-    background: linear-gradient(135deg, rgba(0, 51, 102, 0.9), rgba(0, 64, 128, 0.8));
+/* Form Input Styles */
+input[type="text"],
+textarea,
+select {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease;
+    width: 100% !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    padding: 0.75rem 1rem !important;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(0, 204, 255, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.25) !important;
+    outline: none !important;
+}
+
+textarea {
+    min-height: 8rem !important;
+    resize: vertical;
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' height='24' viewBox='0 0 24 24' width='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem !important;
+}
+
+.preview-section {
+    background: rgba(0, 51, 102, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
 }
 
-/* Update background for media files section */
-.bg-gray-50\/80 {
-    background: rgba(0, 51, 102, 0.25);
-    backdrop-filter: blur(12px);
+.preview-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-bottom: 1rem;
+    letter-spacing: 0.01em;
 }
 
-/* Update action buttons */
-.action-buttons {
-    display: flex;
-    gap: 0.5rem;
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
     padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(4px);
+}
+
+.preview-item {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
     border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preview-image,
+.preview-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.document-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.document-icon {
+    font-size: 2.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.5rem;
+}
+
+.document-name {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.remove-button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-button:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+}
+
+/* Button Styles */
+.browse-button {
+    display: inline-block;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.browse-button:hover,
+.browse-button:focus {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+    outline: none;
+}
+
+.browse-button:focus-visible {
+    outline: 2px solid #00ccff;
+    outline-offset: 2px;
 }
 
 .action-button {
     padding: 0.5rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 0.25rem;
+    border: none;
 }
 
 .delete-button {
@@ -450,245 +688,107 @@ const submit = () => {
     background: rgba(0, 204, 255, 0.1);
 }
 
-/* Oceanic Theme */
-.bg-gradient-overlay {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 51, 102, 0.9) 0%,
-        rgba(0, 64, 128, 0.8) 50%,
-        rgba(0, 31, 63, 0.9) 100%
-    );
-}
-
-.backdrop-blur-sm {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(10px);
-}
-
-/* Add container hover effect */
-.shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.shadow-lg:hover {
-    box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-}
-
-/* Button Gradients */
-.gradient-primary {
-    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-}
-
-/* Container max widths */
-.max-w-4xl {
-    max-width: 56rem;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.max-w-3xl {
-    max-width: 48rem;
-}
-
-.max-w-2xl {
-    max-width: 42rem;
-}
-
-/* Adjust inner padding for better content display */
-.p-4 {
-  padding: 1.25rem;
-}
-
-/* Enhance spacing between sections */
-.space-y-4 > * + * {
-  margin-top: 1.25rem;
-}
-
-/* Additional container styles */
-.max-w-4xl {
-    max-width: 56rem;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* Adjust spacing for better visual hierarchy */
-.space-y-4 > * + * {
-    margin-top: 1rem;
-}
-
-/* Oceanic Button Style */
-button {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 51, 102, 0.9) 0%,
-        rgba(0, 64, 128, 0.8) 100%
-    ) !important;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    padding: 0.5rem 1.5rem;
-}
-
-button:hover {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 64, 128, 0.95) 0%,
-        rgba(0, 51, 102, 0.85) 100%
-    ) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.2);
-}
-
-/* Icon Animation */
-.group:hover .group-hover\:rotate-12 {
-    transform: rotate(12deg);
-    color: #00ccff !important;
-}
-
-button .material-icons-round {
-    color: #00ccff !important;
-    transition: all 0.3s ease;
-}
-
-/* Container Adjustments */
-.bg-white\/70 {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 51, 102, 0.75) 0%,
-        rgba(0, 64, 128, 0.65) 100%
-    );
-    color: white;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Adjust form backgrounds for better transparency */
-.bg-gray-50\/80 {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(4px);
-}
-
-/* Make inputs slightly more transparent */
-input, select {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(2px);
-    border-color: rgba(255, 255, 255, 0.15);
-    color: white;
-}
-
-/* Enhanced container glow */
-.shadow-xl {
-    box-shadow: 0 0 25px rgba(0, 102, 204, 0.15);
-}
-
-/* Adjust blur intensity for the entire container */
-.backdrop-blur-sm {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
-
-/* Override text colors for better contrast */
-.text-gray-800 {
-    color: white;
-}
-
-.text-gray-700 {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Adjust form inputs for dark container */
-input, select {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-/* Add a subtle glow effect to containers */
-.shadow-xl {
-    box-shadow: 0 0 20px rgba(0, 102, 204, 0.2);
-}
-
-/* Textarea styling */
-textarea {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(2px);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: white;
-  resize: vertical;
-  min-height: 6rem;
-  padding: 0.75rem;
-}
-
-textarea:focus {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Add gradient text effect */
-.text-gradient {
-    background: linear-gradient(
-        135deg,
-        rgb(255, 255, 255) 0%,
-        rgb(147, 197, 253) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 0 30px rgba(147, 197, 253, 0.5);
-}
-
-/* Adjust TextInput width for title */
-input[type="text"] {
-  width: 100%;
-  min-width: 500px;
-  font-size: 1.125rem;
-  line-height: 1.75;
-  padding: 0.75rem 1rem;
-}
-
-/* Remove old file input styles */
-.file-input {
-    display: none;
-}
-
-/* Add new browse button styling */
-.browse-button {
-    display: inline-block;
-    background: linear-gradient(135deg, rgba(0, 51, 102, 0.9), rgba(0, 64, 128, 0.8));
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(4px);
-    cursor: pointer;
-    font-family: 'Inter', sans-serif;
+.create-button,
+.cancel-button {
+    padding: 0.75rem 1.5rem;
     font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 50px;
+    min-width: 140px;
     text-align: center;
     transition: all 0.3s ease;
 }
 
-.browse-button:hover {
-    background: linear-gradient(135deg, rgba(0, 64, 128, 0.95), rgba(0, 51, 102, 0.85));
+.create-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.cancel-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+.create-button:hover,
+.cancel-button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.create-button:active,
+.cancel-button:active {
+    transform: translateY(0);
+}
+
+/* Spacing and Layout */
+.space-y-8 > * + * {
+    margin-top: 2rem;
+}
+
+.space-y-4 > * + * {
+    margin-top: 1rem;
+}
+
+.item-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Error Container */
+.error-container {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 1.25rem;
+    color: #ff4444;
+    margin-bottom: 1.5rem;
+}
+
+/* Labels */
+label {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Back Button */
+.oceanic-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.oceanic-button:hover {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.oceanic-button a {
+    color: white !important;
+    text-decoration: none;
+}
+
+.item-header h3 {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.125rem;
+    font-weight: 600;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.01em;
 }
 </style>
