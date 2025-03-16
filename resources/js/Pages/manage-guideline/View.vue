@@ -1,7 +1,6 @@
 <script setup>
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
@@ -92,205 +91,383 @@ const updateButton = () => {
     <Head title="View Guideline" />
     <Sidebar>
         <template #header>
-            <div class="flex justify-between items-center">
-                <SecondaryButton @click="backRoute">
-                    Back
-                </SecondaryButton>
-            </div>
+            <h2 class="text-xl font-semibold leading-tight text-white">
+                View Guideline
+            </h2>
         </template>
 
         <div class="relative min-h-screen">
-            <!-- Background image with oceanic overlay -->
-            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" style="background-image: url('/images/landing.jpg');">
+            <!-- Background -->
+            <div class="absolute inset-0">
+                <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
                 <div class="absolute inset-0 bg-gradient-overlay"></div>
             </div>
-            
-            <!-- Content overlay -->
-            <div class="relative z-10 max-w-4xl mx-auto p-6">
-                <div v-if="props?.success" class="bg-blue-100/80 border border-blue-400 text-blue-700 px-4 py-3 mb-4 rounded backdrop-blur-sm">
-                    <strong>Success! </strong> {{ props?.success }}
-                </div>
-                <div class="space-x-2 flex mt-4 justify-end items-end">
-                    <DangerButton v-if="props.guideline.is_active" 
-                        class="action-button-gradient danger" 
-                        @click="showArchiveModal()">Archive</DangerButton>
-                    <DangerButton v-else 
-                        class="action-button-gradient danger" 
-                        @click="showArchiveModal()">Unarchive</DangerButton>
-                    <PrimaryButton v-if="props.guideline.is_active" 
-                        class="action-button-gradient primary" 
-                        @click="updateButton">Update</PrimaryButton>
-                </div>
 
-                <!-- Main info container -->
-                <div class="bg-blue-900/30 backdrop-blur-sm p-6 rounded-lg shadow-lg mb-6 text-white">
-                    <div>
-                        <h1 class="text-2xl font-bold font-poppins tracking-tight">{{ props.guideline.title }}</h1>
-                        <p class="text-blue-50 mt-2 font-inter">{{ props.guideline.description }}</p>
-                        <div class="text-sm text-blue-100 mt-2 font-inter">
-                            <span class="mr-4">Category: {{ props.guideline.category }}</span>
-                            <span> User Role: {{ props.guideline.user_role }}</span>
-                        </div>
-                        <p class="mt-2 text-sm font-semibold" :class="{'text-green-400': props.guideline.is_active, 'text-red-400': !props.guideline.is_active}">
-                            {{ props.guideline.is_active ? 'Active' : 'Inactive' }}
-                        </p>
+            <!-- Content -->
+            <div class="relative container mx-auto px-4 py-8 max-w-4xl">
+                <!-- Success Message -->
+                <div v-if="props?.success"
+                     class="notification success-notification"
+                     role="alert">
+                    <div class="flex-1 flex items-center">
+                        <span class="material-icons material-icons-round text-2xl mr-3">check_circle</span>
+                        <p class="notification-text">{{ props?.success }}</p>
                     </div>
                 </div>
 
-                <div class="mt-6">
-                    <h2 class="text-xl font-bold text-white mb-4 font-poppins tracking-tight">Guidelines</h2>
-                    <div v-for="(item, index) in sortedItems" :key="item.id" 
-                         class="bg-blue-900/30 backdrop-blur-sm p-4 rounded-lg shadow-lg mt-4 text-white hover:bg-blue-800/40 transition-all">
-                        <h3 class="text-lg font-semibold text-blue-50 font-inter">• {{ item.text }}</h3>
-                        <div v-if="item.mediaFiles.length > 0" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <div v-for="mediaFile in item.mediaFiles" :key="mediaFile.id" class="cursor-pointer" @click="openFileModal(mediaFile)">
-                                <template v-if="mediaFile.type.startsWith('image/')">
-                                    <img :src="`/storage/${mediaFile.path}`" alt="Media" class="w-full h-32 object-cover rounded-lg shadow-md" />
-                                </template>
-                                <template v-else>
-                                    <div class="flex items-center justify-center h-32 bg-gray-200 rounded-lg shadow-md">
-                                        <span class="text-gray-600">{{ mediaFile.type.includes('video') ? '🎥 Video' : '📄 Document' }}</span>
-                                    </div>
-                                </template>
+                <!-- Error Message -->
+                <div v-if="form.errors.password"
+                     class="notification error-notification"
+                     role="alert">
+                    <div class="flex-1 flex items-center">
+                        <span class="material-icons material-icons-round text-2xl mr-3">error</span>
+                        <p class="notification-text">{{ form.errors.password }}</p>
+                    </div>
+                </div>
+
+                <!-- Guideline Card -->
+                <div class="profile-card">
+                    <div class="guideline-header">
+                        <div class="flex flex-col">
+                            <h1 class="guideline-title-gradient">{{ props.guideline.title }}</h1>
+                            <div class="category-badge">
+                                <span class="material-icons material-icons-round text-sm mr-2">category</span>
+                                <p>{{ props.guideline.category }}</p>
                             </div>
                         </div>
-                        <p v-else class="text-blue-200 mt-2">No media files available.</p>
+                    </div>
+
+                    <!-- Guideline Content -->
+                    <div class="p-6 space-y-6">
+                        <!-- Description Section -->
+                        <div class="space-y-4">
+                            <h2 class="text-lg font-semibold border-b pb-2 flex items-center text-white border-opacity-20">
+                                <span class="material-icons material-icons-round mr-2">description</span>
+                                Description
+                            </h2>
+                            <p class="text-white/90">{{ props.guideline.description }}</p>
+                        </div>
+
+                        <!-- Guidelines Section -->
+                        <div class="space-y-4">
+                            <h2 class="text-lg font-semibold border-b pb-2 flex items-center text-white border-opacity-20">
+                                <span class="material-icons material-icons-round mr-2">list</span>
+                                Guidelines
+                            </h2>
+                            <div class="space-y-4">
+                                <div v-for="(item, index) in sortedItems" :key="item.id"
+                                     class="info-row group p-4 rounded-lg">
+                                    <h3 class="step-title">
+                                        <span class="material-icons material-icons-round mr-2">article</span>
+                                        Item {{ item.count }}
+                                    </h3>
+                                    <p class="text-white/90 ml-8">{{ item.text }}</p>
+
+                                    <!-- Media Files Grid -->
+                                    <div v-if="item.mediaFiles.length > 0" class="mt-4 ml-8">
+                                        <h4 class="text-sm font-medium text-white/80 mb-2">Media Files</h4>
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            <div v-for="mediaFile in item.mediaFiles" :key="mediaFile.id"
+                                                 class="media-item group/media"
+                                                 @click="openFileModal(mediaFile)">
+                                                <template v-if="mediaFile.type.startsWith('image/')">
+                                                    <img :src="`/storage/${mediaFile.path}`"
+                                                         alt="Media"
+                                                         class="media-preview" />
+                                                </template>
+                                                <template v-else-if="mediaFile.type.startsWith('video/')">
+                                                    <div class="media-preview flex items-center justify-center bg-black/30">
+                                                        <span class="material-icons material-icons-round text-3xl">play_circle</span>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="media-preview flex flex-col items-center justify-center bg-black/30">
+                                                        <span class="material-icons material-icons-round text-3xl">description</span>
+                                                        <span class="text-xs mt-1 text-center px-2">Document</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-4">
+                        <button
+                            v-if="props.guideline.is_active"
+                            class="action-button-gradient danger"
+                            @click="showArchiveModal"
+                        >
+                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">archive</span>
+                            Archive Guideline
+                        </button>
+                        <button
+                            v-else
+                            class="action-button-gradient success"
+                            @click="showArchiveModal"
+                        >
+                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">unarchive</span>
+                            Unarchive Guideline
+                        </button>
+                        <button
+                            v-if="props.guideline.is_active"
+                            class="action-button-gradient primary"
+                            @click="updateButton"
+                        >
+                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">edit</span>
+                            Update Guideline
+                        </button>
                     </div>
                 </div>
+
+                <!-- Media Preview Modal -->
+                <Modal :show="showFileModal" @close="closeFileModal">
+                    <div class="p-6">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Media Preview</h2>
+                        <div class="mt-4" v-if="currentMediaFile">
+                            <template v-if="currentMediaFile.type.startsWith('image/')">
+                                <img :src="`/storage/${currentMediaFile.path}`"
+                                     alt="Preview"
+                                     class="w-full h-auto rounded-lg" />
+                            </template>
+                            <template v-else-if="currentMediaFile.type.startsWith('video/')">
+                                <video controls class="w-full h-auto rounded-lg">
+                                    <source :src="`/storage/${currentMediaFile.path}`" :type="currentMediaFile.type" />
+                                    Your browser does not support the video tag.
+                                </video>
+                            </template>
+                            <template v-else>
+                                <div class="text-center p-8 bg-gray-50 rounded-lg">
+                                    <span class="material-icons material-icons-round text-4xl text-gray-400 mb-2">description</span>
+                                    <p class="text-gray-600">This is a document file.</p>
+                                    <a :href="`/storage/${currentMediaFile.path}`"
+                                       class="text-indigo-600 hover:text-indigo-800 underline mt-2 inline-block"
+                                       target="_blank">
+                                       Download Document
+                                    </a>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </Modal>
+
+                <!-- Archive Modal -->
+                <Modal :show="archiveModal" @close="closeArchiveModal">
+                    <div class="p-6">
+                        <h2 class="text-lg font-semibold text-gray-800">
+                            {{ props.guideline.is_active ? 'Archive Guideline' : 'Unarchive Guideline' }}
+                        </h2>
+                        <p class="mt-2 text-sm text-gray-600">
+                            Are you sure you want to {{ props.guideline.is_active ? 'archive' : 'unarchive' }} this guideline?
+                        </p>
+
+                        <div class="mt-4">
+                            <label for="admin-password" class="text-sm text-gray-500">
+                                Please confirm by entering your password
+                            </label>
+                            <input
+                                type="password"
+                                id="admin-password"
+                                v-model="form.password"
+                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="Enter your password"
+                            />
+                            <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                                {{ form.errors.password }}
+                            </p>
+                        </div>
+
+                        <div class="mt-6 space-x-4 flex justify-end">
+                            <SecondaryButton @click="closeArchiveModal">Cancel</SecondaryButton>
+                            <DangerButton @click="archive">Confirm</DangerButton>
+                        </div>
+                    </div>
+                </Modal>
             </div>
         </div>
-
-        <Modal :show="showFileModal" @close="closeFileModal">
-            <div class="p-6">
-                <h2 class="text-lg font-semibold text-gray-800">Preview Media File</h2>
-                <div class="mt-4"  v-if="currentMediaFile">
-                    <template v-if="currentMediaFile.type.startsWith('image/')">
-                        <img :src="`/storage/${currentMediaFile.path}`" alt="Preview" class="w-full h-auto rounded-lg" />
-                    </template>
-                    <template v-else-if="currentMediaFile.type.startsWith('video/')">
-                        <video controls class="w-full h-auto rounded-lg">
-                            <source :src="`/storage/${currentMediaFile.path}`" :type="currentMediaFile.type" />
-                            Your browser does not support the video tag.
-                        </video>
-                    </template>
-                    <template v-else>
-                        <p class="text-gray-600">This is a document file. You can download it <a :href="`/storage/${currentMediaFile.path}`" class="text-indigo-600 underline" target="_blank">here</a>.</p>
-                    </template>
-                </div>
-            </div>
-        </Modal>
     </Sidebar>
 </template>
 
 <style scoped>
-/* Responsive tweaks */
-@media (max-width: 640px) {
-    .grid-cols-2 {
-        grid-template-columns: 1fr !important;
-    }
-}
-
 /* Oceanic Theme */
 .bg-gradient-overlay {
     background: linear-gradient(
         135deg,
-        rgba(0, 51, 102, 0.9) 0%,
-        rgba(0, 64, 128, 0.8) 50%,
-        rgba(0, 31, 63, 0.9) 100%
+        rgba(0, 51, 102, 0.95) 0%,
+        rgba(0, 64, 128, 0.85) 50%,
+        rgba(0, 31, 63, 0.95) 100%
     );
 }
 
-.backdrop-blur-sm {
-    backdrop-filter: blur(6px);
+/* Guideline Card */
+.profile-card {
+    @apply rounded-xl shadow-lg overflow-hidden mb-6;
+    background: rgba(0, 51, 102, 0.25);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-/* Add container hover effect */
-.shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+.guideline-header {
+    @apply px-8 py-6;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.shadow-lg:hover {
-    box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+.category-badge {
+    @apply flex items-center text-indigo-200 mt-2;
+}
+
+/* Text Styling */
+.guideline-title-gradient {
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.step-title {
+    @apply text-lg font-semibold mb-2 flex items-center text-white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Information Row Styling */
+.info-row {
+    @apply transition-all duration-200 p-6;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 1rem;
+    border-radius: 12px;
+}
+
+.info-row:hover {
+    background: rgba(255, 255, 255, 0.05);
     transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Button Gradients */
-.gradient-primary {
-    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
+/* Media Items */
+.media-item {
+    @apply relative rounded-xl overflow-hidden cursor-pointer transition-all duration-200;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.gradient-danger {
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
+.media-preview {
+    @apply w-full aspect-square object-cover;
+    background: rgba(0, 0, 0, 0.2);
 }
 
-/* Font styles */
-.font-poppins {
-    font-family: 'Poppins', sans-serif;
-}
-
-.font-inter {
-    font-family: 'Inter', sans-serif;
+.media-item:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 /* Button Gradients */
 .action-button-gradient {
-    @apply px-6 py-3 rounded-lg flex items-center transition-all duration-300 text-base;
+    @apply px-6 py-2.5 rounded-xl flex items-center transition-all duration-300;
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
     font-weight: 500;
-    min-width: 120px;
-    justify-content: center;
+    letter-spacing: 0.3px;
 }
 
 .action-button-gradient.primary {
     background: linear-gradient(135deg, #4f46e5, #3730a3) !important;
-    font-size: 1rem;
 }
 
 .action-button-gradient.danger {
     background: linear-gradient(135deg, #dc2626, #991b1b) !important;
-    font-size: 1rem;
 }
 
-/* Updated Button Styles */
-button {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 51, 102, 0.9) 0%,
-        rgba(0, 64, 128, 0.8) 100%
-    ) !important;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    padding: 0.5rem 1.5rem;
+.action-button-gradient.success {
+    background: linear-gradient(135deg, #059669, #065f46) !important;
 }
 
-button:hover {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 64, 128, 0.95) 0%,
-        rgba(0, 51, 102, 0.85) 100%
-    ) !important;
+.action-button-gradient:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
-    border-color: rgba(255, 255, 255, 0.3);
+    filter: brightness(110%);
 }
 
-button:active {
+.action-button-gradient:active {
     transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.2);
+}
+
+/* Background Styles */
+.bg-gray-50 {
+    background: rgba(0, 51, 102, 0.2) !important;
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Material Icons */
+.material-icons-round {
+    color: rgba(0, 204, 255, 0.9) !important;
+}
+
+/* Group hover effects */
+.group:hover .group-hover\:rotate-12 {
+    transform: rotate(12deg);
+    color: #00ccff !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .guideline-title-gradient {
+        font-size: 1.5rem;
+    }
+    .container {
+        padding: 1rem;
+    }
+    .profile-card {
+        margin: 0.5rem;
+    }
+}
+
+/* Notifications */
+.notification {
+    @apply flex items-center justify-between mb-6 px-6 py-4 rounded-xl backdrop-blur-md;
+    animation: slideIn 0.3s ease-out;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.success-notification {
+    background: rgba(16, 185, 129, 0.15);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+}
+
+.error-notification {
+    background: rgba(239, 68, 68, 0.15);
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.15);
+}
+
+.notification-text {
+    @apply text-white text-base font-medium;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.success-notification .material-icons-round {
+    color: rgb(16, 185, 129) !important;
+}
+
+.error-notification .material-icons-round {
+    color: rgb(239, 68, 68) !important;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 </style>
