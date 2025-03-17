@@ -236,7 +236,8 @@ class SightingController extends Controller
         // Eager load necessary relationships
         $sighting = Sighting::with([
             'mediaFiles',
-            'sightedSpecies'
+            'sightedSpecies',
+            'user'
             ])->findOrFail($id);
 
         // Map media files to include public URLs
