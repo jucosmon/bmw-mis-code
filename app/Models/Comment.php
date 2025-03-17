@@ -14,7 +14,6 @@ class Comment extends Model
         'stranded_incident_id',
         'user_id',
         'is_active',
-        'is_automated'
     ];
 
     public function user()

@@ -3,10 +3,10 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 
 const page = usePage();
 const props = defineProps({
@@ -334,11 +334,27 @@ const submitComment = () => {
         stranded_incident_id: props.strandedIncident.id // Ensure this is included
     }, {
         onSuccess: (response) => {
-            // Clear the form after successful submission
-            const newComment = { id: response.id, text: form.text }; // Assuming the response contains the new comment ID
-            form.text = ''; // Reset the text field
-            comments.value.push(newComment); // Add the new comment to the local state
-            scrollToNewComment(newComment.id); // Scroll to the new comment
+            // Create a complete comment object with all required properties
+            const newComment = {
+                id: response.props?.comment?.id || Date.now(), // Fallback to timestamp if id is missing
+                text: form.text,
+                user: page.props.auth.user, // Current user info
+                user_id: page.props.auth.user.id,
+                created_at: new Date().toLocaleString(), // Current timestamp
+                is_active: true,
+                showOptions: false
+            };
+
+            // Add the new comment to the local state
+            comments.value.push(newComment);
+
+            // Reset the form
+            form.text = '';
+
+            // Scroll to the new comment
+            nextTick(() => {
+                scrollToNewComment(newComment.id);
+            });
         },
         onError: (errors) => {
             // Handle errors (e.g., server validation issues)
@@ -455,6 +471,9 @@ onMounted(() => {
     if (props.strandedIncident.latitude && props.strandedIncident.longitude) {
       initializeMap();
     }
+
+    // Add event listener for click outside
+    document.addEventListener('click', clickOutsideHandler);
   });
 });
 
@@ -490,57 +509,550 @@ const closeFileModal = () => {
     showFileModal.value = false;
     currentMediaFile.value = null;
 };
+
+// Add this to the script setup section, right after the errors ref
+const clickOutsideHandler = (e) => {
+    // Check if any comment has showOptions open
+    const openComment = comments.value.find(comment => comment.showOptions);
+    if (openComment) {
+        // Check if the click was outside the menu
+        const menu = document.getElementById(`comment-menu-${openComment.id}`);
+        const trigger = document.getElementById(`comment-trigger-${openComment.id}`);
+        if (menu && !menu.contains(e.target) && !trigger.contains(e.target)) {
+            openComment.showOptions = false;
+        }
+    }
+};
+
+// Function to position the comment menu
+const getMenuPosition = (triggerId) => {
+    // Get the trigger element
+    const trigger = document.getElementById(triggerId);
+    if (!trigger) return { top: '0px', right: '0px' };
+
+    // Get the position of the trigger
+    const rect = trigger.getBoundingClientRect();
+
+    // Position the menu below and to the right of the trigger
+    return {
+        top: `${rect.bottom + 5}px`,
+        left: `${rect.left - 120}px` // Offset to the left to show the menu properly
+    };
+};
+
+// Clean up event listener when component is unmounted
+onUnmounted(() => {
+  document.removeEventListener('click', clickOutsideHandler);
+});
+
 </script>
 
 <template>
-    <Head title="View Stranded Incident" />
+    <Head title="View Stranded Incident">
+        <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Round" rel="stylesheet" />
+    </Head>
     <Sidebar>
         <template #header>
-            <div>
-                <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-                <Link :href="backRoute" class="flex items-center">
-                    Back
-                </Link>
-                </button>
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold leading-tight">
+                    View Stranded Incident
+                </h2>
+
             </div>
         </template>
 
-        <div class="container mx-auto px-6 pb-6 max-w-5xl">
-            <div v-if="props?.success"
-                 class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded shadow-sm"
-                 role="alert">
-                <p class="font-bold">Success!</p>
-                <p>{{ props?.success }}</p>
+        <div class="relative min-h-screen">
+            <!-- Background -->
+            <div class="absolute inset-0">
+                <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
             </div>
-            <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-8 rounded-xl shadow-xl mb-8">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h1 class="text-3xl font-bold mb-2">Stranded Incident #{{ props.strandedIncident.id }}</h1>
-                        <div class="flex items-center space-x-3">
-                            <span class="px-3 py-1 bg-white/20 rounded-full text-sm">
-                                Status: {{ props.strandedIncident.report_status }}
-                            </span>
-                            <span v-if="userRespondStatus" class="px-3 py-1 bg-white/20 rounded-full text-sm">
-                                Response: {{ userRespondStatus }}
-                            </span>
+
+            <!-- Content -->
+            <div class="relative container mx-auto px-4 py-8 max-w-5xl">
+                <!-- Success Message -->
+                <div v-if="props?.success" class="success-notification" role="alert">
+                    <div class="flex-1 flex items-center">
+                        <span class="material-icons material-icons-round text-2xl mr-3">check_circle</span>
+                        <p class="notification-text">{{ props?.success }}</p>
+                    </div>
+                </div>
+
+                <!-- Stranded Incident Header Card -->
+                <div class="profile-card mb-6">
+
+                    <div class="profile-header">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex flex-col">
+                                <h1 class="profile-title-gradient">Stranded Incident #{{ props.strandedIncident.id }}</h1>
+                                <div class="flex flex-wrap items-center text-indigo-200 mt-2">
+                                    <div class="flex items-center mr-4 mb-1">
+                                        <span class="material-icons material-icons-round text-sm mr-1">event</span>
+                                        <p class="text-xs text-gray-100 italic">{{ props.strandedIncident.date }}</p>
+                                    </div>
+                                    <div class="flex items-center mr-4 mb-1">
+                                        <span class="material-icons material-icons-round text-sm mr-1">schedule</span>
+                                        <p class="text-xs text-gray-100 italic">{{ props.strandedIncident.time }}</p>
+                                    </div>
+                                    <div class="flex items-center mr-4 mb-1">
+                                        <span class="material-icons material-icons-round text-sm mr-1">verified</span>
+                                        <p class="text-xs">{{ props.strandedIncident.is_active ? 'Active' : 'Inactive' }} ({{ props.strandedIncident.report_status }})</p>
+                                    </div>
+                                    <div class="flex items-center mb-1" v-if="userRespondStatus">
+                                        <span class="material-icons material-icons-round text-sm mr-1">how_to_reg</span>
+                                        <p class="text-xs">Response: {{ userRespondStatus }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap justify-start sm:justify-end space-x-2 mt-4 sm:mt-0">
+                                <!-- Original action buttons styled with new classes -->
+                                <button
+                                    class="action-button-gradient danger text-sm mb-2"
+                                    @click="confirmArchiveIncident"
+                                    v-if="props.strandedIncident.is_active && archiveButtonStatus"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">cancel</span>
+                                    Cancel Report
+                                </button>
+                                <button
+                                    class="action-button-gradient success text-sm mb-2"
+                                    @click="confirmArchiveIncident"
+                                    v-if="props.strandedIncident.is_active===false && isPublicUser"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restore</span>
+                                    Unarchive
+                                </button>
+
+                                <button
+                                    v-if="updateButtonStatusPublic"
+                                    class="action-button-gradient primary text-sm mb-2"
+                                    @click="updateIncident"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">edit</span>
+                                    Update Report
+                                </button>
+                                <button
+                                    v-if="updateButtonStatusResponder"
+                                    class="action-button-gradient primary text-sm mb-2"
+                                    @click="updateIncident"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">
+                                        {{ (userRespondStatus === 'ongoing' || userRespondStatus === 'onsite') &&
+                                        (props.strandedIncident.report_status==='pending' || props.strandedIncident.report_status==='false') && !isPublicUser
+                                            ? 'verified' : 'edit' }}
+                                    </span>
+                                    {{ (userRespondStatus === 'ongoing' || userRespondStatus === 'onsite') &&
+                                    (props.strandedIncident.report_status==='pending' || props.strandedIncident.report_status==='false') && !isPublicUser
+                                        ? 'Verify Incident' : 'Update Incident' }}
+                                </button>
+                                <button
+                                    v-if="respondButtonStatus"
+                                    class="action-button-gradient primary text-sm mb-2"
+                                    @click="showRespondModal"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">assignment_turned_in</span>
+                                    Respond
+                                </button>
+                                <button
+                                    v-if="completeButtonStatus"
+                                    class="action-button-gradient success text-sm mb-2"
+                                    @click="showCompleteModal"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">check_circle</span>
+                                    Mark as Complete
+                                </button>
+                                <button
+                                    v-if="resolveButtonStatus"
+                                    class="action-button-gradient success text-sm mb-2"
+                                    @click="showResolveModal"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">task_alt</span>
+                                    Mark as Resolved
+                                </button>
+                                <button
+                                    v-if="unresolveButtonStatus"
+                                    class="action-button-gradient warning text-sm mb-2"
+                                    @click="showUnresolveModal"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restart_alt</span>
+                                    Unresolve Incident
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex justify-end space-x-4">
-                    <button
-                        class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
-                        @click="confirmArchiveIncident"
-                        v-if="props.strandedIncident.is_active && archiveButtonStatus"
-                    >
-                        Cancel Report
-                    </button>
-                    <button
-                        class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
-                        @click="confirmArchiveIncident"
-                        v-if="props.strandedIncident.is_active===false && isPublicUser"
-                    >
-                        Unarchive Incident
-                    </button>
+                </div>
 
+                <div class="space-y-6">
+                    <!-- Role-specific warnings (preserved from original) -->
+                    <div v-if="((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
+                                (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff))) &&
+                                !activeStrandedSpecies.length"
+                        class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4 rounded">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    Please complete at least one detailed species form to mark this incident as
+                                    {{ props.strandedIncident.report_status === 'verified' ? 'complete' : 'resolved' }}.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else-if="((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
+                                    (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff))) &&
+                                    activeStrandedSpecies.length > 0"
+                        class="bg-green-50 border-l-4 border-green-400 p-4 mb-4 rounded">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-green-700">
+                                    You can now mark this incident as {{ props.strandedIncident.report_status === 'verified' ? 'complete' : 'resolved' }}.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reporter Information -->
+                    <div class="profile-card">
+                        <div class="section-header py-5">
+                            <h2 class="section-title">
+                                <span class="material-icons material-icons-round mr-3">person</span>
+                                Reporter Information
+                            </h2>
+                        </div>
+                        <div class="p-6 pt-5">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="info-row group">
+                                    <span class="material-icons material-icons-round">account_circle</span>
+                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user ? `${props.strandedIncident.user.first_name} ${props.strandedIncident.user.last_name}` : 'Unknown Reporter' }}</span>
+                                </div>
+                                <div class="info-row group">
+                                    <span class="material-icons material-icons-round">phone</span>
+                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user && props.strandedIncident.user.contact_number ? props.strandedIncident.user.contact_number : 'No contact number available' }}</span>
+                                </div>
+                                <div class="info-row group">
+                                    <span class="material-icons material-icons-round">email</span>
+                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user ? props.strandedIncident.user.email : 'No email available' }}</span>
+                                </div>
+                                <div class="info-row group">
+                                    <span class="material-icons material-icons-round">badge</span>
+                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user ? props.strandedIncident.user.user_role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown role' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Incident Details -->
+                    <div class="profile-card">
+                        <div class="section-header py-5">
+                            <h2 class="section-title">
+                                <span class="material-icons material-icons-round mr-3">info</span>
+                                Incident Details
+                            </h2>
+                        </div>
+                        <div class="p-6 pt-5 space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="info-card">
+                                    <div class="flex items-start">
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">pets</span>
+                                        <div>
+                                            <h3 class="info-card-title">Species Involved</h3>
+                                            <p class="info-card-content">{{ formatValue(props.strandedIncident.species_involved) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-card">
+                                    <div class="flex items-start">
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">pin_drop</span>
+                                        <div>
+                                            <h3 class="info-card-title">Quantity</h3>
+                                            <p class="info-card-content">{{ formatValue(props.strandedIncident.quantity) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="info-card">
+                                    <div class="flex items-start">
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">waves</span>
+                                        <div>
+                                            <h3 class="info-card-title">Sea State</h3>
+                                            <p class="info-card-content capitalize">{{ formatValue(props.strandedIncident.sea_state) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-card">
+                                    <div class="flex items-start">
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">wb_sunny</span>
+                                        <div>
+                                            <h3 class="info-card-title">Weather</h3>
+                                            <p class="info-card-content capitalize">{{ formatValue(props.strandedIncident.weather) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-card">
+                                    <div class="flex items-start">
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">landscape</span>
+                                        <div>
+                                            <h3 class="info-card-title">Beach Type</h3>
+                                            <p class="info-card-content capitalize">{{ formatValue(props.strandedIncident.beach_type) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-card">
+                                <div class="flex items-start">
+                                    <span class="material-icons material-icons-round text-xl mr-3 mt-1">heart_broken</span>
+                                    <div>
+                                        <h3 class="info-card-title">Condition</h3>
+                                        <p class="info-card-content capitalize">{{ formatValue(props.strandedIncident.condition) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-card">
+                                <div class="flex items-start">
+                                    <span class="material-icons material-icons-round text-xl mr-3 mt-1">notes</span>
+                                    <div>
+                                        <h3 class="info-card-title">Additional Information</h3>
+                                        <p class="info-card-content whitespace-pre-wrap">{{ formatValue(props.strandedIncident.more_information, 'No additional information provided') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information -->
+                    <div class="profile-card">
+                        <div class="section-header py-5">
+                            <h2 class="section-title">
+                                <span class="material-icons material-icons-round mr-3">location_on</span>
+                                Incident Location
+                            </h2>
+                        </div>
+                        <div class="p-6 pt-5 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div class="info-row group">
+                                    <span class="material-icons material-icons-round">place</span>
+                                    <span class="ml-3 text-sm">{{ formatValue(barangayName) }}, {{ formatValue(municipalityName) }}</span>
+                                </div>
+                                <div class="info-row group">
+                                    <span class="material-icons material-icons-round">info</span>
+                                    <span class="ml-3 text-sm">{{ formatValue(props.strandedIncident.detailed_location, 'No detailed location provided') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Only show map if coordinates exist -->
+                            <template v-if="props.strandedIncident.latitude && props.strandedIncident.longitude">
+                                <div id="map" class="rounded-lg overflow-hidden shadow-md z-0" style="height: 350px; width: 100%;"></div>
+                                <p class="text-center text-xs text-indigo-200 flex items-center justify-center mt-2">
+                                    <span class="material-icons material-icons-round text-sm mr-1">my_location</span>
+                                    <span>{{ props.strandedIncident.latitude }} lat | {{ props.strandedIncident.longitude }} long</span>
+                                </p>
+                            </template>
+                            <p v-else class="text-gray-300 italic text-center py-4">
+                                No GPS coordinates available
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Media Files -->
+                    <div class="profile-card">
+                        <div class="section-header py-5">
+                            <h2 class="section-title">
+                                <span class="material-icons material-icons-round mr-3">perm_media</span>
+                                Media Files
+                            </h2>
+                        </div>
+                        <div class="p-6 pt-5">
+                            <div v-if="props.strandedIncident.mediaFiles && props.strandedIncident.mediaFiles.length > 0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                <div
+                                    v-for="file in props.strandedIncident.mediaFiles"
+                                    :key="file.id"
+                                    class="media-item"
+                                    @click="openFileModal(file)"
+                                >
+                                    <template v-if="file.type.startsWith('image/')">
+                                        <img :src="file.url" :alt="`Image of ${props.strandedIncident.name}`" class="media-preview" />
+                                    </template>
+                                    <template v-else-if="file.type.startsWith('video/')">
+                                        <div class="media-preview flex items-center justify-center">
+                                            <span class="material-icons material-icons-round text-3xl">play_circle</span>
+                                        </div>
+                                    </template>
+                                    <div class="media-overlay">
+                                        <span class="material-icons material-icons-round">visibility</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-else class="text-gray-300 text-center py-4 italic">No media files available</p>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Species Forms -->
+                    <div v-if="isBpemoAdmin || isBpemoStaff || isLguResponder" class="profile-card">
+                        <div class="section-header py-5">
+                            <h2 class="section-title flex justify-between items-center w-full">
+                                <div class="flex items-center">
+                                    <span class="material-icons material-icons-round mr-3">pets</span>
+                                    Detailed Species Forms
+                                </div>
+                                <button
+                                    class="action-button-gradient primary text-sm"
+                                    @click="createSpeciesForm"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1">add</span>
+                                    Add Form
+                                </button>
+                            </h2>
+                        </div>
+
+                        <div v-if="errors.species_forms &&
+                                ((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
+                                (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff)))"
+                            class="mx-6 mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded"
+                            role="alert">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        {{ errors.species_forms }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div v-if="activeStrandedSpecies && activeStrandedSpecies.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                                <div
+                                    v-for="(strandedSpecies, index) in activeStrandedSpecies"
+                                    :key="strandedSpecies.id"
+                                    class="species-card cursor-pointer"
+                                    @click="handleSpeciesClick(strandedSpecies.id)"
+                                >
+                                    <div class="flex items-start">
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">water</span>
+                                        <div>
+                                            <h4 class="species-name">Species {{ index + 1 }}</h4>
+                                            <p class="species-description">{{ strandedSpecies.species_name }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-else class="text-gray-300 text-center py-6 italic">No detailed species form created</p>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section-->
+                    <div v-if="props.strandedIncident.report_status!=='resolved'" id="comments-section" class="profile-card">
+                        <div class="section-header py-5">
+                            <h2 class="section-title">
+                                <span class="material-icons material-icons-round mr-3">comment</span>
+                                Comments
+                            </h2>
+                        </div>
+                        <div class="p-6 pt-5">
+                            <div class="bg-opacity-10 bg-white p-4 rounded-xl backdrop-blur-sm mb-6">
+                                <div class="flex gap-2">
+                                    <input
+                                        type="text"
+                                        id="text"
+                                        v-model="form.text"
+                                        class="block w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                                        placeholder="Add a comment..."
+                                    />
+                                    <button
+                                        class="action-button-gradient primary"
+                                        @click="submitComment"
+                                    >
+                                        <span class="material-icons material-icons-round text-sm mr-1">send</span>
+                                        Post
+                                    </button>
+                                </div>
+                                <p v-if="form.errors.text" class="text-sm text-red-300 mt-1">{{ form.errors.text }}</p>
+                            </div>
+
+                            <div v-if="comments.length > 0" class="space-y-4">
+                                <div v-for="comment in activeComments" :id="`comment-${comment.id}`" :key="comment.id" class="bg-white/5 p-4 rounded-xl backdrop-blur-sm">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <div class="flex items-center mb-1">
+                                                <span class="material-icons material-icons-round text-sm mr-1">account_circle</span>
+                                                <p class="text-sm font-medium text-white">{{ comment.user.first_name }} {{ comment.user.last_name }}</p>
+                                                <span class="mx-2 text-white/40">•</span>
+                                                <span class="text-xs text-white/60">{{ comment.created_at }}</span>
+                                            </div>
+                                            <p v-if="editingCommentId !== comment.id" class="text-white/90 ml-6">{{ comment.text }}</p>
+                                            <div v-else class="ml-6 mt-2">
+                                                <input
+                                                    type="text"
+                                                    v-model="newCommentText"
+                                                    class="block w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:ring-2 focus:ring-indigo-400 focus:outline-none mb-2"
+                                                    placeholder="Edit your comment..."
+                                                />
+                                            </div>
+                                        </div>
+                                        <div v-if="comment.user_id === page.props.auth.user.id" class="relative">
+                                            <button
+                                                class="text-white/50 hover:text-white"
+                                                @click.stop="comment.showOptions = !comment.showOptions; $event.stopPropagation();"
+                                                :id="`comment-trigger-${comment.id}`"
+                                            >
+                                                <span class="material-icons material-icons-round">more_vert</span>
+                                            </button>
+                                            <teleport to="body">
+                                                <div
+                                                    v-if="comment.showOptions"
+                                                    class="fixed comment-options-menu"
+                                                    style="min-width: 150px; background: #1f2937; border-radius: 0.375rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5); overflow: hidden; z-index: 999999;"
+                                                    :id="`comment-menu-${comment.id}`"
+                                                    :style="getMenuPosition(`comment-trigger-${comment.id}`)"
+                                                >
+                                                    <button class="block w-full px-4 py-2 text-sm text-white hover:bg-gray-700 text-left" @click.stop="startEditComment(comment)">
+                                                        <span class="material-icons material-icons-round text-sm mr-1 align-text-bottom">edit</span>
+                                                        Update
+                                                    </button>
+                                                    <button class="block w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left" @click.stop="archiveComment(comment.id)">
+                                                        <span class="material-icons material-icons-round text-sm mr-1 align-text-bottom">delete</span>
+                                                        Archive
+                                                    </button>
+                                                </div>
+                                            </teleport>
+                                        </div>
+                                    </div>
+
+                                    <div v-if="editingCommentId === comment.id" class="mt-2 flex justify-end space-x-2">
+                                        <button class="action-button-gradient danger text-xs" @click="cancelEditComment">
+                                            <span class="material-icons material-icons-round text-xs mr-1">close</span>
+                                            Cancel
+                                        </button>
+                                        <button class="action-button-gradient primary text-xs" @click="submitEditComment(comment.id)">
+                                            <span class="material-icons material-icons-round text-xs mr-1">save</span>
+                                            Update
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-else class="text-gray-300 text-center py-4 italic">No comments yet</p>
+                        </div>
+                    </div>
+
+                    <!-- Modals -->
                     <Modal :show="showConfirmArchiveModal" @close="closeModal">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-gray-800">
@@ -567,30 +1079,6 @@ const closeFileModal = () => {
                             </div>
                         </div>
                     </Modal>
-
-                    <button
-                        v-if="updateButtonStatusPublic"
-                        class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
-                        @click="updateIncident"
-                    >
-                        Update Report
-                    </button>
-                    <button
-                        v-if="updateButtonStatusResponder"
-                        class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
-                        @click="updateIncident"
-                    >
-                    {{ (userRespondStatus === 'ongoing' || userRespondStatus === 'onsite' )&&
-                    (props.strandedIncident.report_status==='pending' || props.strandedIncident.report_status==='false') && !isPublicUser
-                        ? 'Verify Incident' : 'Update Incident' }}
-                    </button>
-                    <button
-                         v-if="respondButtonStatus"
-                        class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
-                        @click="showRespondModal"
-                    >
-                        Respond
-                    </button>
 
                     <Modal :show="respondModalVisible" @close="respondModalVisible = false">
                         <div class="p-6">
@@ -620,15 +1108,6 @@ const closeFileModal = () => {
                         </div>
                     </Modal>
 
-                    <!-- Complete Button -->
-                    <button
-                        v-if="completeButtonStatus"
-                        class="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 transition"
-                        @click="showCompleteModal"
-                    >
-                        Mark as Complete
-                    </button>
-
                     <Modal :show="completeModalVisible" @close="completeModalVisible = false">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-gray-800">
@@ -641,15 +1120,6 @@ const closeFileModal = () => {
                         </div>
                     </Modal>
 
-                    <!-- Resolve Button -->
-                    <button
-                        v-if="resolveButtonStatus"
-                        class="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 transition"
-                        @click="showResolveModal"
-                    >
-                        Mark as Resolved
-                    </button>
-
                     <Modal :show="resolveModalVisible" @close="resolveModalVisible = false">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-gray-800">
@@ -661,13 +1131,7 @@ const closeFileModal = () => {
                             </div>
                         </div>
                     </Modal>
-                    <button
-                        v-if="unresolveButtonStatus"
-                        class="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 transition"
-                        @click="showUnresolveModal"
-                    >
-                        Unresolve Incident
-                    </button>
+
                     <Modal :show="unresolveModalVisible" @close="unresolveModalVisible = false">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-gray-800">
@@ -679,183 +1143,11 @@ const closeFileModal = () => {
                             </div>
                         </div>
                     </Modal>
-                </div>
-                </div>
-            </div>
 
-            <div class="space-y-8">
-                <!-- Role-specific warnings -->
-                <div v-if="((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
-                            (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff))) &&
-                            !activeStrandedSpecies.length"
-                     class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4 rounded">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                Please complete at least one detailed species form to mark this incident as
-                                {{ props.strandedIncident.report_status === 'verified' ? 'complete' : 'resolved' }}.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-else-if="((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
-                                 (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff))) &&
-                                 activeStrandedSpecies.length > 0"
-                     class="bg-green-50 border-l-4 border-green-400 p-4 mb-4 rounded">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-green-700">
-                                You can now mark this incident as {{ props.strandedIncident.report_status === 'verified' ? 'complete' : 'resolved' }}.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main details card -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition-shadow">
-                        <h2 class="text-xl font-semibold text-indigo-700 mb-6 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Incident Details
-                        </h2>
-                        <div class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-gray-50 p-3 rounded-lg">
-                                    <p class="text-sm text-gray-500">Date</p>
-                                    <p class="font-medium">{{ formatValue(props.strandedIncident.date) }}</p>
-                                </div>
-                                <div class="bg-gray-50 p-3 rounded-lg">
-                                    <p class="text-sm text-gray-500">Time</p>
-                                    <p class="font-medium">{{ formatValue(props.strandedIncident.time) }}</p>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-sm text-gray-500">Species Involved</p>
-                                <p class="font-medium">{{ formatValue(props.strandedIncident.species_involved) }}</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-gray-50 p-3 rounded-lg">
-                                    <p class="text-sm text-gray-500">Quantity</p>
-                                    <p class="font-medium">{{ formatValue(props.strandedIncident.quantity) }}</p>
-                                </div>
-                                <div class="bg-gray-50 p-3 rounded-lg">
-                                    <p class="text-sm text-gray-500">Condition</p>
-                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.condition) }}</p>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div class="bg-gray-50 p-3 rounded-lg">
-                                    <p class="text-sm text-gray-500">Sea State</p>
-                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.sea_state) }}</p>
-                                </div>
-                                <div class="bg-gray-50 p-3 rounded-lg">
-                                    <p class="text-sm text-gray-500">Weather</p>
-                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.weather) }}</p>
-                                </div>
-                                <div class="bg-gray-50 p-3 rounded-lg">
-                                    <p class="text-sm text-gray-500">Beach Type</p>
-                                    <p class="font-medium capitalize">{{ formatValue(props.strandedIncident.beach_type) }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Location Information -->
-                    <div class="bg-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition-shadow">
-                        <h2 class="text-xl font-semibold text-indigo-700 mb-6 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Location Details
-                        </h2>
-                        <div class="space-y-4">
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-sm text-gray-500">Address</p>
-                                <p class="font-medium">{{ formatValue(barangayName) }}, {{ formatValue(municipalityName) }}</p>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-sm text-gray-500">Detailed Location</p>
-                                <p class="font-medium">{{ formatValue(props.strandedIncident.detailed_location, 'No detailed location provided') }}</p>
-                            </div>
-
-                            <!-- Only show map if coordinates exist -->
-                            <template v-if="props.strandedIncident.latitude && props.strandedIncident.longitude">
-                                <div id="map" class="h-[300px] rounded-lg shadow-inner"></div>
-                                <p class="text-sm text-gray-500 text-center">
-                                    {{ props.strandedIncident.latitude }}° N, {{ props.strandedIncident.longitude }}° E
-                                </p>
-                            </template>
-                            <p v-else class="text-gray-500 italic text-center py-4">
-                                No GPS coordinates available
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Information -->
-                <div class="bg-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition-shadow">
-                    <h2 class="text-xl font-semibold text-indigo-700 mb-6 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Additional Information
-                    </h2>
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <p class="whitespace-pre-wrap">{{ formatValue(props.strandedIncident.more_information, 'No additional information provided') }}</p>
-                    </div>
-                </div>
-
-                <!-- Rest of the existing sections with enhanced styling -->
-                <!--Media Files section -->
-                <div class="bg-white shadow-lg rounded-xl p-6 relative z-10">
-                    <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-6 w-6 mr-2 text-indigo-10"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path d="M4.75 4A2.75 2.75 0 002 6.75v6.5A2.75 2.75 0 004.75 16h10.5A2.75 2.75 0 0018 13.25v-6.5A2.75 2.75 0 0015.25 4H4.75zM9.5 8.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5H10.5a.75.75 0 01-.75-.75zm-3.25 4.25a.75.75 0 110-1.5h7.5a.75.75 0 110 1.5H6.25z" />
-                        </svg>
-                        Media Files
-                    </h2>
-                    <div v-if="props.strandedIncident.mediaFiles && props.strandedIncident.mediaFiles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div
-                            v-for="file in props.strandedIncident.mediaFiles"
-                            :key="file.id"
-                            class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
-                            @click="openFileModal(file)"
-                        >
-                            <template v-if="file.type.startsWith('image/')">
-                                <img :src="file.url" :alt="`Image of ${props.strandedIncident.name}`" class="w-full h-48 object-cover" />
-                            </template>
-                            <template v-else-if="file.type.startsWith('video/')">
-                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                    <span class="text-gray-600">🎥 Video</span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                    <p v-else class="text-gray-500 text-center py-4">No media files available</p>
-
-                    <!-- Add preview modal -->
+                    <!-- Media Preview Modal -->
                     <Modal :show="showFileModal" @close="closeFileModal">
                         <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800">Preview Media File</h2>
+                            <h2 class="text-lg font-semibold text-gray-800 mb-4">Media Preview</h2>
                             <div class="mt-4" v-if="currentMediaFile">
                                 <template v-if="currentMediaFile.type.startsWith('image/')">
                                     <img :src="currentMediaFile.url" alt="Preview" class="w-full h-auto rounded-lg" />
@@ -870,106 +1162,270 @@ const closeFileModal = () => {
                         </div>
                     </Modal>
                 </div>
-                <!--Detailed Species Form section -->
-                <div v-if="isBpemoAdmin || isBpemoStaff || isLguResponder" class="bg-white shadow-lg rounded-xl p-6 relative z-10">
-                    <div v-if="errors.species_forms &&
-                               ((props.strandedIncident.report_status === 'verified' && (isBpemoAdmin || isBpemoStaff || isLguResponder)) ||
-                                (props.strandedIncident.report_status === 'completed' && (isBpemoAdmin || isBpemoStaff)))"
-                         class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded"
-                         role="alert">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-yellow-700">
-                                    {{ errors.species_forms }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    <div class="flex justify-between">
-                        <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-10" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M4.75 4A2.75 2.75 0 002 6.75v6.5A2.75 2.75 0 004.75 16h10.5A2.75 2.75 0 0018 13.25v-6.5A2.75 2.75 0 0015.25 4H4.75zM9.5 8.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5H10.5a.75.75 0 01-.75-.75zm-3.25 4.25a.75.75 0 110-1.5h7.5a.75.75 0 110 1.5H6.25z" />
-                            </svg>
-                            Detailed Species Forms
-                        </h2>
-                        <button class="bg-indigo-900 text-white px-3 m-1 rounded" @click="createSpeciesForm">+</button>
-                    </div>
-
-                    <div v-if="activeStrandedSpecies && activeStrandedSpecies.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-                        <div v-for="(strandedSpecies, index) in activeStrandedSpecies" :key="strandedSpecies.id" class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer">
-                            <button @click="handleSpeciesClick(strandedSpecies.id)" class="w-full h-full text-left p-4">
-                                <p class="font-semibold text-md text-indigo-950">Species {{ index + 1 }}</p>
-                                <p class="text-sm">{{ strandedSpecies.species_name }}</p>
-                            </button>
-                        </div>
-                    </div>
-                    <p v-else class="text-gray-500 text-center py-4">No detailed species form created</p>
-                </div>
-
-                <!-- Comments Section-->
-                <div v-if="props.strandedIncident.report_status!=='resolved'" id="comments-section" class="bg-white shadow-lg rounded-xl p-6 relative z-10">
-                    <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">Comments</h2>
-                    <div class="mt-4">
-                        <label for="text" class="text-sm text-gray-500 hidden">Create Comment</label>
-                        <div class="flex gap-2">
-                            <input
-                                type="text"
-                                id="text"
-                                v-model="form.text"
-                                class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Comment here"
-                            />
-                            <button class="bg-indigo-900 text-white px-4 rounded" @click="submitComment">Submit</button>
-                        </div>
-                        <p v-if="form.errors.text" class="text-sm text-red-500 mt-1">{{ form.errors.text }}</p>
-                    </div>
-
-                    <div v-if="comments.length > 0" class="mt-4">
-                        <div v-for="comment in activeComments" :id="`comment-${comment.id}`" :key="comment.id" class="comment-item bg-gray-100 shadow-md p-4 rounded-md mb-4">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <span class="text-gray-500 text-sm">{{ comment.created_at }}</span>
-                                    <p class="font-semibold">{{ comment.user.first_name }} {{ comment.user.last_name }}</p>
-                                    <p v-if="editingCommentId !== comment.id" class="text-gray-700">{{ comment.text }}</p>
-                                    <input
-                                        v-else
-                                        type="text"
-                                        v-model="newCommentText"
-                                        class="border rounded-md p-2 w-full mt-1 focus:ring focus:ring-indigo-300"
-                                        placeholder="Edit your comment..."
-                                    />
-                                </div>
-                                <div v-if="comment.user_id === page.props.auth.user.id" class="relative">
-                                    <button class="text-gray-500 hover:text-gray-700" @click="comment.showOptions = !comment.showOptions">&hellip;</button>
-                                    <div v-if="comment.showOptions" class="absolute right-0 mt-2 bg-white shadow-md rounded-md z-10">
-                                        <button class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200" @click="startEditComment(comment)">Update</button>
-                                        <button class="block px-4 py-2 text-sm text-red-700 hover:bg-gray-200" @click="archiveComment(comment.id)">Archive</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="editingCommentId === comment.id" class="mt-2 flex justify-end">
-                                <button class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400" @click="cancelEditComment">Cancel</button>
-                                <button class="ml-2 bg-indigo-900 text-white px-4 py-2 rounded-md hover:bg-indigo-600" @click="submitEditComment(comment.id)">Update</button>
-                            </div>
-                        </div>
-                    </div>
-                    <p v-else class="text-gray-500 text-center py-4">No comments</p>
-                </div>
             </div>
         </div>
     </Sidebar>
 </template>
 
 <style scoped>
+/* Oceanic Theme */
+.bg-gradient-overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 51, 102, 0.9) 0%,
+        rgba(0, 64, 128, 0.8) 50%,
+        rgba(0, 31, 63, 0.9) 100%
+    );
+}
+
+/* Profile Card */
+.profile-card {
+    @apply rounded-xl shadow-lg overflow-hidden mb-6;
+    background: rgba(0, 51, 102, 0.25);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.profile-header {
+    @apply px-6 py-6;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-header {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.25rem 1.5rem;
+}
+
+.section-title {
+    @apply text-lg font-semibold flex items-center text-white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Text Styling */
+.profile-title-gradient {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Information Row Styling */
+.info-row {
+    @apply flex items-center p-3 rounded-lg transition-all duration-200 my-2;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.info-row span {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.info-row:hover {
+    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(4px);
+}
+
+.info-row .material-icons-round {
+    transition: color 0.3s ease;
+}
+
+.info-row:hover .material-icons-round {
+    color: #00ccff !important;
+}
+
+/* Info Card */
+.info-card {
+    @apply p-3 rounded-lg;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.info-card-title {
+    @apply text-base font-semibold mb-1 text-white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-card-content {
+    @apply text-white/90 text-sm;
+}
+
+/* Species Card */
+.species-card {
+    @apply p-3 rounded-lg transition-all duration-200;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.species-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.species-name {
+    @apply text-base font-bold mb-0.5;
+    color: #00ccff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.species-description {
+    @apply text-xs italic text-white/80;
+}
+
+/* Media Items */
+.media-item {
+    @apply relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    height: 120px;
+}
+
+.media-preview {
+    @apply w-full h-full object-cover;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.media-overlay {
+    @apply absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200;
+    background: rgba(0, 51, 102, 0.6);
+}
+
+.media-item:hover .media-overlay {
+    opacity: 1;
+}
+
+.media-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Button Gradients */
+.action-button-gradient {
+    @apply rounded-lg flex items-center transition-all duration-300;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.action-button-gradient.primary {
+    background: linear-gradient(135deg, #4f46e5, #3730a3) !important;
+}
+
+.action-button-gradient.danger {
+    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+}
+
+.action-button-gradient.success {
+    background: linear-gradient(135deg, #059669, #065f46) !important;
+}
+
+.action-button-gradient.warning {
+    background: linear-gradient(135deg, #d97706, #92400e) !important;
+}
+
+.action-button-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
+    filter: brightness(110%);
+}
+
+.action-button-gradient:active {
+    transform: translateY(0);
+}
+
+/* Background Styles */
+.bg-gray-50 {
+    background: rgba(0, 51, 102, 0.2) !important;
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Material Icons */
+.material-icons-round {
+    color: rgba(0, 204, 255, 0.9) !important;
+}
+
+/* Group hover effects */
+.group:hover .group-hover\:rotate-12 {
+    transform: rotate(12deg);
+    color: #00ccff !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-title-gradient {
+        font-size: 1.5rem;
+    }
+    .container {
+        padding: 1rem;
+    }
+    .profile-card {
+        margin: 0.5rem;
+    }
+    .media-item {
+        height: 100px;
+    }
+}
+
+@media (max-width: 640px) {
+    .media-item {
+        height: 90px;
+    }
+}
+
+/* Notifications */
+.success-notification {
+    @apply flex items-center justify-between mb-6 px-6 py-4 rounded-xl backdrop-blur-md;
+    animation: slideIn 0.3s ease-out;
+    background: rgba(16, 185, 129, 0.15);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notification-text {
+    @apply text-white text-base font-medium;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Map Styling */
+#map {
+    height: 350px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    #map {
+        height: 250px;
+    }
+}
+
+/* From original Stranded Incident View */
 .from-indigo-700 {
     background-image: linear-gradient(135deg, #4338ca 0%, #312e81 100%);
 }
@@ -985,17 +1441,19 @@ const closeFileModal = () => {
     transform: translateY(-2px);
 }
 
+/* Preserve any necessary original map styles */
 #map {
-    height: 400px;
+    height: 350px;
     width: 100%;
     border-radius: 0.5rem;
 }
 
-/* Add responsive padding */
-@media (max-width: 640px) {
-    .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
+/* Comment Options Menu */
+.comment-options-menu {
+    position: fixed !important;
+    z-index: 999999 !important;
+    transform: translateZ(0);
+    will-change: transform;
+    filter: drop-shadow(0 25px 25px rgb(0 0 0 / 0.6));
 }
 </style>

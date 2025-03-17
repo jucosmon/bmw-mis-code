@@ -21,7 +21,6 @@ class CommentController extends Controller
             'stranded_incident_id' => $request->stranded_incident_id,
             'user_id' => Auth::id(),
             'is_active' => true,
-            'is_automated' => false,
         ]);
 
         $this->createNotification($comment);

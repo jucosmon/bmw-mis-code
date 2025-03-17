@@ -289,7 +289,6 @@ class StrandedIncidentController extends Controller
         else {
             abort(403, 'Invalid action');
         }
-
     }
 
     public function view($id)
@@ -300,7 +299,8 @@ class StrandedIncidentController extends Controller
             'comments.user',
             'respondActions',
             'reportActions',
-            'strandedSpecies'
+            'strandedSpecies',
+            'user'
             ])->findOrFail($id);
 
         // Map media files to include public URLs
