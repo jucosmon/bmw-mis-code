@@ -187,12 +187,10 @@ const isPublicUser = computed(() => user.user_role === 'public_user');
 
                 <!-- Password Modal -->
                 <Modal :show="showUpdatePasswordModal" @close="closeModal">
-                    <div class="p-6 modal-form">
-                        <UpdatePasswordForm
-                            :onCancel="handleCancel"
-                            :onSuccess="handleSuccess"
-                        />
-                    </div>
+                    <UpdatePasswordForm
+                        :onCancel="handleCancel"
+                        :onSuccess="handleSuccess"
+                    />
                 </Modal>
             </div>
         </div>
@@ -365,17 +363,6 @@ button .material-icons-round {
     .rounded-xl {
         margin: 0.5rem;
     }
-}
-
-/* Modal form styling */
-.modal-form {
-    background: transparent !important;
-    backdrop-filter: none !important;
-}
-
-.modal-form :deep(.bg-white) {
-    background: transparent !important;
-    backdrop-filter: none !important;
 }
 </style>
 

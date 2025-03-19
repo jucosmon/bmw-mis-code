@@ -219,7 +219,7 @@ const disableUser = ()=> {
                         </div>
 
                         <!-- Work & Location -->
-                        <div v-if="props.user.user_role !== 'public_user'" class="space-y-4">
+                        <div class="space-y-4">
                             <h2 class="text-lg font-semibold border-b pb-2 flex items-center text-white border-opacity-20">
                                 <span class="material-icons material-icons-round mr-2">work</span>
                                 Work & Location
@@ -227,11 +227,11 @@ const disableUser = ()=> {
                             <div class="space-y-3">
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">business_center</span>
-                                    <span class="ml-3">{{ props.user.position }}</span>
+                                    <span class="ml-3">{{ props.user.user_role !== 'public_user' ? props.user.position : 'Not Applicable' }}</span>
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">location_on</span>
-                                    <span class="ml-3">{{ barangayName }}, {{ municipalityName }}</span>
+                                    <span class="ml-3">{{ props.user.user_role !== 'public_user' ? barangayName + ', ' + municipalityName : 'Not Applicable' }}</span>
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">event</span>
@@ -275,20 +275,20 @@ const disableUser = ()=> {
 
                 <!-- Modal -->
                 <Modal :show="showConfirmDisableUserModal" @close="closeModal">
-                    <div class="p-6">
-                        <h2 class="text-lg font-semibold text-slate-800">
+                    <div class="p-6 rounded-lg shadow-lg">
+                        <h2 class="text-gray-200 text-lg font-semibold">
                             {{ props.user.is_active ? 'Are you sure you want to disable this account?' : 'Are you sure you want to activate this account?' }}
                         </h2>
 
                         <div class="mt-4">
-                            <label for="admin-password" class="text-sm text-gray-500 mt-2">
+                            <label for="admin-password" class="text-sm text-gray-300 mt-2">
                                 Please confirm by entering your password
                             </label>
                             <input
                                 type="password"
                                 id="admin-password"
                                 v-model="form.password"
-                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                class="text-black mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 placeholder="Enter your password"
                             />
                             <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
