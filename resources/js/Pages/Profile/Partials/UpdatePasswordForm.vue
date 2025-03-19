@@ -52,7 +52,7 @@ const updatePassword = () => {
     <section class="modal-wrapper">
         <div class="password-update-container">
             <header>
-                <h2 class="title-gradient mb-6">
+                <h2 class="title-gradient mb-2">
                     Update Password
                 </h2>
 
@@ -135,18 +135,18 @@ const updatePassword = () => {
     justify-content: center;
     min-height: 100%;
     width: 100%;
-    padding: 1rem;
+    padding: 0;
 }
 
 .password-update-container {
-    background: rgba(0, 95, 175, 0.25);
-    backdrop-filter: blur(12px);
-    padding: 2.5rem;
+    background: transparent;
+    padding: 2rem;
     border-radius: 16px;
     width: 100%;
-    max-width: 420px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    max-width: 550px;
+    box-shadow: none;
+    border: none;
+    margin: 0 auto;
 }
 
 .title-gradient {

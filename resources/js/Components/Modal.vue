@@ -121,6 +121,16 @@ const maxWidthClass = computed(() => {
 </template>
 
 <style scoped>
+.modal-content {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.50) 0%, rgba(0, 64, 128, 0.50) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    color: white;
+    pointer-events: auto;
+}
+
 /* Remove default dialog styles */
 dialog {
     padding: 0;

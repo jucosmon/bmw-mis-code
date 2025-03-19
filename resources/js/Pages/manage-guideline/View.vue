@@ -226,7 +226,7 @@ const updateButton = () => {
                 <!-- Media Preview Modal -->
                 <Modal :show="showFileModal" @close="closeFileModal">
                     <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Media Preview</h2>
+                        <h2 class="text-lg font-semibold text-gray-300 mb-4">Media Preview</h2>
                         <div class="mt-4" v-if="currentMediaFile">
                             <template v-if="currentMediaFile.type.startsWith('image/')">
                                 <img :src="`/storage/${currentMediaFile.path}`"
@@ -255,24 +255,24 @@ const updateButton = () => {
                 </Modal>
 
                 <!-- Archive Modal -->
-                <Modal :show="archiveModal" @close="closeArchiveModal">
+                <Modal :show="archiveModal" @close="closeArchiveModal" class="bg-white rounded-lg shadow-lg">
                     <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-800">
+                        <h2 class="text-lg font-semibold text-gray-100">
                             {{ props.guideline.is_active ? 'Archive Guideline' : 'Unarchive Guideline' }}
                         </h2>
-                        <p class="mt-2 text-sm text-gray-600">
+                        <p class="mt-2 text-sm text-gray-300">
                             Are you sure you want to {{ props.guideline.is_active ? 'archive' : 'unarchive' }} this guideline?
                         </p>
 
                         <div class="mt-4">
-                            <label for="admin-password" class="text-sm text-gray-500">
+                            <label for="admin-password" class="text-sm text-gray-250">
                                 Please confirm by entering your password
                             </label>
                             <input
                                 type="password"
                                 id="admin-password"
                                 v-model="form.password"
-                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                class="text-black mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 placeholder="Enter your password"
                             />
                             <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
