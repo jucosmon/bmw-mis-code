@@ -1,5 +1,10 @@
 <script setup>
-import { useForm, usePage } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
+import Sidebar from '@/Layouts/Sidebar.vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage(); // Ensure page is initialized
@@ -106,7 +111,7 @@ const hasChanges = computed(() => {
 const handleNewFileChange = (event) => {
     const files = event.target.files;
     const maxSize = 5 * 1024 * 1024; // 5MB limit
-    
+
     // Validate each file
     const validFiles = Array.from(files).filter(file => {
         if (file.size > maxSize) {
@@ -142,12 +147,12 @@ const removeExistingImage = (index) => {
 const addColor = (event) => {
     const selectedColor = event.target.value;
     if (!selectedColor) return; // Guard against null selection
-    
+
     if (selectedColors.value.includes(selectedColor)) {
         alert('This color is already selected');
         return;
     }
-    
+
     selectedColors.value.push(selectedColor);
     form.colors.push(selectedColor);
     document.getElementById("colors").value = "";
@@ -193,9 +198,19 @@ const submit = () => {
     <Head title="Update Species" />
 
     <Sidebar>
+        <template #header>
+            <div>
+                <button class="bg-white/90 border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
+                    <Link :href="backRoute" class="flex items-center">
+                        Back
+                    </Link>
+                </button>
+            </div>
+        </template>
+
         <div class="relative min-h-screen">
             <!-- Background image with oceanic overlay -->
-            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" 
+            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0"
                  style="background-image: url('/images/landing.jpg');">
                 <!-- Ocean-themed overlay -->
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-blue-600/30 to-blue-900/50 mix-blend-overlay"></div>
@@ -204,16 +219,6 @@ const submit = () => {
 
             <!-- Existing content -->
             <div class="relative z-10">
-                <template #header>
-                    <div>
-                        <button class="bg-white/90 border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-                            <Link :href="backRoute" class="flex items-center">
-                                Back
-                            </Link>
-                        </button>
-                    </div>
-                </template>
-
                 <div class="container mx-auto px-4 py-8">
                     <h2 class="text-2xl font-bold text-white text-center mb-6">Update Species</h2>
 
@@ -326,8 +331,9 @@ const submit = () => {
                                     </select>
                                     <InputError class="mt-2" :message="form.errors.is_dangerous" />
                                 </div>
-                                 <!-- Existing Image Previews -->
-                                 <div class="mt-4 sm:col-span-2 col-span-1">
+
+                                <!-- Existing Image Previews -->
+                                <div class="mt-4 sm:col-span-2 col-span-1">
                                     <InputLabel value="Existing Images" />
                                     <div>
                                         <div v-if="existingImages.length===0" class="flex flex-wrap gap-2">No existing images</div>
@@ -375,7 +381,6 @@ const submit = () => {
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
 
                             <!-- Submit and Cancel Buttons -->
@@ -462,9 +467,9 @@ const submit = () => {
 
 /* Add new overlay styles */
 .bg-gradient-overlay {
-    background: linear-gradient(to bottom right, 
-        rgba(30, 58, 138, 0.4), 
-        rgba(37, 99, 235, 0.3), 
+    background: linear-gradient(to bottom right,
+        rgba(30, 58, 138, 0.4),
+        rgba(37, 99, 235, 0.3),
         rgba(30, 58, 138, 0.5)
     );
     mix-blend-mode: overlay;
