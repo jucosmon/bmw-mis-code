@@ -1,10 +1,5 @@
 <script setup>
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage(); // Ensure page is initialized
@@ -110,13 +105,26 @@ const hasChanges = computed(() => {
 
 const handleNewFileChange = (event) => {
     const files = event.target.files;
-    // Append new files to the mediaFiles array without resetting the form
-    form.mediaFiles.push(...Array.from(files));
-
-    // Generate previews for each selected image
-    previewNewImages.value = Array.from(files).map(file => {
-        return URL.createObjectURL(file);
+    const maxSize = 5 * 1024 * 1024; // 5MB limit
+    
+    // Validate each file
+    const validFiles = Array.from(files).filter(file => {
+        if (file.size > maxSize) {
+            alert(`File ${file.name} is too large. Maximum size is 5MB`);
+            return false;
+        }
+        if (!file.type.startsWith('image/')) {
+            alert(`File ${file.name} is not an image`);
+            return false;
+        }
+        return true;
     });
+
+    // Add valid files to form
+    form.mediaFiles.push(...validFiles);
+
+    // Generate previews for valid images
+    previewNewImages.value.push(...validFiles.map(file => URL.createObjectURL(file)));
 };
 
 // Remove selected preview image
@@ -133,11 +141,16 @@ const removeExistingImage = (index) => {
 
 const addColor = (event) => {
     const selectedColor = event.target.value;
-    if (selectedColor && !selectedColors.value.includes(selectedColor)) {
-        selectedColors.value.push(selectedColor);
-        form.colors.push(selectedColor);
-        document.getElementById("colors").value = "";
+    if (!selectedColor) return; // Guard against null selection
+    
+    if (selectedColors.value.includes(selectedColor)) {
+        alert('This color is already selected');
+        return;
     }
+    
+    selectedColors.value.push(selectedColor);
+    form.colors.push(selectedColor);
+    document.getElementById("colors").value = "";
 };
 
 const removeColor = (color) => {
@@ -149,22 +162,29 @@ const removeColor = (color) => {
 };
 
 const submit = () => {
-    if (hasChanges.value) {
-        form.deletedImages = deletedImages.value;
-        form.colors = selectedColors.value;
-
-        // Submit the form via Inertia
-        form.post(updateRoute.value, {
-            onSuccess: () => {
-                formErrors.value = null;
-            },
-            onError: (errors) => {
-                formErrors.value = errors;
-            },
-        });
-    } else {
+    if (!hasChanges.value) {
         alert('No changes detected in the form.');
+        return;
     }
+
+    if (form.name.trim() === '') {
+        alert('Name field is required');
+        return;
+    }
+
+    form.deletedImages = deletedImages.value;
+    form.colors = selectedColors.value;
+
+    // Submit the form via Inertia
+    form.post(updateRoute.value, {
+        onSuccess: () => {
+            formErrors.value = null;
+        },
+        onError: (errors) => {
+            formErrors.value = errors;
+            console.error('Form submission errors:', errors);
+        },
+    });
 };
 
 </script>
@@ -173,188 +193,201 @@ const submit = () => {
     <Head title="Update Species" />
 
     <Sidebar>
-        <template #header>
-            <div>
-                <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-                    <Link :href="backRoute" class="flex items-center">
-                        Back
-                    </Link>
-                </button>
+        <div class="relative min-h-screen">
+            <!-- Background image with oceanic overlay -->
+            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" 
+                 style="background-image: url('/images/landing.jpg');">
+                <!-- Ocean-themed overlay -->
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-blue-600/30 to-blue-900/50 mix-blend-overlay"></div>
+                <div class="absolute inset-0 bg-black/20"></div>
             </div>
-        </template>
 
-        <div class="container mx-auto px-4 py-8">
-            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Species</h2>
-
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-                <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Error Messages -->
-                    <div v-if="formErrors" class="p-4 bg-red-100 border border-red-400 rounded-lg text-red-600">
-                        <ul class="list-disc ml-4">
-                            <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
-                        </ul>
+            <!-- Existing content -->
+            <div class="relative z-10">
+                <template #header>
+                    <div>
+                        <button class="bg-white/90 border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
+                            <Link :href="backRoute" class="flex items-center">
+                                Back
+                            </Link>
+                        </button>
                     </div>
+                </template>
 
-                    <!-- Form Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div>
-                            <InputLabel for="name" value="Name" />
-                            <TextInput id="name" type="text" v-model="form.name" required autocomplete="name" class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.name" />
-                        </div>
+                <div class="container mx-auto px-4 py-8">
+                    <h2 class="text-2xl font-bold text-white text-center mb-6">Update Species</h2>
 
-                        <div>
-                            <InputLabel for="scientific_name" value="Scientific Name" />
-                            <TextInput id="scientific_name" type="text" v-model="form.scientific_name" autocomplete="scientific_name" class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.scientific_name" />
-                        </div>
-                        <div>
-                            <InputLabel for="common_name" value="Common Name" />
-                            <TextInput id="common_name" type="text" v-model="form.common_name" autocomplete="common_name" class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.common_name" />
-                        </div>
-                        <div>
-                            <InputLabel for="local_name" value="Local Name" />
-                            <TextInput id="local_name" type="text" v-model="form.local_name" autocomplete="local_name" class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.local_name" />
-                        </div>
-                        <div class="sm:col-span-2 col-span-1">
-                            <InputLabel for="description" value="Description" />
-                            <textarea
-                                id="description"
-                                v-model="form.description"
-                                required
-                                autocomplete="description"
-                                class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                                placeholder="Enter a detailed description"
-                            ></textarea>
-                            <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
-                        </div>
-                        <div class="sm:col-span-2 col-span-1">
-                            <InputLabel for="colors" value="Select Colors" />
-                            <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled selected>Choose a color</option>
-                                <option v-for="color in props.colors" :key="color.name" :value="color.name">
-                                    {{ color.name }}
-                                </option>
-                            </select>
-                            <div v-if="selectedColors.length" class="flex flex-wrap gap-2 mt-3">
-                                <div v-for="color in selectedColors" :key="color" class="flex items-center space-x-2 bg-gray-200 px-3 py-1 rounded-lg">
-                                    <div :style="{ backgroundColor: color }" class="w-6 h-6 rounded-full"></div>
-                                    <span>{{ color }}</span>
-                                    <button @click="removeColor(color)" class="text-red-600 hover:text-red-800 font-bold">X</button>
-                                </div>
+                    <div class="max-w-4xl mx-auto bg-white/95 backdrop-blur-sm p-8 rounded-lg shadow-lg">
+                        <form @submit.prevent="submit" class="space-y-6">
+                            <!-- Error Messages -->
+                            <div v-if="formErrors" class="p-4 bg-red-100 border border-red-400 rounded-lg text-red-600">
+                                <ul class="list-disc ml-4">
+                                    <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
+                                </ul>
                             </div>
-                        </div>
-                        <div>
-                            <InputLabel for="category" value="Marine Wildlife Category" />
-                            <select id="category" v-model="form.category" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select an option</option>
-                                <option value="marine_turtles">Marine Turtles</option>
-                                <option value="marine_mammals">Marine Mammals</option>
-                                <option value="sharks_rays">Sharks and Rays</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.category" />
-                        </div>
 
-                        <div>
-                            <InputLabel for="conservation_status" value="Conservation Status" />
-                            <select id="conservation_status" v-model="form.conservation_status" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select an option</option>
-                                <option value="CR">Critically Endangered (CR)</option>
-                                <option value="NT">Near Threatened (NT)</option>
-                                <option value="EN">Endangered (EN)</option>
-                                <option value="DD">Data Deficient (DD)</option>
-                                <option value="VU">Vulnerable (VU)</option>
-                                <option value="NA">Not Assessed (NA)</option>
-                                <option value="LC">Least Concern (LC)</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.conservation_status" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="shape" value="Shape" />
-                            <select id="shape" v-model="form.shape" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select an option</option>
-                                <option value="turtle-like">Turtle-like Shape</option>
-                                <option value="shark-like">Shark-like Shape</option>
-                                <option value="dolphin-like">Dolphin-like Shape</option>
-                                <option value="dugong-like">Dugong-like Shape</option>
-                                <option value="whale-like">Whale-like Shape</option>
-                                <option value="ray-like">Ray-like Shape</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.shape" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="is_dangerous" value="Is this species dangerous?" />
-                            <select id="is_dangerous" v-model="form.is_dangerous" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled>Select an option</option>
-                                <option :value="true">Yes, it is dangerous</option>
-                                <option :value="false">No, it is not dangerous</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.is_dangerous" />
-                        </div>
-                         <!-- Existing Image Previews -->
-                         <div class="mt-4 sm:col-span-2 col-span-1">
-                            <InputLabel value="Existing Images" />
-                            <div>
-                                <div v-if="existingImages.length===0" class="flex flex-wrap gap-2">No existing images</div>
-                                <div v-if="existingImages.length" class="flex flex-wrap gap-2">
-                                <div v-for="(image, index) in existingImages" :key="index" class="relative">
-                                    <img :src="image.url" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
-                                    <button
-                                        @click.prevent="removeExistingImage(index)"
-                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                                    >
-                                        &times;
-                                    </button>
+                            <!-- Form Grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <InputLabel for="name" value="Name" />
+                                    <TextInput id="name" type="text" v-model="form.name" required autocomplete="name" class="w-full" />
+                                    <InputError class="mt-2" :message="form.errors.name" />
                                 </div>
+
+                                <div>
+                                    <InputLabel for="scientific_name" value="Scientific Name" />
+                                    <TextInput id="scientific_name" type="text" v-model="form.scientific_name" autocomplete="scientific_name" class="w-full" />
+                                    <InputError class="mt-2" :message="form.errors.scientific_name" />
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Image Upload Field -->
-                        <div class="sm:col-span-2 col-span-1">
-                            <InputLabel for="mediaFiles" value="Upload New Images" />
-                            <input
-                                id="mediaFiles"
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                @change="handleNewFileChange"
-                                class="file-input w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            />
-                            <InputError class="mt-2" :message="form.errors.mediaFiles" />
-                        </div>
-
-                        <!-- Image Previews -->
-                        <div class="mt-4 sm:col-span-2 col-span-1">
-                            <div>
-                                <div v-if="previewNewImages.length" class="flex flex-wrap gap-2">
-                                    <div v-for="(image, index) in previewNewImages" :key="index" class="relative">
-                                        <img :src="image" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
-                                        <button
-                                            @click="removeNewImage(index)"
-                                            class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                                        >
-                                            &times;
-                                        </button>
+                                <div>
+                                    <InputLabel for="common_name" value="Common Name" />
+                                    <TextInput id="common_name" type="text" v-model="form.common_name" autocomplete="common_name" class="w-full" />
+                                    <InputError class="mt-2" :message="form.errors.common_name" />
+                                </div>
+                                <div>
+                                    <InputLabel for="local_name" value="Local Name" />
+                                    <TextInput id="local_name" type="text" v-model="form.local_name" autocomplete="local_name" class="w-full" />
+                                    <InputError class="mt-2" :message="form.errors.local_name" />
+                                </div>
+                                <div class="sm:col-span-2 col-span-1">
+                                    <InputLabel for="description" value="Description" />
+                                    <textarea
+                                        id="description"
+                                        v-model="form.description"
+                                        required
+                                        autocomplete="description"
+                                        class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                                        placeholder="Enter a detailed description"
+                                    ></textarea>
+                                    <InputError class="mt-2 text-sm text-red-600" :message="form.errors.description" />
+                                </div>
+                                <div class="sm:col-span-2 col-span-1">
+                                    <InputLabel for="colors" value="Select Colors" />
+                                    <select id="colors" @change="addColor" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="" disabled selected>Choose a color</option>
+                                        <option v-for="color in props.colors" :key="color.name" :value="color.name">
+                                            {{ color.name }}
+                                        </option>
+                                    </select>
+                                    <div v-if="selectedColors.length" class="flex flex-wrap gap-2 mt-3">
+                                        <div v-for="color in selectedColors" :key="color" class="flex items-center space-x-2 bg-gray-200 px-3 py-1 rounded-lg">
+                                            <div :style="{ backgroundColor: color }" class="w-6 h-6 rounded-full"></div>
+                                            <span>{{ color }}</span>
+                                            <button @click="removeColor(color)" class="text-red-600 hover:text-red-800 font-bold">X</button>
+                                        </div>
                                     </div>
                                 </div>
+                                <div>
+                                    <InputLabel for="category" value="Marine Wildlife Category" />
+                                    <select id="category" v-model="form.category" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="marine_turtles">Marine Turtles</option>
+                                        <option value="marine_mammals">Marine Mammals</option>
+                                        <option value="sharks_rays">Sharks and Rays</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.category" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="conservation_status" value="Conservation Status" />
+                                    <select id="conservation_status" v-model="form.conservation_status" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="CR">Critically Endangered (CR)</option>
+                                        <option value="NT">Near Threatened (NT)</option>
+                                        <option value="EN">Endangered (EN)</option>
+                                        <option value="DD">Data Deficient (DD)</option>
+                                        <option value="VU">Vulnerable (VU)</option>
+                                        <option value="NA">Not Assessed (NA)</option>
+                                        <option value="LC">Least Concern (LC)</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.conservation_status" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="shape" value="Shape" />
+                                    <select id="shape" v-model="form.shape" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="turtle-like">Turtle-like Shape</option>
+                                        <option value="shark-like">Shark-like Shape</option>
+                                        <option value="dolphin-like">Dolphin-like Shape</option>
+                                        <option value="dugong-like">Dugong-like Shape</option>
+                                        <option value="whale-like">Whale-like Shape</option>
+                                        <option value="ray-like">Ray-like Shape</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.shape" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="is_dangerous" value="Is this species dangerous?" />
+                                    <select id="is_dangerous" v-model="form.is_dangerous" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="" disabled>Select an option</option>
+                                        <option :value="true">Yes, it is dangerous</option>
+                                        <option :value="false">No, it is not dangerous</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.is_dangerous" />
+                                </div>
+                                 <!-- Existing Image Previews -->
+                                 <div class="mt-4 sm:col-span-2 col-span-1">
+                                    <InputLabel value="Existing Images" />
+                                    <div>
+                                        <div v-if="existingImages.length===0" class="flex flex-wrap gap-2">No existing images</div>
+                                        <div v-if="existingImages.length" class="flex flex-wrap gap-2">
+                                        <div v-for="(image, index) in existingImages" :key="index" class="relative">
+                                            <img :src="image.url" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
+                                            <button
+                                                @click.prevent="removeExistingImage(index)"
+                                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                            >
+                                                &times;
+                                            </button>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Image Upload Field -->
+                                <div class="sm:col-span-2 col-span-1">
+                                    <InputLabel for="mediaFiles" value="Upload New Images" />
+                                    <input
+                                        id="mediaFiles"
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        @change="handleNewFileChange"
+                                        class="file-input w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    />
+                                    <InputError class="mt-2" :message="form.errors.mediaFiles" />
+                                </div>
+
+                                <!-- Image Previews -->
+                                <div class="mt-4 sm:col-span-2 col-span-1">
+                                    <div>
+                                        <div v-if="previewNewImages.length" class="flex flex-wrap gap-2">
+                                            <div v-for="(image, index) in previewNewImages" :key="index" class="relative">
+                                                <img :src="image" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
+                                                <button
+                                                    @click="removeNewImage(index)"
+                                                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                                >
+                                                    &times;
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
-                        </div>
 
+                            <!-- Submit and Cancel Buttons -->
+                            <div class="flex items-center justify-between mt-6">
+                                <Link :href="backRoute" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
+                                <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900">
+                                    Update Species
+                                </PrimaryButton>
+                            </div>
+                        </form>
                     </div>
-
-                    <!-- Submit and Cancel Buttons -->
-                    <div class="flex items-center justify-between mt-6">
-                        <Link :href="backRoute" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
-                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900">
-                            Update Species
-                        </PrimaryButton>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </Sidebar>
@@ -388,4 +421,52 @@ const submit = () => {
   text-align: center;
 }
 
+.file-input {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 40px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 8px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.file-input:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.file-input::-webkit-file-upload-button {
+    visibility: hidden;
+}
+
+.file-input::before {
+    content: 'Choose Files';
+    display: inline-block;
+    color: white;
+    font-weight: 500;
+    font-size: 0.875rem;
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+}
+
+.file-input:active {
+    transform: scale(0.98);
+}
+
+/* Add new overlay styles */
+.bg-gradient-overlay {
+    background: linear-gradient(to bottom right, 
+        rgba(30, 58, 138, 0.4), 
+        rgba(37, 99, 235, 0.3), 
+        rgba(30, 58, 138, 0.5)
+    );
+    mix-blend-mode: overlay;
+}
 </style>
