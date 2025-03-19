@@ -90,7 +90,7 @@ const isPublicUser = computed(() => user.user_role === 'public_user');
                 <!-- Success Message -->
                 <div v-if="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded-lg flex items-center" role="alert">
                     <span class="material-icons material-icons-round mr-2">check_circle</span>
-                    <span>{{ successMessage }}</span>
+                    <span class="text-white">{{ successMessage }}</span>
                 </div>
 
                 <!-- Profile Header -->
@@ -187,7 +187,7 @@ const isPublicUser = computed(() => user.user_role === 'public_user');
 
                 <!-- Password Modal -->
                 <Modal :show="showUpdatePasswordModal" @close="closeModal">
-                    <div class="p-6">
+                    <div class="p-6 modal-form">
                         <UpdatePasswordForm
                             :onCancel="handleCancel"
                             :onSuccess="handleSuccess"
@@ -365,6 +365,17 @@ button .material-icons-round {
     .rounded-xl {
         margin: 0.5rem;
     }
+}
+
+/* Modal form styling */
+.modal-form {
+    background: transparent !important;
+    backdrop-filter: none !important;
+}
+
+.modal-form :deep(.bg-white) {
+    background: transparent !important;
+    backdrop-filter: none !important;
 }
 </style>
 

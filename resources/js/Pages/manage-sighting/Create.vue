@@ -472,15 +472,15 @@ const sizeOptions = [
                 </div>
                 <div class="sm:col-span-2">
                   <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
-                  <input 
-                    required 
-                    id="certainty_level" 
-                    type="range" 
-                    min="1" 
-                    max="10" 
+                  <input
+                    required
+                    id="certainty_level"
+                    type="range"
+                    min="1"
+                    max="10"
                     v-model="form.certainty_level"
                     :style="{ '--value': form.certainty_level / 10 }"
-                    class="w-full custom-range" 
+                    class="w-full custom-range"
                   />
                   <p class="certainty-value">{{ form.certainty_level }}</p>
                   <InputError class="mt-2" :message="form.errors.certainty_level" />
@@ -827,10 +827,10 @@ const sizeOptions = [
 }
 
 /* Update text colors */
-label, 
-h1, 
-h2, 
-h3, 
+label,
+h1,
+h2,
+h3,
 h4 {
   color: rgba(255, 255, 255, 0.9);
 }
@@ -1196,7 +1196,7 @@ select option {
   padding: 0.75rem 2.5rem;
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(2, 136, 209, 0.3),
     inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
@@ -1204,14 +1204,14 @@ select option {
 :deep(.primary-button:hover) {
   background: linear-gradient(135deg, #039be5, #0277bd);
   transform: translateY(-1px);
-  box-shadow: 
+  box-shadow:
     0 6px 16px rgba(2, 136, 209, 0.4),
     inset 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 :deep(.primary-button:active) {
   transform: translateY(0);
-  box-shadow: 
+  box-shadow:
     0 2px 8px rgba(2, 136, 209, 0.3),
     inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }

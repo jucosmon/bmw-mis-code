@@ -76,7 +76,7 @@ const maxWidthClass = computed(() => {
 
 <template>
     <dialog
-        class="z-50 m-0 min-h-full min-w-full overflow-y-auto bg-transparent backdrop:bg-transparent"
+        class="z-50 m-0 min-h-full min-w-full overflow-y-auto bg-transparent"
         ref="dialog"
     >
         <div
@@ -96,9 +96,7 @@ const maxWidthClass = computed(() => {
                     class="fixed inset-0 transform transition-all"
                     @click="close"
                 >
-                    <div
-                        class="absolute inset-0 bg-gray-500 opacity-75"
-                    />
+                    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" />
                 </div>
             </Transition>
 
@@ -112,7 +110,7 @@ const maxWidthClass = computed(() => {
             >
                 <div
                     v-show="show"
-                    class="mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full"
+                    class="modal-content relative z-[60] mb-6 transform overflow-hidden transition-all sm:mx-auto sm:w-full"
                     :class="maxWidthClass"
                 >
                     <slot v-if="showSlot" />
@@ -121,3 +119,16 @@ const maxWidthClass = computed(() => {
         </div>
     </dialog>
 </template>
+
+<style scoped>
+/* Remove default dialog styles */
+dialog {
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+dialog::backdrop {
+    background: transparent;
+}
+</style>
