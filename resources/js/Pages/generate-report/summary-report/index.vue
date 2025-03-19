@@ -96,6 +96,10 @@ const fetchData = async () => {
         if (sightingsRes.error) throw sightingsRes.error;
         if (strandingsRes.error) throw strandingsRes.error;
 
+        // Log fetched data
+        console.log('Sightings Data:', sightingsRes.data);
+        console.log('Strandings Data:', strandingsRes.data);
+
         // Get false reports
         const [falseSightingsRes, falseStrandingsRes] = await Promise.all([
             supabase
@@ -113,6 +117,10 @@ const fetchData = async () => {
         if (falseSightingsRes.error) throw falseSightingsRes.error;
         if (falseStrandingsRes.error) throw falseStrandingsRes.error;
 
+        // Log false reports data
+        console.log('False Sightings Data:', falseSightingsRes.data);
+        console.log('False Strandings Data:', falseStrandingsRes.data);
+
         const verifiedAndResolvedData = [
             ...processSightings(sightingsRes.data || []),
             ...processStrandings(strandingsRes.data || [])
@@ -124,10 +132,16 @@ const fetchData = async () => {
         ];
 
         // Apply filters to verified/resolved data
-        const filteredData = applyFilters(verifiedAndResolvedData);
+        const filtered = applyFilters(verifiedAndResolvedData);
+
+        // Log filtered data
+        console.log('Filtered Data After Applying Filters:', filtered);
+
+        // Update filteredData ref
+        filteredData.value = filtered;
 
         // Update the summary data with all the information
-        updateSummaryData(verifiedAndResolvedData, falseReportsData, filteredData);
+        updateSummaryData(verifiedAndResolvedData, falseReportsData, filtered);
 
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -614,6 +628,9 @@ const exportToExcel = () => {
         isExporting.value = true;
         showExportModal.value = false;
 
+        // Log the filtered data to check its content
+        console.log('Filtered Data:', filteredData.value);
+
         // Prepare data for export
         const dataToExport = filteredData.value.map(item => {
             // Find municipality name
@@ -633,6 +650,9 @@ const exportToExcel = () => {
                 'Report Status': item.report_status.charAt(0).toUpperCase() + item.report_status.slice(1)
             };
         });
+
+        // Log the data to export to check its content
+        console.log('Data to Export:', dataToExport);
 
         // Create worksheet
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
