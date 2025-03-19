@@ -91,7 +91,7 @@ const updateButton = () => {
     <Head title="View Guideline" />
     <Sidebar>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-white">
+            <h2 class="text-xl font-semibold leading-tight">
                 View Guideline
             </h2>
         </template>
