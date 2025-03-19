@@ -444,155 +444,208 @@ const downloadPDF = async () => {
     <Head title="Cluster Map" />
     <Sidebar>
         <template #header>
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                    Marine Wildlife Incident Cluster Map
-                </h2>
-            </div>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                Marine Wildlife Incident Cluster Map
+            </h2>
         </template>
 
-        <div class="container mx-auto px-4 py-8">
-            <!-- Filters with improved layout -->
-            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div class="space-y-2">
-                        <label for="year" class="font-medium text-gray-700 block">Year:</label>
-                        <select v-model="filters.year" id="year" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-500">
-                            <option value="">All Years</option>
-                            <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="category" class="font-medium text-gray-700 block">Category:</label>
-                        <select v-model="filters.category" id="category" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-500">
-                            <option value="">All Categories</option>
-                            <option value="marine_mammals">Marine Mammals</option>
-                            <option value="marine_turtles">Marine Turtles</option>
-                            <option value="sharks_rays">Shark and Rays</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="eventType" class="font-medium text-gray-700 block">Incident Type:</label>
-                        <select v-model="filters.eventType" id="eventType" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-500">
-                            <option value="">All Types</option>
-                            <option value="Sighting">Sighting</option>
-                            <option value="Stranded">Stranded</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="accurateGPS"
-                            v-model="showOnlyAccurateGPS"
-                            class="form-checkbox h-5 w-5 text-green-600 rounded"
-                        >
-                        <label for="accurateGPS" class="font-medium text-gray-700">Show only GPS-verified locations</label>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button @click="resetFilters" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
-                            Reset
-                        </button>
-                        <button @click="showDownloadConfirmation" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors">
-                            Download
-                        </button>
-                    </div>
-                </div>
+        <div class="relative min-h-screen">
+            <!-- Background -->
+            <div class="absolute inset-0">
+                <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
             </div>
 
-            <!-- Compact Legend -->
-            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
-                <details class="legend-details">
-                    <summary class="font-semibold text-gray-800 cursor-pointer hover:text-green-600 transition-colors">
-                        Map Legend
-                    </summary>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-3">
-                        <div class="flex gap-6">
-                            <!-- Markers -->
-                            <div class="space-y-2">
-                                <h4 class="font-medium text-gray-700">Markers:</h4>
-                                <div class="flex items-center gap-2">
-                                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"
-                                         alt="Sighting" class="h-6">
-                                    <span class="text-sm">Sighting</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
-                                         alt="Stranding" class="h-6">
-                                    <span class="text-sm">Stranding</span>
-                                </div>
-                            </div>
+            <!-- Content -->
+            <div class="relative py-6">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <!-- Page Title with Gradient -->
+                    <div class="mb-6">
+                        <h3 class="profile-title-gradient">Marine Wildlife Incident Map</h3>
+                        <p class="text-white text-opacity-80">Visualize and analyze incident clusters across Bohol</p>
+                    </div>
 
-                            <!-- Location Type -->
-                            <div class="space-y-2">
-                                <h4 class="font-medium text-gray-700">Location Type:</h4>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 flex items-center justify-center">
-                                        <div class="w-4 h-4 border-2 border-gray-800"></div>
-                                    </div>
-                                    <span class="text-sm">GPS Verified</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 flex items-center justify-center opacity-50">
-                                        <div class="w-4 h-4 border-2 border-gray-800"></div>
-                                    </div>
-                                    <span class="text-sm">Area Estimated</span>
-                                </div>
-                            </div>
+                    <!-- Filters Card -->
+                    <div class="glass-panel mb-6">
+                        <div class="p-5 border-b border-white/10">
+                            <h3 class="font-semibold text-white flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                </svg>
+                                Filters
+                            </h3>
                         </div>
 
-                        <!-- Clusters -->
-                        <div class="space-y-2">
-                            <h4 class="font-medium text-gray-700">Clusters:</h4>
-                            <div class="flex flex-wrap gap-4">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-[rgba(181,226,140,0.6)] flex items-center justify-center">
-                                        <span class="text-xs font-bold text-[#006400]">&lt;10</span>
-                                    </div>
-                                    <span class="text-sm">Small</span>
+                        <div class="p-5">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-5">
+                                <div>
+                                    <label for="year" class="block text-sm font-medium text-white mb-1">Year</label>
+                                    <select v-model="filters.year" id="year" class="w-full bg-white/20 border border-white/20 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200">
+                                        <option value="" class="bg-blue-900 text-white">All Years</option>
+                                        <option v-for="year in years" :key="year" :value="year" class="bg-blue-900 text-white">{{ year }}</option>
+                                    </select>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-[rgba(241,211,87,0.6)] flex items-center justify-center">
-                                        <span class="text-xs font-bold text-[#8B4513]">&lt;50</span>
-                                    </div>
-                                    <span class="text-sm">Medium</span>
+
+                                <div>
+                                    <label for="category" class="block text-sm font-medium text-white mb-1">Category</label>
+                                    <select v-model="filters.category" id="category" class="w-full bg-white/20 border border-white/20 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200">
+                                        <option value="" class="bg-blue-900 text-white">All Categories</option>
+                                        <option value="marine_mammals" class="bg-blue-900 text-white">Marine Mammals</option>
+                                        <option value="marine_turtles" class="bg-blue-900 text-white">Marine Turtles</option>
+                                        <option value="sharks_rays" class="bg-blue-900 text-white">Shark and Rays</option>
+                                    </select>
                                 </div>
+
+                                <div>
+                                    <label for="eventType" class="block text-sm font-medium text-white mb-1">Incident Type</label>
+                                    <select v-model="filters.eventType" id="eventType" class="w-full bg-white/20 border border-white/20 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200">
+                                        <option value="" class="bg-blue-900 text-white">All Types</option>
+                                        <option value="Sighting" class="bg-blue-900 text-white">Sighting</option>
+                                        <option value="Stranded" class="bg-blue-900 text-white">Stranded</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-[rgba(253,156,115,0.6)] flex items-center justify-center">
-                                        <span class="text-xs font-bold text-[#8B0000]">50+</span>
-                                    </div>
-                                    <span class="text-sm">Large</span>
+                                    <input
+                                        type="checkbox"
+                                        id="accurateGPS"
+                                        v-model="showOnlyAccurateGPS"
+                                        class="form-checkbox h-5 w-5 text-blue-400 rounded-md cursor-pointer bg-white/10 border-white/20"
+                                    >
+                                    <label for="accurateGPS" class="text-sm font-medium text-white cursor-pointer">Show only GPS-verified locations</label>
+                                </div>
+
+                                <div class="flex gap-3">
+                                    <button @click="resetFilters" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors duration-300 flex items-center space-x-2 border border-white/20">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>Reset Filters</span>
+                                    </button>
+
+                                    <button @click="showDownloadConfirmation" class="px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 text-white rounded-lg transition-colors duration-300 flex items-center space-x-2 border border-blue-400/30">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        <span>Download Map</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </details>
-            </div>
 
-            <div id="map" class="rounded-lg shadow-sm overflow-hidden" style="height: 600px; z-index: 0;"></div>
+                    <!-- Legend and Map Container -->
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <!-- Legend Card -->
+                        <div class="glass-panel">
+                            <div class="p-5 border-b border-white/10">
+                                <h3 class="font-semibold text-white flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                    </svg>
+                                    Map Legend
+                                </h3>
+                            </div>
+
+                            <div class="p-5 space-y-6">
+                                <!-- Markers -->
+                                <div>
+                                    <h4 class="font-medium text-white mb-3">Markers</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-3 legend-item">
+                                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"
+                                                alt="Sighting" class="h-7 drop-shadow-glow">
+                                            <span class="text-sm text-white">Sighting</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 legend-item">
+                                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
+                                                alt="Stranding" class="h-7 drop-shadow-glow">
+                                            <span class="text-sm text-white">Stranding</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Location Type -->
+                                <div>
+                                    <h4 class="font-medium text-white mb-3">Location Type</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-3 legend-item">
+                                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"
+                                                 alt="GPS Verified" class="h-7 drop-shadow-glow">
+                                            <span class="text-sm text-white">GPS Verified</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 legend-item">
+                                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"
+                                                 alt="Area Estimated" class="h-7 drop-shadow-glow opacity-50">
+                                            <span class="text-sm text-white">Area Estimated</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Clusters -->
+                                <div>
+                                    <h4 class="font-medium text-white mb-3">Clusters</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-3 legend-item">
+                                            <div class="w-7 h-7 rounded-full bg-[rgba(181,226,140,0.6)] flex items-center justify-center drop-shadow-glow">
+                                                <span class="text-xs font-bold text-[#006400]">&lt;10</span>
+                                            </div>
+                                            <span class="text-sm text-white">Small</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 legend-item">
+                                            <div class="w-7 h-7 rounded-full bg-[rgba(241,211,87,0.6)] flex items-center justify-center drop-shadow-glow">
+                                                <span class="text-xs font-bold text-[#8B4513]">&lt;50</span>
+                                            </div>
+                                            <span class="text-sm text-white">Medium</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 legend-item">
+                                            <div class="w-7 h-7 rounded-full bg-[rgba(253,156,115,0.6)] flex items-center justify-center drop-shadow-glow">
+                                                <span class="text-xs font-bold text-[#8B0000]">50+</span>
+                                            </div>
+                                            <span class="text-sm text-white">Large</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Map Container -->
+                        <div class="lg:col-span-3">
+                            <div class="glass-panel h-full">
+                                <!-- Map header -->
+                                <div class="p-3 border-b border-white/10">
+                                    <h3 class="font-medium text-white text-sm">Bohol Province Map View</h3>
+                                </div>
+                                <div id="map" class="w-full h-[580px] z-0 rounded-b-xl overflow-hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </Sidebar>
 
     <!-- Download Confirmation Modal -->
-    <div v-if="showDownloadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h3 class="text-lg font-semibold mb-4">Download Map</h3>
-            <p class="mb-6">Are you sure you want to download the current map as a PDF?</p>
+    <div v-if="showDownloadModal" class="fixed inset-0 bg-blue-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="glass-panel p-6 rounded-xl max-w-md w-full border border-white/20">
+            <h3 class="text-lg font-semibold mb-2 text-white">Download Map</h3>
+            <p class="mb-6 text-white">Are you sure you want to download the current map as a PDF?</p>
             <div class="flex justify-end space-x-3">
                 <button
                     @click="showDownloadModal = false"
-                    class="px-4 py-2 bg-gray-300 rounded">
+                    class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors duration-300 border border-white/20">
                     Cancel
                 </button>
                 <button
                     @click="downloadPDF"
-                    class="px-4 py-2 bg-green-500 text-white rounded"
+                    class="px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 text-white rounded-lg transition-colors duration-300 flex items-center border border-blue-400/30"
                     :disabled="isDownloading">
+                    <svg v-if="isDownloading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                     {{ isDownloading ? 'Downloading...' : 'Download' }}
                 </button>
             </div>
@@ -602,57 +655,178 @@ const downloadPDF = async () => {
 
 <style>
 #map {
-    height: 500px;
     z-index: 0;
+    filter: saturate(0.8) brightness(0.95);
 }
-.filters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-}
+
 .marker-cluster-small {
     background-color: rgba(181, 226, 140, 0.6);
     color: #006400;
 }
+
 .marker-cluster-medium {
     background-color: rgba(241, 211, 87, 0.6);
     color: #8B4513;
 }
+
 .marker-cluster-large {
     background-color: rgba(253, 156, 115, 0.6);
     color: #8B0000;
 }
+
 .marker-cluster div {
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     width: 40px;
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #fff;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
+
 .marker-cluster span {
     font-size: 12px;
     font-weight: bold;
-}
-.legend-details {
-    user-select: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.legend-details summary::-webkit-details-marker {
-    display: none;
+/* Ocean theme styling */
+.bg-gradient-overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 51, 102, 0.9) 0%,
+        rgba(0, 64, 128, 0.8) 50%,
+        rgba(0, 31, 63, 0.9) 100%
+    );
 }
 
-.legend-details summary::before {
-    content: '▸';
-    display: inline-block;
-    margin-right: 0.5rem;
-    transition: transform 0.2s;
+.glass-panel {
+    background: rgba(0, 51, 102, 0.25);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
-.legend-details[open] summary::before {
-    transform: rotate(90deg);
+.glass-panel:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.profile-title-gradient {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: 1px;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.drop-shadow-glow {
+    filter: drop-shadow(0 0 4px rgba(0, 204, 255, 0.5));
+}
+
+.legend-item {
+    @apply bg-white/5 backdrop-blur-md p-2 rounded-lg border border-white/10 transition-all duration-200;
+}
+
+.legend-item:hover {
+    @apply bg-white/10 border-white/20 transform -translate-y-0.5;
+}
+
+/* Custom scrollbar for Webkit browsers */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Ocean-themed focus outline */
+*:focus {
+    outline: 2px solid rgba(0, 204, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* Select dropdown styling */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+select option {
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+}
+
+/* Map popup styling */
+.leaflet-popup-content-wrapper {
+    background: rgba(0, 51, 102, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.leaflet-popup-tip {
+    background: rgba(0, 51, 102, 0.95);
+}
+
+.leaflet-popup-content {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.leaflet-popup-content a {
+    color: #00ccff;
+}
+
+/* Marker styling */
+.leaflet-marker-icon {
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Button effects */
+button {
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>
