@@ -653,12 +653,14 @@ const downloadPDF = async () => {
     </div>
 </template>
 
-<style>
+<style scoped>
+/* Map styling */
 #map {
     z-index: 0;
     filter: saturate(0.8) brightness(0.95);
 }
 
+/* Marker styling */
 .marker-cluster-small {
     background-color: rgba(181, 226, 140, 0.6);
     color: #006400;
@@ -692,7 +694,7 @@ const downloadPDF = async () => {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* Ocean theme styling */
+/* Ocean theme styling - scoped to this component only */
 .bg-gradient-overlay {
     background: linear-gradient(
         135deg,
@@ -740,7 +742,7 @@ const downloadPDF = async () => {
     @apply bg-white/10 border-white/20 transform -translate-y-0.5;
 }
 
-/* Custom scrollbar for Webkit browsers */
+/* Custom scrollbar - only applied within this component */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -768,14 +770,14 @@ const downloadPDF = async () => {
     animation: spin 1s linear infinite;
 }
 
-/* Ocean-themed focus outline */
-*:focus {
+/* Ocean-themed focus outline - only applies within this component */
+.glass-panel *:focus {
     outline: 2px solid rgba(0, 204, 255, 0.5);
     outline-offset: 2px;
 }
 
-/* Select dropdown styling */
-select {
+/* Select dropdown styling - scoped to our specific component */
+.glass-panel select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
     background-position: right 0.5rem center;
@@ -784,48 +786,51 @@ select {
     padding-right: 2.5rem;
 }
 
-select option {
+.glass-panel select option {
     margin: 0.5rem 0;
     padding: 0.5rem;
 }
 
-/* Map popup styling */
-.leaflet-popup-content-wrapper {
+/* Map popup styling - Leaflet specific elements */
+:deep(.leaflet-popup-content-wrapper) {
     background: rgba(0, 51, 102, 0.95);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
 }
 
-.leaflet-popup-tip {
+:deep(.leaflet-popup-tip) {
     background: rgba(0, 51, 102, 0.95);
 }
 
-.leaflet-popup-content {
+:deep(.leaflet-popup-content) {
     color: rgba(255, 255, 255, 0.9);
 }
 
-.leaflet-popup-content a {
+:deep(.leaflet-popup-content a) {
     color: #00ccff;
 }
 
 /* Marker styling */
-.leaflet-marker-icon {
+:deep(.leaflet-marker-icon) {
     filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
 }
 
-/* Button effects */
-button {
+/* Scoped Button effects - only for buttons in this component */
+.glass-panel button,
+.fixed.inset-0 button {
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-button:hover:not(:disabled) {
+.glass-panel button:hover:not(:disabled),
+.fixed.inset-0 button:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
-button:disabled {
+.glass-panel button:disabled,
+.fixed.inset-0 button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
