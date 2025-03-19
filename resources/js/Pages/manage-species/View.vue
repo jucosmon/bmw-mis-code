@@ -3,7 +3,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -111,77 +111,137 @@ const closeFileModal = () => {
     <Head title="View Species" />
     <Sidebar>
         <template #header>
-            <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-700 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-                <Link :href="backRoute" class="flex items-center">
-                    Back
-                </Link>
-            </button>
+            <div class="flex justify-between items-center">
+                <SecondaryButton @click="$router.get(backRoute)">Back</SecondaryButton>
+            </div>
         </template>
 
-        <div class="container mx-auto px-6 pb-6 max-w-5xl">
-            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
-                <strong class="font-bold">Success! </strong>
-                <span class="block sm:inline">{{ props?.success}}</span>
+        <div class="relative min-h-screen">
+            <!-- Background image -->
+            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" 
+                 style="background-image: url('/images/landing.jpg');">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
             </div>
-            <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-lg shadow-lg mb-8">
-                <h1 class="text-3xl font-bold">Species Information</h1>
-                <p class="text-sm mt-2">({{ speciesCategory }})</p>
-            </div>
+            
+            <!-- Main Content -->
+            <div class="relative z-10 max-w-4xl mx-auto p-6">
+                <!-- Success Message Container -->
+                <div v-if="props?.success" 
+                     class="bg-blue-100/80 border border-blue-400 text-blue-700 px-4 py-3 mb-4 rounded backdrop-blur-sm">
+                    <strong>Success! </strong> {{ props?.success }}
+                </div>
 
-            <div class="space-y-6">
-                <div class="bg-white shadow-lg rounded-xl p-6">
-                    <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-9-4h2v2H9V6zm0 4h2v6H9v-6z" />
-                        </svg>
-                        Species Details
-                    </h2>
-                    <div class="space-y-2">
-                        <p><strong>Name:</strong> {{ props.species.name }}</p>
-                        <p><strong>Scientific Name:</strong> {{ props.species.scientific_name }}</p>
-                        <p><strong>Common Name:</strong> {{ props.species.common_name }}</p>
-                        <p><strong>Local Name:</strong> {{ props.species.local_name }}</p>
-                        <p><strong>Description:</strong> {{ props.species.description }}</p>
-                        <p><strong>Conservation Status:</strong> {{ props.species.conservation_status }}</p>
-                        <p><strong>Shape:</strong> {{ props.species.shape }} </p>
-                        <p><strong>Dangerous:</strong> {{ props.species.is_dangerous ? 'Yes' : 'No' }}</p>
-                        <p><strong>Status:</strong> {{ props.species.is_active ? 'Active' : 'Inactive' }}</p>
-                         <!-- Colors Section -->
-                        <div v-if="species.speciesColors.length" class="flex gap-1">
-                            <p><strong>Colors:</strong></p>
-                            <ul class="flex flex-wrap gap-2">
-                                <li
-                                    v-for="color in species.speciesColors"
-                                    :key="color.id"
-                                    :style="{ backgroundColor: color.color.name }"
-                                    class="w-6 h-6 rounded-full border border-gray-400"
-                                ></li>
-                            </ul>
-                        </div>
+                <!-- Title and Category Container -->
+                <div class="bg-blue-900/30 backdrop-blur-sm p-6 rounded-lg shadow-lg mb-6">
+                    <h2 class="text-3xl font-bold text-white">Species Information</h2>
+                    <p class="text-sm mt-2 text-blue-200">({{ speciesCategory }})</p>
+                </div>
 
+                <!-- Actions Container -->
+                <div v-if="page.props.auth.user.user_role==='bpemo_admin'" 
+                     class="bg-blue-900/30 backdrop-blur-sm p-6 rounded-lg shadow-lg mb-6">
+                    <div class="flex justify-end gap-4">
+                        <DangerButton v-if="props.species.is_active" 
+                            @click="confirmArchiveSpecies">Archive</DangerButton>
+                        <DangerButton v-else 
+                            @click="confirmArchiveSpecies">Unarchive</DangerButton>
+                        <PrimaryButton @click="updateSpecies">Update Species</PrimaryButton>
                     </div>
                 </div>
-                <div class="bg-white shadow-lg rounded-xl p-6 relative z-10">
-                    <h2 class="text-xl font-semibold text-indigo-700 mb-4 flex items-center">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-6 w-6 mr-2 text-indigo-10"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path d="M4.75 4A2.75 2.75 0 002 6.75v6.5A2.75 2.75 0 004.75 16h10.5A2.75 2.75 0 0018 13.25v-6.5A2.75 2.75 0 0015.25 4H4.75zM9.5 8.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5H10.5a.75.75 0 01-.75-.75zm-3.25 4.25a.75.75 0 110-1.5h7.5a.75.75 0 110 1.5H6.25z" />
-                        </svg>
-                        Images
-                    </h2>
-                    <div v-if="props.species.mediaFiles && props.species.mediaFiles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div
-                            v-for="file in props.species.mediaFiles"
-                            :key="file.id"
-                            class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
-                            @click="openFileModal(file)"
-                        >
+
+                <!-- Species Details Container -->
+                <div class="bg-blue-900/30 backdrop-blur-sm p-6 rounded-lg shadow-lg mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-white">Species Details</h3>
+                        <span class="px-4 py-1 rounded-full text-sm" 
+                              :class="{
+                                'bg-green-500/20 text-green-300': props.species.is_active,
+                                'bg-red-500/20 text-red-300': !props.species.is_active
+                              }">
+                            {{ props.species.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+
+                    <!-- Main Details -->
+                    <div class="space-y-6 text-white">
+                        <!-- Basic Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                            <div class="space-y-4">
+                                <div class="bg-blue-950/30 p-4 rounded-lg">
+                                    <h4 class="text-blue-300 text-sm mb-2">Scientific Name</h4>
+                                    <p class="font-medium">{{ props.species.scientific_name }}</p>
+                                </div>
+                                <div class="bg-blue-950/30 p-4 rounded-lg">
+                                    <h4 class="text-blue-300 text-sm mb-2">Common Name</h4>
+                                    <p class="font-medium">{{ props.species.common_name }}</p>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="bg-blue-950/30 p-4 rounded-lg">
+                                    <h4 class="text-blue-300 text-sm mb-2">Local Name</h4>
+                                    <p class="font-medium">{{ props.species.local_name }}</p>
+                                </div>
+                                <div class="bg-blue-950/30 p-4 rounded-lg">
+                                    <h4 class="text-blue-300 text-sm mb-2">Conservation Status</h4>
+                                    <p class="font-medium">{{ props.species.conservation_status }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                            <div class="bg-blue-950/30 p-4 rounded-lg">
+                                <h4 class="text-blue-300 text-sm mb-2">Shape</h4>
+                                <p class="font-medium">{{ props.species.shape }}</p>
+                            </div>
+                            <div class="bg-blue-950/30 p-4 rounded-lg flex items-center">
+                                <div>
+                                    <h4 class="text-blue-300 text-sm mb-2">Dangerous</h4>
+                                    <p class="font-medium">{{ props.species.is_dangerous ? 'Yes' : 'No' }}</p>
+                                </div>
+                                <div v-if="props.species.is_dangerous" 
+                                     class="ml-auto bg-red-500/20 p-2 rounded-full">
+                                    <svg class="w-6 h-6 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="bg-blue-950/30 p-4 rounded-lg">
+                            <h4 class="text-blue-300 text-sm mb-2">Description</h4>
+                            <p class="font-medium">{{ props.species.description }}</p>
+                        </div>
+
+                        <!-- Colors Section -->
+                        <div v-if="species.speciesColors?.length" class="bg-blue-950/30 p-4 rounded-lg">
+                            <h4 class="text-blue-300 text-sm mb-3">Colors</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <div v-for="color in species.speciesColors" 
+                                     :key="color.id"
+                                     :style="{ backgroundColor: color.color.name }"
+                                     class="w-8 h-8 rounded-full shadow-lg border-2 border-white/20 
+                                            transform hover:scale-110 transition-transform">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media Gallery Container -->
+                <div class="bg-blue-900/30 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-white mb-4">Media Gallery</h3>
+                    <div v-if="props.species.mediaFiles?.length" 
+                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div v-for="file in props.species.mediaFiles"
+                             :key="file.id"
+                             @click="openFileModal(file)"
+                             class="cursor-pointer rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
                             <template v-if="file.type.startsWith('image/')">
-                                <img :src="file.url" :alt="`Image of ${props.species.name}`" class="w-full h-48 object-cover" />
+                                <img :src="file.url" 
+                                     :alt="`Image of ${props.species.name}`" 
+                                     class="w-full h-48 object-cover" />
                             </template>
                             <template v-else-if="file.type.startsWith('video/')">
                                 <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -190,79 +250,80 @@ const closeFileModal = () => {
                             </template>
                         </div>
                     </div>
-                    <p v-else class="text-gray-500 text-center py-4">No images available</p>
-
-                    <!-- Add preview modal -->
-                    <Modal :show="showFileModal" @close="closeFileModal">
-                        <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800">Preview Media File</h2>
-                            <div class="mt-4" v-if="currentMediaFile">
-                                <template v-if="currentMediaFile.type.startsWith('image/')">
-                                    <img :src="currentMediaFile.url" alt="Preview" class="w-full h-auto rounded-lg" />
-                                </template>
-                                <template v-else-if="currentMediaFile.type.startsWith('video/')">
-                                    <video controls class="w-full h-auto rounded-lg">
-                                        <source :src="currentMediaFile.url" :type="currentMediaFile.type" />
-                                        Your browser does not support the video tag.
-                                    </video>
-                                </template>
-                            </div>
-                        </div>
-                    </Modal>
-                </div>
-
-
-                <div v-if="page.props.auth.user.user_role==='bpemo_admin'" class="flex justify-end space-x-4 mt-8">
-                    <button
-                        class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
-                        @click="confirmArchiveSpecies"
-                        v-if="props.species.is_active"
-                    >
-                        Archive Species
-                    </button>
-                    <button
-                        class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
-                        @click="confirmArchiveSpecies"
-                        v-if="props.species.is_active===false"
-                    >
-                        Unarchive Species
-                    </button>
-
-                    <Modal :show="showConfirmArchiveModal" @close="closeModal">
-                        <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800">
-                               {{ props.species.is_active ? 'Are you sure you want to archive this species?' : 'Are you sure you want to unarchive this species?'}}
-                            </h2>
-                            <div class="mt-4">
-                                <label for="admin-password" class="text-sm text-gray-500">
-                                    Confirm by entering your password
-                                </label>
-                                <input
-                                    type="password"
-                                    id="admin-password"
-                                    v-model="form.password"
-                                    class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                    placeholder="Enter your password"
-                                />
-                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
-                                    {{ form.errors.password }}
-                                </p>
-                            </div>
-                            <div class="mt-6 flex justify-end space-x-4">
-                                <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
-                                <DangerButton @click="archiveSpecies">Confirm</DangerButton>
-                            </div>
-                        </div>
-                    </Modal>
-
-                    <button
-                        class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
-                        @click="updateSpecies"
-                    >
-                        Update Species
-                    </button>
+                    <p v-else class="text-blue-200 text-center py-4">No media files available</p>
                 </div>
             </div>
         </div>
+
+        <!-- Existing Modals -->
+        <Modal :show="showFileModal" @close="closeFileModal">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-800">Preview Media File</h2>
+                <div class="mt-4" v-if="currentMediaFile">
+                    <template v-if="currentMediaFile.type.startsWith('image/')">
+                        <img :src="currentMediaFile.url" alt="Preview" class="w-full h-auto rounded-lg" />
+                    </template>
+                    <template v-else-if="currentMediaFile.type.startsWith('video/')">
+                        <video controls class="w-full h-auto rounded-lg">
+                            <source :src="currentMediaFile.url" :type="currentMediaFile.type" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </template>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal :show="showConfirmArchiveModal" @close="closeModal">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-800">
+                   {{ props.species.is_active ? 'Are you sure you want to archive this species?' : 'Are you sure you want to unarchive this species?'}}
+                </h2>
+                <div class="mt-4">
+                    <label for="admin-password" class="text-sm text-gray-500">
+                        Confirm by entering your password
+                    </label>
+                    <input
+                        type="password"
+                        id="admin-password"
+                        v-model="form.password"
+                        class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="Enter your password"
+                    />
+                    <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                        {{ form.errors.password }}
+                    </p>
+                </div>
+                <div class="mt-6 flex justify-end space-x-4">
+                    <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
+                    <DangerButton @click="archiveSpecies">Confirm</DangerButton>
+                </div>
+            </div>
+        </Modal>
     </Sidebar>
 </template>
+
+<style scoped>
+.bg-gradient-overlay {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.9) 0%, rgba(0, 64, 128, 0.8) 50%, rgba(0, 31, 63, 0.9) 100%);
+}
+
+.backdrop-blur-sm {
+    backdrop-filter: blur(6px);
+}
+
+/* Basic hover effects */
+.shadow-lg {
+    transition: all 0.3s ease;
+}
+
+.shadow-lg:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsive styles */
+@media (max-width: 640px) {
+    .grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
