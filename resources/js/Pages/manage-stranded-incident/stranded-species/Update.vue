@@ -260,200 +260,554 @@ onBeforeUnmount(() => {
   <Sidebar>
     <template #header>
       <div>
-        <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-          <Link :href="backRoute" class="flex items-center">
-            Back
-          </Link>
+        <button class="oceanic-button">
+          <Link :href="backRoute" class="flex items-center">Back</Link>
         </button>
       </div>
     </template>
 
-    <div class="container mx-auto px-4 py-8">
-      <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Species Form</h2>
+    <div class="relative min-h-screen">
+      <!-- Background image with oceanic overlay -->
+      <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" style="background-image: url('/images/landing.jpg');">
+        <div class="absolute inset-0 bg-gradient-overlay"></div>
+      </div>
 
-      <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-        <form @submit.prevent="submit" class="space-y-6">
-          <!-- Error Messages -->
-          <div v-if="formErrors" class="p-4 bg-red-100 border border-red-400 rounded-lg text-red-600">
-            <ul class="list-disc ml-4">
-              <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
-            </ul>
-          </div>
+      <!-- Main content -->
+      <div class="relative z-10">
+        <div class="container mx-auto px-4 py-8">
+          <h2 class="title-gradient mb-6">Update Species Form</h2>
 
-          <!-- Form Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div class="sm:col-span-2">
+          <form @submit.prevent="submit" class="space-y-8 max-w-4xl mx-auto">
+            <!-- Error Messages -->
+            <div v-if="formErrors" class="error-container">
+              <ul class="list-disc ml-4">
+                <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
+              </ul>
+            </div>
+
+            <!-- Species Selection Section -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <span class="material-icons text-cyan-400 mr-2">pets</span>
+                Species Identification
+              </h3>
+              <div class="sm:col-span-2">
                 <div class="relative dropdown-container">
-                    <InputLabel for="species" value="Species Involved" />
-                    <input
-                        id="species"
-                        v-model="search"
-                        @focus="isDropdownVisible = true"
-                        @input="isDropdownVisible = true"
-                        placeholder="Search and select what species is involved..."
-                        class="w-full border rounded-lg p-2"
-                    />
-                    <InputError class="mt-2" :message="form.errors?.species_id" />
+                  <InputLabel for="species" value="Species Involved" />
+                  <input
+                    id="species"
+                    v-model="search"
+                    @focus="isDropdownVisible = true"
+                    @input="isDropdownVisible = true"
+                    placeholder="Search and select what species is involved..."
+                    class="w-full rounded-lg"
+                  />
+                  <InputError class="mt-2" :message="form.errors?.species_id" />
 
-                    <!-- Dropdown -->
-                    <ul
-                        v-if="isDropdownVisible && filteredSpecies.length"
-                        class="absolute bg-white border rounded-lg shadow-lg w-full max-h-40 overflow-y-auto z-10 mt-1"
+                  <!-- Dropdown -->
+                  <ul
+                    v-if="isDropdownVisible && filteredSpecies.length"
+                    class="dropdown-list"
+                  >
+                    <li
+                      v-for="species in filteredSpecies"
+                      :key="species.id"
+                      @click="selectSpecies(species)"
+                      class="dropdown-item"
                     >
-                        <li
-                        v-for="species in filteredSpecies"
-                        :key="species.id"
-                        @click="selectSpecies(species)"
-                        class="px-4 py-2 hover:bg-indigo-100 cursor-pointer"
-                        >
-                        {{ species.name }}
-                        </li>
-                    </ul>
-                    </div>
+                      {{ species.name }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
 
+            <!-- Species Details Section -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <span class="material-icons text-cyan-400 mr-2">description</span>
+                Species Condition & Characteristics
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <InputLabel for="condition_code" value="Condition" />
+                  <select v-model.number="form.condition_code" class="w-full" required>
+                    <option value="" disabled>Select an option</option>
+                    <option value=1>1 = Alive</option>
+                    <option value=2>2 = Freshly Dead</option>
+                    <option value=3>3 = Decomposed, but organs are intact</option>
+                    <option value=4>4 = Advanced Decomposition</option>
+                    <option value=5>5 = Skeletal/Cartiginous Remains</option>
+                    <option value=6>6 = Destroyed (slaughtered or burned)</option>
+                  </select>
+                  <InputError class="mt-2" :message="form.errors.condition_code" />
+                </div>
+                <div>
+                  <InputLabel for="sex" value="Sex" />
+                  <select v-model="form.sex" class="w-full">
+                    <option value="" disabled>Select an option</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="unknown">Unknown</option>
+                  </select>
+                  <InputError class="mt-2" :message="form.errors.sex" />
+                </div>
+
+                <div>
+                  <InputLabel for="length" value="Length (cm)" />
+                  <input id="length" type="number" step="0.01" min="0" v-model="form.length" class="w-full" placeholder="Enter the length of the species in cm" />
+                  <InputError class="mt-2" :message="form.errors.length" />
+                </div>
+                <div>
+                  <InputLabel for="weight" value="Weight (kg)" />
+                  <input id="weight" type="number" step="0.01" min="0" v-model="form.weight" class="w-full" placeholder="Enter the weight of the species in kg" />
+                  <InputError class="mt-2" :message="form.errors.weight" />
+                </div>
+                <div>
+                  <InputLabel for="girth" value="Girth (cm)" />
+                  <input id="girth" type="number" step="0.01" min="0" v-model="form.girth" class="w-full" placeholder="Enter the girth of the species in cm" />
+                  <InputError class="mt-2" :message="form.errors.girth" />
+                </div>
+                <div>
+                  <InputLabel for="is_released" value="Released?" />
+                  <select v-model="form.is_released" class="w-full">
+                    <option value="" disabled>Select an option</option>
+                    <option :value="true">Yes</option>
+                    <option :value="false">No</option>
+                  </select>
+                  <InputError class="mt-2" :message="form.errors.is_released" />
+                </div>
+              </div>
             </div>
-            <div>
-              <InputLabel for="condition_code" value="Condition" />
-              <select v-model.number="form.condition_code" class="w-full" required>
-                <option value="" disabled>Select an option</option>
-                <option value=1>1 = Alive</option>
-                <option value=2>2 = Freshly Dead</option>
-                <option value=3>3 = Decomposed, but organs are intact</option>
-                <option value=4>4 = Advanced Decomposition</option>
-                <option value=5>5 = Skeletal/Cartiginous Remains</option>
-                <option value=6>6 = Destroyed (slaughtered or burned)</option>
-            </select>
-              <InputError class="mt-2" :message="form.errors.condition_code" />
-            </div>
-            <div>
-              <InputLabel for="sex" value="Sex" />
-              <select v-model="form.sex" class="w-full">
-                <option value="" disabled>Select an option</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="unknown">Unknown</option>
-              </select>
-              <InputError class="mt-2" :message="form.errors.sex" />
-            </div>
-            <div>
-                <InputLabel for="length" value="Length (cm)" />
-                <input id="length" type="number" step="0.01" min="0" v-model="form.length" class="w-full" placeholder="Enter the length of the species in cm" />
-                <InputError class="mt-2" :message="form.errors.length" />
-            </div>
-            <div>
-                <InputLabel for="weight" value="Weight (kg)" />
-                <input id="weight" type="number" step="0.01" min="0" v-model="form.weight" class="w-full" placeholder="Enter the weight of the species in kg" />
-                <InputError class="mt-2" :message="form.errors.weight" />
-            </div>
-            <div>
-                <InputLabel for="girth" value="Girth (cm)" />
-                <input id="girth" type="number" step="0.01" min="0" v-model="form.girth" class="w-full" placeholder="Enter the girth of the species in cm" />
-                <InputError class="mt-2" :message="form.errors.girth" />
-            </div>
-            <div>
-              <InputLabel for="is_released" value="Released?" />
-              <select v-model="form.is_released" class="w-full">
-                <option value="" disabled>Select an option</option>
-                <option :value="true">Yes</option>
-                <option :value="false">No</option>
-            </select>
-              <InputError class="mt-2" :message="form.errors.is_released" />
-            </div>
-            <!--Map-->
-            <div class="sm:col-span-2 flex justify-end gap-3">
+
+            <!-- Location Section -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <span class="material-icons text-cyan-400 mr-2">place</span>
+                Location Information
+              </h3>
+
+              <div class="sm:col-span-2 flex justify-end gap-3 mb-4">
                 <button
-                    type="button"
-                    @click.prevent="setLocationFromMap"
-                    class="px-3 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-lg"
+                  type="button"
+                  @click.prevent="setLocationFromMap"
+                  class="location-button"
                 >
-                    <span class="material-icons material-symbols-outlined">
-                        my_location
-                    </span>
+                  <span class="material-icons">my_location</span>
+                  <span>Current Location</span>
                 </button>
                 <button
-                    type="button"
-                    @click="handleResetCoordinates"
-                    class="px-3 py-2 bg-white text-yellow-600 rounded-lg hover:bg-yellow-50 transition-colors shadow-lg"
+                  type="button"
+                  @click="handleResetCoordinates"
+                  class="location-button bg-amber-600 hover:bg-amber-700"
                 >
-                    <span class="material-icons material-symbols-outlined">
-                        restart_alt
-                    </span>
+                  <span class="material-icons">restart_alt</span>
+                  <span>Reset Location</span>
                 </button>
-            </div>
-            <div class="mt-4 sm:col-span-2">
-                <div v-if="!showMap" class="text-center py-4 bg-gray-100 rounded-lg">
-                    No GPS coordinates available
+              </div>
+
+              <div class="mt-4">
+                <div v-if="!showMap" class="no-location-display">
+                  No GPS coordinates available
                 </div>
 
                 <template v-else>
-                    <div class="relative rounded-xl overflow-hidden shadow-lg">
-                        <div id="map" class="h-[400px] w-full z-0"></div>
-                        <!-- Map Controls -->
-                        <div class="absolute top-4 right-4 z-10 flex space-x-2">
-
-                            <button
-                                type="button"
-                                @click="handleRemoveMap"
-                                class="px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
-                            >
-                                <span class="material-icons material-symbols-outlined">
-                                    location_off
-                                </span>
-                            </button>
-                        </div>
-                        <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
-                            <p class="text-sm font-medium text-gray-700">
-                                Latitude: {{ form.latitude || 'Not Set' }}<br>
-                                Longitude: {{ form.longitude || 'Not Set' }}
-                            </p>
-                        </div>
+                  <div class="relative rounded-xl overflow-hidden shadow-lg map-container">
+                    <div id="map" class="h-[400px] w-full z-0"></div>
+                    <!-- Map Controls -->
+                    <div class="absolute top-4 right-4 z-10">
+                      <button
+                        type="button"
+                        @click="handleRemoveMap"
+                        class="remove-location-button"
+                      >
+                        <span class="material-icons">location_off</span>
+                      </button>
                     </div>
+                    <div class="coordinates-display">
+                      <p class="text-sm font-medium text-white">
+                        Latitude: {{ form.latitude || 'Not Set' }}<br>
+                        Longitude: {{ form.longitude || 'Not Set' }}
+                      </p>
+                    </div>
+                  </div>
                 </template>
+              </div>
             </div>
 
-            <div class="sm:col-span-2">
-              <InputLabel for="disposition" value="Disposition" />
-              <TextInput id="disposition" v-model="form.disposition" class="w-full" placeholder="e.g. Buried" />
-              <InputError class="mt-2" :message="form.errors.disposition" />
-            </div>
-            <div>
-              <InputLabel for="disposal_site" value="Disposal Site" />
-              <textarea
-                id="disposal_site"
-                v-model="form.disposal_site"
-                autocomplete="disposal_site"
-                class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                placeholder="Please add more details of the disposal location site"
-            ></textarea>
-              <InputError class="mt-2" :message="form.errors.disposal_site" />
-            </div>
-            <div>
-              <InputLabel for="more_information" value="More Information of the Incident" />
-              <textarea
-                id="more_information"
-                v-model="form.more_information"
-                autocomplete="more_information"
-                class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                placeholder="Please share more information about the stranded species"
-            ></textarea>
-              <InputError class="mt-2" :message="form.errors.more_information" />
+            <!-- Disposition Section -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <span class="material-icons text-cyan-400 mr-2">info</span>
+                Additional Information
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="sm:col-span-2">
+                  <InputLabel for="disposition" value="Disposition" />
+                  <TextInput id="disposition" v-model="form.disposition" class="w-full" placeholder="e.g. Buried" />
+                  <InputError class="mt-2" :message="form.errors.disposition" />
+                </div>
+                <div>
+                  <InputLabel for="disposal_site" value="Disposal Site" />
+                  <textarea
+                    id="disposal_site"
+                    v-model="form.disposal_site"
+                    autocomplete="disposal_site"
+                    class="w-full h-24"
+                    placeholder="Please add more details of the disposal location site"
+                  ></textarea>
+                  <InputError class="mt-2" :message="form.errors.disposal_site" />
+                </div>
+                <div>
+                  <InputLabel for="more_information" value="More Information" />
+                  <textarea
+                    id="more_information"
+                    v-model="form.more_information"
+                    autocomplete="more_information"
+                    class="w-full h-24"
+                    placeholder="Please share more information about the stranded species"
+                  ></textarea>
+                  <InputError class="mt-2" :message="form.errors.more_information" />
+                </div>
+              </div>
             </div>
 
-          </div>
-
-          <div class="text-center mt-6">
-            <PrimaryButton type="submit">Update</PrimaryButton>
-          </div>
-        </form>
+            <div class="flex justify-between items-center mt-6">
+              <Link :href="backRoute" class="cancel-button">Cancel</Link>
+              <PrimaryButton type="submit" class="create-button" :disabled="form.processing">
+                Update
+              </PrimaryButton>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </Sidebar>
 </template>
 
 <style scoped>
- #map {
-    height: 400px; /* Ensure this is set */
-    width: 100%; /* Ensure this is set */
+/* Oceanic Theme Base */
+.title-gradient {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  background: linear-gradient(to right, #ffffff, #00ccff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.5px;
+  margin-bottom: 2.5rem;
 }
 
+.bg-gradient-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 51, 102, 0.92) 0%,
+    rgba(0, 75, 150, 0.9) 50%,
+    rgba(0, 51, 102, 0.92) 100%
+  );
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: white;
+  border-bottom: 1px solid rgba(0, 204, 255, 0.3);
+  padding-bottom: 0.75rem;
+}
+
+.form-section {
+  background: rgba(0, 51, 102, 0.35);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Form Input Styles */
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease;
+  width: 100% !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  padding: 0.75rem 1rem !important;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(0, 204, 255, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.25) !important;
+  outline: none !important;
+}
+
+/* Species Search Input */
+#species {
+  border: 1px solid rgba(0, 204, 255, 0.4) !important;
+  background: rgba(0, 51, 102, 0.4) !important;
+  box-shadow: 0 0 8px rgba(0, 204, 255, 0.1);
+  color: white !important;
+}
+
+#species::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+textarea {
+  min-height: 8rem !important;
+  resize: vertical;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' height='24' viewBox='0 0 24 24' width='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem !important;
+  border: 1px solid rgba(0, 204, 255, 0.4) !important;
+}
+
+/* Fix dropdown options contrast */
+select option {
+  background-color: #003366 !important;
+  color: white !important;
+}
+
+/* Dropdown styling */
+.dropdown-container {
+  position: relative;
+  z-index: 1000;
+}
+
+.dropdown-list {
+  position: absolute;
+  background: #003366;
+  border: 1px solid rgba(0, 204, 255, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 204, 255, 0.25);
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 4px;
+  animation: fadeIn 0.2s ease-out;
+  transform-origin: top center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-item {
+  padding: 0.75rem 1rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(0, 204, 255, 0.2);
+  padding-left: 1.5rem;
+}
+
+.dropdown-item:hover::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  background: rgba(0, 204, 255, 0.8);
+  border-radius: 2px;
+}
+
+/* Map styles */
+.map-container {
+  border: 1px solid rgba(0, 204, 255, 0.4);
+  margin-bottom: 1.5rem;
+}
+
+.no-location-display {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.coordinates-display {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(0, 51, 102, 0.8);
+  backdrop-filter: blur(4px);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Button Styles */
+.oceanic-button {
+  background: linear-gradient(135deg, #00a3cc, #00ccff);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.oceanic-button:hover {
+  background: linear-gradient(135deg, #00b3cc, #00d9ff);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.oceanic-button a {
+  color: white !important;
+  text-decoration: none;
+}
+
+.location-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #00a3cc, #00ccff);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 50px;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.location-button:hover {
+  background: linear-gradient(135deg, #00b3cc, #00d9ff);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.remove-location-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #cc0000, #ff3333);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+}
+
+.remove-location-button:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.create-button {
+  background: linear-gradient(135deg, #00a3cc, #00ccff);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 140px;
+  text-align: center;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-button:hover {
+  background: linear-gradient(135deg, #00b3cc, #00d9ff);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 140px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.cancel-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+/* Error Container */
+.error-container {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+  color: #ff4444;
+  margin-bottom: 1.5rem;
+}
+
+/* Labels */
+label {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+#map {
+  height: 400px;
+  width: 100%;
+}
+
+/* Species Selection Section specific */
+.form-section:first-of-type {
+  z-index: 10;
+}
 </style>
