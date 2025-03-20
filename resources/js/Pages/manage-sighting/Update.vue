@@ -1,5 +1,4 @@
 <script setup>
-import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue'; // Add this import
@@ -736,328 +735,411 @@ const handleDropdownClick = (index) => {
     <Sidebar>
         <template #header>
             <div>
-                <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-                    <Link :href="backRoute" class="flex items-center">
-                        Back
-                    </Link>
+                <button class="oceanic-button">
+                    <Link :href="backRoute" class="flex items-center">Back</Link>
                 </button>
             </div>
         </template>
 
-        <div class="container mx-auto px-4 py-8">
-            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Sighting Report</h2>
+        <div class="relative min-h-screen">
+            <!-- Background image with oceanic overlay -->
+            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" style="background-image: url('/images/landing.jpg');">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
+            </div>
 
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-                <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Error Messages -->
-                    <div v-if="formErrors" class="p-4 bg-red-100 border border-red-400 rounded-lg text-red-600">
-                        <ul class="list-disc ml-4">
-                            <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
-                        </ul>
-                    </div>
-                    <!-- Form Fields -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div>
-                            <InputLabel for="date" value="Date of the Incident" />
-                            <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
-                            <InputError class="mt-2" :message="form.errors.date" />
-                        </div>
-                        <div>
-                            <InputLabel for="time" value="Time of the Incident" />
-                            <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
-                            <InputError class="mt-2" :message="form.errors.time" />
-                        </div>
-                        <div class="sm:col-span-2">
-                            <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
-                            <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
-                            <p class="text-center">{{ form.certainty_level }}</p>
-                            <InputError class="mt-2" :message="form.errors.certainty_level" />
+            <!-- Main content -->
+            <div class="relative z-10">
+                <div class="container mx-auto px-4 py-8">
+                    <h2 class="title-gradient mb-6">Update Sighting Report</h2>
+
+                    <form @submit.prevent="submit" class="space-y-8 max-w-4xl mx-auto">
+                        <!-- Error Messages -->
+                        <div v-if="formErrors" class="error-container">
+                            <ul class="list-disc ml-4">
+                                <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
+                            </ul>
                         </div>
 
-                        <!-- Map -->
-                        <div class="mt-4 sm:col-span-2 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-semibold text-gray-900">Location Details</h3>
-                                <div class="flex space-x-2">
-                                    <button
-                                        type="button"
-                                        @click.prevent="setLocationFromMap"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
-                                    >
-                                        <span class="material-icons material-symbols-outlined">
-                                            my_location
-                                        </span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        v-if="!showMap || locationSource !== 'original'"
-                                        @click="resetToOriginal"
-                                        class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-                                    >
-                                        <span class="material-icons material-symbols-outlined">
-                                            restart_alt
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div v-if="showMap" class="relative rounded-xl overflow-hidden shadow-lg">
-                                <div id="map" class="h-[400px] w-full z-0"></div>
-                                <div class="absolute top-4 right-4 z-10">
-                                    <button
-                                        type="button"
-                                        @click="removeGpsLocation"
-                                        class="px-5 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
-                                    >
-                                        <span class="material-icons material-symbols-outlined">
-                                            location_off
-                                        </span>
-                                    </button>
-                                </div>
-                                <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
-                                    <p class="text-sm font-medium text-gray-700">
-                                        Latitude: {{ form.latitude || 'Not Set' }}<br>
-                                        Longitude: {{ form.longitude || 'Not Set' }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <InputLabel for="municipality_id" value="Municipality" />
-                            <select required v-model="form.municipality_id" class="w-full">
-                                <option value="" disabled>Select a municipality</option>
-                                <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
-                                    {{ municipality.name }}
-                                </option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.municipality_id" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="barangay_id" value="Barangay" />
-                            <select required v-model="form.barangay_id" class="w-full">
-                                <option value="" disabled>Select a barangay</option>
-                                <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
-                                    {{ barangay.name }}
-                                </option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.barangay_id" />
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <InputLabel for="detailed_location" value="Detailed Location" />
-                            <textarea
-                                required
-                                id="detailed_location"
-                                v-model="form.detailed_location"
-                                autocomplete="detailed_location"
-                                class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                                placeholder="Please add more details of the exact location"
-                            ></textarea>
-                            <InputError class="mt-2" :message="form.errors.detailed_location" />
-                        </div>
-                        <div class="sm:col-span-2">
-                            <InputLabel for="more_information" value="More Information of the Incident" />
-                            <textarea
-                                id="more_information"
-                                v-model="form.more_information"
-                                autocomplete="more_information"
-                                class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                                placeholder="Please share more information of the incident"
-                            ></textarea>
-                            <InputError class="mt-2" :message="form.errors.more_information" />
-                        </div>
-
-                        <!-- Sighted Species -->
-                        <div v-for="(species, index) in form.sightedSpecies" :key="species.id || index" class="border p-5 rounded-lg mb-4 sm:col-span-2 bg-gray-50">
+                        <!-- Form Fields -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons text-cyan-400 mr-2">calendar_today</span>
+                                Date & Time Information
+                            </h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <div class="relative dropdown-container">
-                                        <InputLabel :for="'species-' + index" value="Species Involved" />
-                                        <input
-                                            :id="'species-' + index"
-                                            v-model="searches[index]"
-                                            @focus="toggleDropdown(index)"
-                                            @input="filteredSpecies(index)"
-                                            @blur="handleBlur"
-                                            placeholder="Search and select what species is involved..."
-                                            class="w-full border rounded-lg p-2"
-                                            autocomplete="off"
-                                        />
-                                        <InputError class="mt-2" :message="form.errors?.sightedSpecies?.[index]?.species_id" />
-
-                                        <ul
-                                        :id="'dropdown-' + index"
-                                        v-if="isDropdownVisible[index] && filteredSpecies(index).value.length > 0"
-                                        class="absolute bg-white border rounded-lg shadow-lg w-full max-h-40 overflow-y-auto z-50 mt-1"
-                                        @click="handleDropdownClick(index)"
-                                    >
-                                            <li
-                                                v-for="species in filteredSpecies(index).value"
-                                                :key="species.id"
-                                                @click="selectSpecies(species, index)"
-                                                class=" px-4 py-2 z-100 hover:bg-indigo-100 cursor-pointer"
-                                            >
-                                                {{ species.name }}
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <InputLabel for="date" value="Date of the Incident" />
+                                    <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                                    <InputError class="mt-2" :message="form.errors.date" />
                                 </div>
                                 <div>
-                                    <InputLabel :for="'size-' + index" value="Size" />
-                                    <select v-model="form.sightedSpecies[index].size" class="w-full" required>
-                                        <option value="" disabled>Select an option</option>
-                                        <option value="tiny">Tiny (Less than 1 foot)</option>
-                                        <option value="small">Small (1 - 3 feet)</option>
-                                        <option value="medium">Medium (3 - 10 feet)</option>
-                                        <option value="large">Large (10 - 20 feet)</option>
-                                        <option value="very_large">Very Large (20 - 30 feet)</option>
-                                        <option value="giant">Giant (Over 30 feet)</option>
-                                    </select>
-                                    <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.size" />
+                                    <InputLabel for="time" value="Time of the Incident" />
+                                    <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
+                                    <InputError class="mt-2" :message="form.errors.time" />
                                 </div>
-                                <div>
-                                    <InputLabel :for="'description-' + index" value="Species Description" />
-                                    <textarea
-                                        :id="'description-' + index"
-                                        v-model="form.sightedSpecies[index].species_description"
-                                        class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                                        placeholder="Please add physical description of the species especially if you can't identify"
-                                    ></textarea>
-                                    <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.species_description" />
-                                </div>
-                                <div>
-                                    <InputLabel :for="'behavior-' + index" value="Behavior Observed" />
-                                    <textarea
-                                        :id="'behavior-' + index"
-                                        v-model="form.sightedSpecies[index].behavior_observed"
-                                        class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                                        placeholder="(e.g. feeding, swimming, resting)"
-                                        required
-                                    ></textarea>
-                                    <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.behavior_observed" />
+                                <div class="sm:col-span-2">
+                                    <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
+                                    <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full range-input" />
+                                    <p class="text-center text-white">{{ form.certainty_level }}</p>
+                                    <InputError class="mt-2" :message="form.errors.certainty_level" />
                                 </div>
                             </div>
-                            <div class="flex justify-end mt-5">
-                                <button type="button" v-if="form.sightedSpecies.length > 1" @click.prevent="removeSpeciesEntry(species, index)">
-                                    <span class="material-icons text-xl mr-2 leading-none text-red-600">delete</span>
-                                </button>
-                                <button type="button" @click.prevent="addSpeciesEntry">
-                                    <span class="material-icons text-xl mr-2 leading-none text-indigo-900">add_circle</span>
-                                </button>
-                            </div>
-
                         </div>
-                        <!-- Existing Image Previews -->
-                        <div class="mt-4 sm:col-span-2 col-span-1">
-                            <InputLabel value="Existing Images" />
-                            <div>
-                                <div v-if="existingImages.length === 0" class="flex flex-wrap gap-2">No existing images</div>
-                                <div v-if="existingImages.length" class="flex flex-wrap gap-2">
-                                    <div v-for="(image, index) in existingImages" :key="index" class="relative">
-                                        <img :src="image.url" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
+
+                        <!-- Map & Location Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons text-cyan-400 mr-2">place</span>
+                                Location Details
+                            </h3>
+
+                            <div class="mt-4 space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex-grow"></div>
+                                    <div class="flex flex-wrap gap-2">
                                         <button
                                             type="button"
-                                            @click.prevent="removeExistingImage(index)"
-                                            class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                            @click.prevent="setLocationFromMap"
+                                            class="location-button"
                                         >
-                                            &times;
+                                            <span class="material-icons">my_location</span>
+                                            <span>Use Current Location</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            v-if="!showMap || locationSource !== 'original'"
+                                            @click="resetToOriginal"
+                                            class="location-button bg-amber-600 hover:bg-amber-700"
+                                        >
+                                            <span class="material-icons">restart_alt</span>
+                                            <span>Reset Location</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div v-if="showMap" class="relative rounded-xl overflow-hidden shadow-lg map-container">
+                                    <div id="map" class="h-[400px] w-full z-0"></div>
+                                    <div class="absolute top-4 right-4 z-10">
+                                        <button
+                                            type="button"
+                                            @click="removeGpsLocation"
+                                            class="remove-location-button"
+                                        >
+                                            <span class="material-icons">location_off</span>
+                                        </button>
+                                    </div>
+                                    <div class="coordinates-display">
+                                        <p class="text-sm font-medium text-white">
+                                            Latitude: {{ form.latitude || 'Not Set' }}<br>
+                                            Longitude: {{ form.longitude || 'Not Set' }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
+                                    <div>
+                                        <InputLabel for="municipality_id" value="Municipality" />
+                                        <select required v-model="form.municipality_id" class="w-full">
+                                            <option value="" disabled>Select a municipality</option>
+                                            <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
+                                                {{ municipality.name }}
+                                            </option>
+                                        </select>
+                                        <InputError class="mt-2" :message="form.errors.municipality_id" />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel for="barangay_id" value="Barangay" />
+                                        <select required v-model="form.barangay_id" class="w-full">
+                                            <option value="" disabled>Select a barangay</option>
+                                            <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
+                                                {{ barangay.name }}
+                                            </option>
+                                        </select>
+                                        <InputError class="mt-2" :message="form.errors.barangay_id" />
+                                    </div>
+
+                                    <div class="sm:col-span-2">
+                                        <InputLabel for="detailed_location" value="Detailed Location" />
+                                        <textarea
+                                            required
+                                            id="detailed_location"
+                                            v-model="form.detailed_location"
+                                            autocomplete="detailed_location"
+                                            class="w-full"
+                                            placeholder="Please add more details of the exact location"
+                                        ></textarea>
+                                        <InputError class="mt-2" :message="form.errors.detailed_location" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons text-cyan-400 mr-2">info</span>
+                                Additional Information
+                            </h3>
+                            <div>
+                                <InputLabel for="more_information" value="More Information of the Incident" />
+                                <textarea
+                                    id="more_information"
+                                    v-model="form.more_information"
+                                    autocomplete="more_information"
+                                    class="w-full h-24"
+                                    placeholder="Please share more information of the incident"
+                                ></textarea>
+                                <InputError class="mt-2" :message="form.errors.more_information" />
+                            </div>
+                        </div>
+
+                        <!-- Sighted Species Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons text-cyan-400 mr-2">pets</span>
+                                Species Information
+                            </h3>
+
+                            <div class="space-y-6">
+                                <div v-for="(species, index) in form.sightedSpecies" :key="species.id || index" class="species-card">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h4 class="text-lg font-semibold text-white">Species #{{ index + 1 }}</h4>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <div>
+                                            <div class="relative dropdown-container">
+                                                <InputLabel :for="'species-' + index" value="Species Involved" />
+                                                <input
+                                                    :id="'species-' + index"
+                                                    v-model="searches[index]"
+                                                    @focus="toggleDropdown(index)"
+                                                    @input="filteredSpecies(index)"
+                                                    @blur="handleBlur"
+                                                    placeholder="Search and select what species is involved..."
+                                                    class="w-full"
+                                                    autocomplete="off"
+                                                />
+                                                <InputError class="mt-2" :message="form.errors?.sightedSpecies?.[index]?.species_id" />
+
+                                                <ul
+                                                    :id="'dropdown-' + index"
+                                                    v-if="isDropdownVisible[index] && filteredSpecies(index).value.length > 0"
+                                                    class="dropdown-list"
+                                                    @click="handleDropdownClick(index)"
+                                                >
+                                                    <li
+                                                        v-for="speciesItem in filteredSpecies(index).value"
+                                                        :key="speciesItem.id"
+                                                        @click="selectSpecies(speciesItem, index)"
+                                                        class="dropdown-item"
+                                                    >
+                                                        {{ speciesItem.name }}
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <InputLabel :for="'size-' + index" value="Size" />
+                                            <select v-model="form.sightedSpecies[index].size" class="w-full" required>
+                                                <option value="" disabled>Select an option</option>
+                                                <option value="tiny">Tiny (Less than 1 foot)</option>
+                                                <option value="small">Small (1 - 3 feet)</option>
+                                                <option value="medium">Medium (3 - 10 feet)</option>
+                                                <option value="large">Large (10 - 20 feet)</option>
+                                                <option value="very_large">Very Large (20 - 30 feet)</option>
+                                                <option value="giant">Giant (Over 30 feet)</option>
+                                            </select>
+                                            <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.size" />
+                                        </div>
+                                        <div>
+                                            <InputLabel :for="'description-' + index" value="Species Description" />
+                                            <textarea
+                                                :id="'description-' + index"
+                                                v-model="form.sightedSpecies[index].species_description"
+                                                class="w-full h-24"
+                                                placeholder="Please add physical description of the species especially if you can't identify"
+                                            ></textarea>
+                                            <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.species_description" />
+                                        </div>
+                                        <div>
+                                            <InputLabel :for="'behavior-' + index" value="Behavior Observed" />
+                                            <textarea
+                                                :id="'behavior-' + index"
+                                                v-model="form.sightedSpecies[index].behavior_observed"
+                                                class="w-full h-24"
+                                                placeholder="(e.g. feeding, swimming, resting)"
+                                                required
+                                            ></textarea>
+                                            <InputError class="mt-2" :message="form.errors.sightedSpecies?.[index]?.behavior_observed" />
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end mt-5 gap-2">
+                                        <button
+                                            type="button"
+                                            v-if="form.sightedSpecies.length > 1"
+                                            @click.prevent="removeSpeciesEntry(species, index)"
+                                            class="action-button delete-button"
+                                        >
+                                            <span class="material-icons">delete</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click.prevent="addSpeciesEntry"
+                                            class="action-button add-button"
+                                        >
+                                            <span class="material-icons">add_circle</span>
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="sm:col-span-2">
-                            <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-                            <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleNewFileChange" multiple class="file-input w-full" />
-                            <div v-if="previewNewImages.length" class="mt-2 flex gap-4">
-                                <div v-for="(img, index) in previewNewImages" :key="index" class="relative">
-                                    <img :src="img" alt="Preview" class="w-20 h-20 object-cover rounded-lg" />
-                                    <button type="button" @click="removeNewImage(index)" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">X</button>
+
+                        <!-- Media Files Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons text-cyan-400 mr-2">image</span>
+                                Media Files
+                            </h3>
+
+                            <!-- Existing Image Previews -->
+                            <div class="mt-4">
+                                <InputLabel value="Existing Images" />
+                                <div v-if="existingImages.length === 0" class="text-white opacity-80 my-2">No existing images</div>
+                                <div v-if="existingImages.length" class="preview-grid">
+                                    <div v-for="(image, index) in existingImages" :key="index" class="preview-item">
+                                        <img :src="image.url" alt="Image Preview" class="preview-image"/>
+                                        <button
+                                            type="button"
+                                            @click.prevent="removeExistingImage(index)"
+                                            class="remove-button"
+                                            title="Remove"
+                                        >
+                                            <span class="material-icons">close</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <InputError class="mt-2" :message="form.errors.mediaFiles" />
+
+                            <!-- Upload New Media -->
+                            <div class="mt-6">
+                                <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
+                                <label :for="'mediaFiles'" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                    <span class="material-icons mr-2">cloud_upload</span>
+                                    Choose Files
+                                </label>
+                                <input
+                                    type="file"
+                                    accept="image/*,video/*"
+                                    id="mediaFiles"
+                                    @change="handleNewFileChange"
+                                    multiple
+                                    class="hidden"
+                                />
+                                <div v-if="previewNewImages.length" class="preview-grid mt-4">
+                                    <div v-for="(img, index) in previewNewImages" :key="index" class="preview-item">
+                                        <img :src="img" alt="Preview" class="preview-image" />
+                                        <button
+                                            type="button"
+                                            @click="removeNewImage(index)"
+                                            class="remove-button"
+                                            title="Remove"
+                                        >
+                                            <span class="material-icons">close</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <InputError class="mt-2" :message="form.errors.mediaFiles" />
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Submit and Cancel Buttons for regular update -->
-                    <div v-if="!buttonStatus" class="flex items-center justify-between mt-6">
-                        <Link :href="backRoute" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
+                        <!-- Submit and Cancel Buttons for regular update -->
+                        <div v-if="!buttonStatus" class="flex items-center justify-between mt-6">
+                            <Link :href="backRoute" class="cancel-button">Cancel</Link>
+                            <PrimaryButton
+                                :disabled="form.processing"
+                                :class="{ 'opacity-25': form.processing }"
+                                class="create-button"
+                            >
+                                Update Sighting
+                            </PrimaryButton>
+                        </div>
 
-                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="bg-indigo-900">
-                            Update Incident
-                        </PrimaryButton>
-                    </div>
-
-                    <!-- False and Verify button for pending cases-->
-                    <div v-else class="flex items-center justify-end gap-5 mt-6">
-                        <DangerButton
-                            type="button"
-                            :disabled="form.processing"
-                            :class="{ 'opacity-25': form.processing }"
-                            class="bg-indigo-900"
-                            @click="falseIncident"
-                            formnovalidate
-                        >
-                            Mark as False
-                        </DangerButton>
-                        <PrimaryButton
-                            type="button"
-                            :disabled="form.processing"
-                            :class="{ 'opacity-25': form.processing }"
-                            class="bg-indigo-900"
-                            @click="verifyIncident"
-                        >
-                            Verify as True
-                        </PrimaryButton>
-                    </div>
-
-                </form>
+                        <!-- False and Verify button for pending cases-->
+                        <div v-else class="flex items-center justify-end gap-5 mt-6">
+                            <button
+                                type="button"
+                                :disabled="form.processing"
+                                :class="{ 'opacity-25': form.processing }"
+                                class="modal-cancel-button false-button"
+                                @click="falseIncident"
+                                formnovalidate
+                            >
+                                Mark as False
+                            </button>
+                            <button
+                                type="button"
+                                :disabled="form.processing"
+                                :class="{ 'opacity-25': form.processing }"
+                                class="modal-confirm-button verify-button"
+                                @click="verifyIncident"
+                            >
+                                Verify as True
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
+
+        <!-- Modal components with improved styling -->
         <Modal :show="showVerifyModal" @close="showVerifyModal = false">
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
+            <div class="modal-container verify-modal">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-green-500"></div>
+                <h2 class="modal-title">
+                    <span class="material-icons text-emerald-500 mr-2">check_circle</span>
                     Confirm Verification
                 </h2>
-                <p class="mt-3 text-sm text-gray-600">
+                <p class="modal-content">
                     Are you sure that the report is true and accurate?
                 </p>
-                <div class="mt-6 flex justify-end gap-3">
+                <div class="modal-actions">
                     <button
                         type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="modal-cancel-button"
                         @click="showVerifyModal = false"
                     >
                         Cancel
                     </button>
-                    <PrimaryButton @click="confirmVerify">
+                    <button @click="confirmVerify" class="modal-confirm-button verify-confirm-button">
                         Confirm
-                    </PrimaryButton>
+                    </button>
                 </div>
             </div>
         </Modal>
 
         <Modal :show="showFalseModal" @close="showFalseModal = false">
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
+            <div class="modal-container false-modal">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-400 to-red-600"></div>
+                <h2 class="modal-title">
+                    <span class="material-icons text-red-500 mr-2">cancel</span>
                     Confirm False Report
                 </h2>
-                <p class="mt-3 text-sm text-gray-600">
+                <p class="modal-content">
                     Are you sure the report is false?
                 </p>
-                <div class="mt-6 flex justify-end gap-3">
+                <div class="modal-actions">
                     <button
                         type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="modal-cancel-button"
                         @click="showFalseModal = false"
                     >
                         Cancel
                     </button>
-                    <PrimaryButton @click="confirmFalse">
+                    <button @click="confirmFalse" class="modal-confirm-button false-confirm-button">
                         Confirm
-                    </PrimaryButton>
+                    </button>
                 </div>
             </div>
         </Modal>
@@ -1065,28 +1147,472 @@ const handleDropdownClick = (index) => {
 </template>
 
 <style scoped>
-
-.file-input {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    height: 40px;
-    color: white;
-}
-
-.file-input::-webkit-file-upload-button {
-    visibility: hidden;
-}
-
-.file-input::before {
-    content: "Choose Files";
-    display: inline-block;
-    background-color: indigo;
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
+/* Oceanic Theme Base */
+.title-gradient {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
     text-align: center;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.5px;
+    margin-bottom: 2.5rem;
 }
 
+.bg-gradient-overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 51, 102, 0.92) 0%,
+        rgba(0, 75, 150, 0.9) 50%,
+        rgba(0, 51, 102, 0.92) 100%
+    );
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: white;
+    border-bottom: 1px solid rgba(0, 204, 255, 0.3);
+    padding-bottom: 0.75rem;
+}
+
+.form-section {
+    background: rgba(0, 51, 102, 0.35);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 2rem;
+}
+
+.species-card {
+    background: rgba(0, 51, 102, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Input Styles */
+input[type="text"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease;
+    width: 100% !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    padding: 0.75rem 1rem !important;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(0, 204, 255, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.25) !important;
+    outline: none !important;
+}
+
+/* Fix color of input type date and time icons */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) opacity(0.7);
+}
+
+/* Range input styling */
+input[type="range"].range-input {
+    background: rgba(0, 204, 255, 0.1) !important;
+    height: 8px;
+    border-radius: 8px !important;
+    outline: none;
+    opacity: 0.7;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: opacity 0.2s;
+    margin: 0.75rem 0;
+}
+
+input[type="range"].range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+input[type="range"].range-input::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+textarea {
+    min-height: 8rem !important;
+    resize: vertical;
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' height='24' viewBox='0 0 24 24' width='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem !important;
+    border: 1px solid rgba(0, 204, 255, 0.4) !important;
+}
+
+/* Fix dropdown options contrast */
+select option {
+    background-color: #003366 !important;
+    color: white !important;
+}
+
+/* Dropdown styling */
+.dropdown-container {
+    position: relative;
+}
+
+.dropdown-list {
+    position: absolute;
+    background: #003366;
+    border: 1px solid rgba(0, 204, 255, 0.4);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 50;
+    margin-top: 4px;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(0, 204, 255, 0.2);
+}
+
+/* Media preview grid */
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.preview-item {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.preview-item:hover {
+    transform: scale(1.05);
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-button:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+}
+
+/* Map styles */
+.map-container {
+    border: 1px solid rgba(0, 204, 255, 0.4);
+    margin-bottom: 1.5rem;
+}
+
+.coordinates-display {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(0, 51, 102, 0.8);
+    backdrop-filter: blur(4px);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Button Styles */
+.oceanic-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.oceanic-button:hover {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.oceanic-button a {
+    color: white !important;
+    text-decoration: none;
+}
+
+.browse-button {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.browse-button:hover {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.location-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.location-button:hover {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.remove-location-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #cc0000, #ff3333);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+}
+
+.remove-location-button:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.action-button {
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0.25rem;
+    border: none;
+}
+
+.delete-button {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+.add-button {
+    color: #00ccff;
+    background: rgba(0, 204, 255, 0.1);
+}
+
+.create-button,
+.cancel-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 50px;
+    min-width: 140px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.create-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.cancel-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+.create-button:hover,
+.cancel-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+/* Modal styling */
+.modal-container {
+    background: rgba(0, 51, 102, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.modal-content {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-cancel-button {
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.modal-confirm-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+.verify-confirm-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.false-confirm-button {
+    background: linear-gradient(135deg, #cc0000, #ff3333);
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+}
+
+.verify-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.false-button {
+    background: linear-gradient(135deg, #cc0000, #ff3333);
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+}
+
+/* Error Container */
+.error-container {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 1.25rem;
+    color: #ff4444;
+    margin-bottom: 1.5rem;
+}
+
+/* Labels */
+label {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+}
 </style>
