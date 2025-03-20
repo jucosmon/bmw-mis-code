@@ -97,13 +97,13 @@ Route::middleware(['auth', 'verified', 'active', 'notRestricted'])->group(functi
         // comments inside a specific stranded incident
         Route::prefix('comments')->group(function () {
             Route::post('/create', [CommentController::class, 'create'])
-                ->name('comment.create');
+                ->name('stranded.incident.comment.create');
 
             Route::patch('/update/{comment}', [CommentController::class, 'update'])
-                ->name('comment.update');
+                ->name('stranded.incident.comment.update');
 
             Route::patch('/archive/{comment}', [CommentController::class, 'archive'])
-                ->name('comment.archive');
+                ->name('stranded.incident.comment.archive');
         });
 
         // detailed species form inside a specific stranded incident

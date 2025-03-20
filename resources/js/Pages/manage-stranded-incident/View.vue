@@ -329,7 +329,7 @@ const submitComment = () => {
         form.errors.text = 'Comment cannot be empty.';
         return;
     }
-    router.post(route('comment.create'), {
+    router.post(route('stranded.incident.comment.create'), {
         text: form.text,
         stranded_incident_id: props.strandedIncident.id // Ensure this is included
     }, {
@@ -392,7 +392,7 @@ const cancelEditComment = () => {
 };
 
 const submitEditComment = (commentId) => {
-    router.patch(route('comment.update', commentId), { text: newCommentText.value }, {
+    router.patch(route('stranded.incident.comment.update', commentId), { text: newCommentText.value }, {
         onSuccess: () => {
             // Find the updated comment and update its text
             const updatedComment = comments.value.find(comment => comment.id === commentId);
@@ -408,7 +408,7 @@ const submitEditComment = (commentId) => {
 };
 
 const archiveComment = (commentId) => {
-    router.patch(route('comment.archive', commentId), {}, {
+    router.patch(route('stranded.incident.comment.archive', commentId), {}, {
         onSuccess: () => {
             // Remove the archived comment from the local state
             comments.value = comments.value.filter(comment => comment.id !== commentId);
