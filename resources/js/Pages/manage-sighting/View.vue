@@ -503,18 +503,18 @@ const closeFileModal = () => {
                 <!-- Modals -->
                 <Modal :show="showConfirmArchiveModal" @close="closeModal">
                     <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-800">
+                        <h2 class="text-lg font-semibold text-gray-100">
                             {{ props.sighting.is_active ? 'Are you sure you want to archive this Sighting report?' : 'Are you sure you want to unarchive this Sighting report?'}}
                         </h2>
                         <div class="mt-4">
-                            <label for="admin-password" class="text-sm text-gray-500">
+                            <label for="admin-password" class="text-sm text-gray-250">
                                 Confirm by entering your password
                             </label>
                             <input
                                 type="password"
                                 id="admin-password"
                                 v-model="form.password"
-                                class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 placeholder="Enter your password"
                             />
                             <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">

@@ -1,9 +1,7 @@
 <script setup>
-import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
@@ -549,373 +547,932 @@ watch(showMap, async (newValue) => {
     <Sidebar>
         <template #header>
             <div>
-                <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
+                <button class="oceanic-button">
                     <Link :href="backRoute" class="flex items-center">
+                        <span class="material-icons text-sm mr-2">arrow_back</span>
                         Back
                     </Link>
                 </button>
             </div>
         </template>
 
-        <div class="container mx-auto px-4 py-8">
-            <h2 class="text-2xl font-bold text-indigo-900 text-center mb-6">Update Stranded Incident for Responders</h2>
+        <div class="relative min-h-screen">
+            <!-- Background image with oceanic overlay -->
+            <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" style="background-image: url('/images/landing.jpg');">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
+            </div>
 
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-                <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Error Messages -->
-                    <div v-if="formErrors" class="p-4 bg-red-100 border border-red-400 rounded-lg text-red-600">
-                        <ul class="list-disc ml-4">
-                            <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
-                        </ul>
-                    </div>
-                    <!-- copy -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div>
-                        <InputLabel for="date" value="Date of the Incident" />
-                        <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
-                        <InputError class="mt-2" :message="form.errors.date" />
-                        </div>
-                        <div>
-                        <InputLabel for="time" value="Time of the Incident" />
-                        <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
-                        <InputError class="mt-2" :message="form.errors.time" />
+            <!-- Main content -->
+            <div class="relative z-10">
+                <div class="container mx-auto px-4 py-8">
+                    <h2 class="title-gradient mb-6">Update Stranded Incident for Responders</h2>
+
+                    <form @submit.prevent="submit" class="space-y-8 max-w-4xl mx-auto">
+                        <!-- Error Messages -->
+                        <div v-if="formErrors" class="error-container">
+                            <ul class="list-disc ml-4">
+                                <li v-for="(error, index) in formErrors" :key="index">{{ error }}</li>
+                            </ul>
                         </div>
 
-                        <div class="sm:col-span-2">
-                        <InputLabel for="species_involved" value="Describe what species are involved" />
-                        <TextInput id="species_involved" required v-model="form.species_involved" class="w-full" placeholder="e.g. Dolphins, Large Whales, Sharks" />
-                        <InputError class="mt-2" :message="form.errors.species_involved" />
-                        </div>
-
-                        <div>
-                        <InputLabel for="quantity" value="How many species are involved in the incident?" />
-                        <input id="quantity" type="number" min="1" v-model="form.quantity" class="w-full" required/>
-                        <InputError class="mt-2" :message="form.errors.quantity" />
-                        </div>
-                        <div>
-                        <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
-                        <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full" />
-                        <p class="text-center">{{ form.certainty_level }}</p>
-                        <InputError class="mt-2" :message="form.errors.certainty_level" />
-                        </div>
-                        <div>
-                        <InputLabel for="condition" value="Condition" />
-                        <select v-model="form.condition" name="condition" class="w-full" required>
-                            <option value="" disabled>Select an option</option>
-                            <option value="alive">Alive</option>
-                            <option value="dead">Dead</option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.condition" />
-                        </div>
-                        <div>
-                        <InputLabel for="sea_state" value="Sea State" />
-                        <select v-model="form.sea_state" name="sea_state" class="w-full">
-                            <option value="" disabled>Select an option</option>
-                            <option value="calm">Calm</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="rough">Rough</option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.sea_state" />
-                        </div>  <div>
-                        <InputLabel for="weather" value="Weather" />
-                        <select v-model="form.weather" name="weather" class="w-full">
-                            <option value="" disabled>Select an option</option>
-                            <option value="sunny">Sunny</option>
-                            <option value="cloudy">Cloudy</option>
-                            <option value="rainy">Rainy</option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.weather" />
-                        </div>  <div>
-                        <InputLabel for="beach_type" value="Beach type" />
-                        <select v-model="form.beach_type" name="beach_type" class="w-full">
-                            <option value="" disabled>Select an option</option>
-                            <option value="mangrove">Mangrove</option>
-                            <option value="rocky">Rocky</option>
-                            <option value="sandy">Sandy</option>
-                            <option value="reef">Reef</option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.beach_type" />
-                        </div>
-
-                        <!--Map Section-->
-                        <div class="mt-4 sm:col-span-2 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-semibold text-gray-900">Location Details</h3>
-                                <div class="flex space-x-2">
-                                    <button
-                                        type="button"
-                                        @click.prevent="setLocationFromMap"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
-                                    >
-                                    <span class="material-icons material-symbols-outlined">
-                                        my_location
-                                    </span>
-                                    </button>
-                                    <button
-                                        v-if="!showMap || locationSource !== 'original'"
-                                        type="button"
-                                        @click="resetToOriginal"
-                                        class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-                                    >
-                                    <span class="material-icons material-symbols-outlined">
-                                        restart_alt
-                                    </span>
-                                    </button>
+                        <!-- Incident Details Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons mr-2">event</span>
+                                Incident Details
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <InputLabel for="date" value="Date of the Incident" />
+                                    <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                                    <InputError class="mt-2" :message="form.errors.date" />
                                 </div>
-                            </div>
-
-                            <div v-if="showMap" class="relative rounded-xl overflow-hidden shadow-lg">
-                                <div id="map" class="h-[400px] w-full z-0"></div>
-                                <div class="absolute top-4 right-4 z-10">
-                                    <button
-                                        type="button"
-                                        @click="removeGpsLocation"
-                                        class="px-5 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors shadow-lg"
-                                    >
-                                    <span class="material-icons material-symbols-outlined">
-                                        location_off
-                                    </span>
-
-                                    </button>
-                                </div>
-                                <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
-                                    <p class="text-sm font-medium text-gray-700">
-                                        Latitude: {{ form.latitude || 'Not Set' }}<br>
-                                        Longitude: {{ form.longitude || 'Not Set' }}
-                                    </p>
+                                <div>
+                                    <InputLabel for="time" value="Time of the Incident" />
+                                    <TextInput required id="time" type="time" v-model="form.time" autocomplete="time" class="w-full" step="1" />
+                                    <InputError class="mt-2" :message="form.errors.time" />
                                 </div>
                             </div>
                         </div>
 
-                        <div>
-                        <InputLabel for="municipality_id" value="Municipality" />
-                        <select
-                            id="municipality_id"
-                            name="municipality_id"
-                            v-model="form.municipality_id"
-                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            :class="{ 'border-red-500': form.errors.municipality_id }"
-                            required
-                        >
-                            <option value="">Select a municipality</option>
-                            <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
-                                {{ municipality.name }}
-                            </option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.municipality_id" />
-                        </div>
-
-                        <div>
-                        <InputLabel for="barangay_id" value="Barangay" />
-                        <select
-                            id="barangay_id"
-                            name="barangay_id"
-                            v-model="form.barangay_id"
-                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            :class="{ 'border-red-500': form.errors.barangay_id }"
-                            required
-                        >
-                            <option value="" disabled>Select a barangay</option>
-                            <option v-for="barangay in filteredBarangays"
-                                    :key="barangay.id"
-                                    :value="barangay.id"
-                            >
-                                {{ barangay.name }}
-                            </option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.barangay_id" />
-                        </div>
-
-                        <div class="sm:col-span-2">
-                        <InputLabel for="detailed_location" value="Detailed Location" />
-                        <textarea
-                            required
-                            id="detailed_location"
-                            v-model="form.detailed_location"
-                            autocomplete="detailed_location"
-                            class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                            placeholder="Please add more details of the exact location"
-                        ></textarea>
-                        <InputError class="mt-2" :message="form.errors.detailed_location" />
-                        </div>
-                        <div class="sm:col-span-2">
-                        <InputLabel for="more_information" value="More Information of the Incident" />
-                        <textarea
-                            id="more_information"
-                            v-model="form.more_information"
-                            autocomplete="more_information"
-                            class="w-full h-15 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                            placeholder="Please share more information of the incident"
-                        ></textarea>
-                        <InputError class="mt-2" :message="form.errors.more_information" />
-                        </div>
-
-                                           <!-- Existing Image Previews -->
-                                           <div class="mt-4 sm:col-span-2 col-span-1">
-                            <InputLabel value="Existing Images" />
-                            <div>
-                                <div v-if="existingImages.length===0" class="flex flex-wrap gap-2">No existing images</div>
-                                <div v-if="existingImages.length" class="flex flex-wrap gap-2">
-                                <div v-for="(image, index) in existingImages" :key="index" class="relative">
-                                    <img :src="image.url" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
-                                    <button
-                                        type="button"
-                                        @click.prevent="removeExistingImage(index)"
-                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                                    >
-                                        &times;
-                                    </button>
+                        <!-- Species Information Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons mr-2">pets</span>
+                                Species Information
+                            </h3>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <InputLabel for="species_involved" value="Describe what species are involved" />
+                                    <TextInput id="species_involved" required v-model="form.species_involved" class="w-full" placeholder="e.g. Dolphins, Large Whales, Sharks" />
+                                    <InputError class="mt-2" :message="form.errors.species_involved" />
                                 </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Image Upload Field -->
-                        <div class="sm:col-span-2 col-span-1">
-                            <InputLabel for="mediaFiles" value="Upload New Images" />
-                            <input
-                                id="mediaFiles"
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                @change="handleNewFileChange"
-                                class="file-input w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            />
-                            <InputError class="mt-2" :message="form.errors.mediaFiles" />
-                        </div>
-
-                        <!-- Image Previews -->
-                        <div class="mt-4 sm:col-span-2 col-span-1">
-                            <div>
-                                <div v-if="previewNewImages.length" class="flex flex-wrap gap-2">
-                                    <div v-for="(image, index) in previewNewImages" :key="index" class="relative">
-                                        <img :src="image" alt="Image Preview" class="h-32 w-32 object-cover rounded-md"/>
-                                        <button
-                                            type="button"
-                                            @click="removeNewImage(index)"
-                                            class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                                        >
-                                            &times;
-                                        </button>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div>
+                                        <InputLabel for="quantity" value="How many species are involved in the incident?" />
+                                        <input id="quantity" type="number" min="1" v-model="form.quantity" class="mt-1 block w-full rounded-md" required/>
+                                        <InputError class="mt-2" :message="form.errors.quantity" />
+                                    </div>
+                                    <div>
+                                        <InputLabel for="certainty_level" value="Certainty Level (1-10)" />
+                                        <div class="mt-1">
+                                            <input required id="certainty_level" type="range" min="1" max="10" v-model="form.certainty_level" class="w-full accent-cyan" />
+                                            <p class="text-center font-medium text-white">{{ form.certainty_level }}</p>
+                                        </div>
+                                        <InputError class="mt-2" :message="form.errors.certainty_level" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Submit and Cancel Buttons for regular update -->
-                    <div v-if="!buttonStatus" class="flex items-center justify-between mt-6">
-                        <Link :href="backRoute" class="text-sm text-gray-500 hover:text-gray-700 underline">Cancel</Link>
+                        <!-- Environmental Conditions -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons mr-2">water</span>
+                                Environmental Conditions
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <InputLabel for="condition" value="Condition" />
+                                    <select v-model="form.condition" name="condition" class="w-full" required>
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="alive">Alive</option>
+                                        <option value="dead">Dead</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.condition" />
+                                </div>
+                                <div>
+                                    <InputLabel for="sea_state" value="Sea State" />
+                                    <select v-model="form.sea_state" name="sea_state" class="w-full">
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="calm">Calm</option>
+                                        <option value="moderate">Moderate</option>
+                                        <option value="rough">Rough</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.sea_state" />
+                                </div>
+                                <div>
+                                    <InputLabel for="weather" value="Weather" />
+                                    <select v-model="form.weather" name="weather" class="w-full">
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="sunny">Sunny</option>
+                                        <option value="cloudy">Cloudy</option>
+                                        <option value="rainy">Rainy</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.weather" />
+                                </div>
+                                <div>
+                                    <InputLabel for="beach_type" value="Beach type" />
+                                    <select v-model="form.beach_type" name="beach_type" class="w-full">
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="mangrove">Mangrove</option>
+                                        <option value="rocky">Rocky</option>
+                                        <option value="sandy">Sandy</option>
+                                        <option value="reef">Reef</option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.beach_type" />
+                                </div>
+                            </div>
+                        </div>
 
-                        <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }"
-                        class="bg-indigo-900">
-                            Update Incident
-                        </PrimaryButton>
-                    </div>
+                        <!--Location Section-->
+                        <div class="form-section">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                                <h3 class="section-title mb-0 pb-0 border-b-0">
+                                    <span class="material-icons mr-2">location_on</span>
+                                    Location Details
+                                </h3>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        @click.prevent="setLocationFromMap"
+                                        class="action-button location-button"
+                                    >
+                                        <span class="material-icons">my_location</span>
+                                        <span>Use Current Location</span>
+                                    </button>
 
-                    <!-- False and Verify button for pending cases-->
-                    <div v-else class="flex items-center justify-end gap-5 mt-6">
-                        <DangerButton
-                            :disabled="form.processing"
-                            :class="{ 'opacity-25': form.processing }"
-                            class="bg-indigo-900"
-                            @click="falseIncident"
-                            type="button"
-                            formnovalidate
-                        >
-                            Mark as False
-                        </DangerButton>
-                        <PrimaryButton
-                            :disabled="form.processing"
-                            :class="{ 'opacity-25': form.processing }"
-                            class="bg-indigo-900"
-                            type="button"
-                            @click="verifyIncident"
-                        >
-                            Verify as True
-                        </PrimaryButton>
-                    </div>
+                                    <button
+                                        v-if="!showMap || locationSource !== 'original'"
+                                        type="button"
+                                        @click="resetToOriginal"
+                                        class="action-button reset-button"
+                                    >
+                                        <span class="material-icons">restart_alt</span>
+                                        <span>Reset Location</span>
+                                    </button>
+                                </div>
+                            </div>
 
-                </form>
+                            <div class="border-t border-blue-300/20 pt-4 mb-4"></div>
+
+                            <div v-if="showMap" class="map-container">
+                                <div id="map" class="h-[450px] w-full z-0"></div>
+                                <div class="absolute top-4 right-4 z-10">
+                                    <button
+                                        type="button"
+                                        @click="removeGpsLocation"
+                                        class="remove-location-button"
+                                    >
+                                        <span class="material-icons">location_off</span>
+                                        <span>Remove Location</span>
+                                    </button>
+                                </div>
+                                <div class="map-coordinates">
+                                    <p class="text-sm font-medium">
+                                        <span class="coordinate-label">Latitude:</span> {{ form.latitude || 'Not Set' }}<br>
+                                        <span class="coordinate-label">Longitude:</span> {{ form.longitude || 'Not Set' }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                                <div>
+                                    <InputLabel for="municipality_id" value="Municipality" />
+                                    <select
+                                        id="municipality_id"
+                                        name="municipality_id"
+                                        v-model="form.municipality_id"
+                                        class="w-full"
+                                        :class="{ 'border-red-500': form.errors.municipality_id }"
+                                        required
+                                    >
+                                        <option value="">Select a municipality</option>
+                                        <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
+                                            {{ municipality.name }}
+                                        </option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.municipality_id" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="barangay_id" value="Barangay" />
+                                    <select
+                                        id="barangay_id"
+                                        name="barangay_id"
+                                        v-model="form.barangay_id"
+                                        class="w-full"
+                                        :class="{ 'border-red-500': form.errors.barangay_id }"
+                                        required
+                                    >
+                                        <option value="" disabled>Select a barangay</option>
+                                        <option v-for="barangay in filteredBarangays"
+                                                :key="barangay.id"
+                                                :value="barangay.id"
+                                        >
+                                            {{ barangay.name }}
+                                        </option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.barangay_id" />
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <InputLabel for="detailed_location" value="Detailed Location" />
+                                <textarea
+                                    required
+                                    id="detailed_location"
+                                    v-model="form.detailed_location"
+                                    autocomplete="detailed_location"
+                                    class="w-full"
+                                    placeholder="Please add more details of the exact location"
+                                    rows="3"
+                                ></textarea>
+                                <InputError class="mt-2" :message="form.errors.detailed_location" />
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons mr-2">info</span>
+                                Additional Information
+                            </h3>
+                            <div>
+                                <InputLabel for="more_information" value="More Information of the Incident" />
+                                <textarea
+                                    id="more_information"
+                                    v-model="form.more_information"
+                                    autocomplete="more_information"
+                                    class="w-full"
+                                    placeholder="Please share more information of the incident"
+                                    rows="4"
+                                ></textarea>
+                                <InputError class="mt-2" :message="form.errors.more_information" />
+                            </div>
+                        </div>
+
+                        <!-- Images Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <span class="material-icons mr-2">photo_library</span>
+                                Images
+                            </h3>
+
+                            <!-- Existing Images -->
+                            <div class="preview-section">
+                                <h4 class="preview-title">Existing Images</h4>
+                                <div class="mt-3">
+                                    <div v-if="existingImages.length===0" class="text-gray-400 italic">No existing images</div>
+                                    <div v-else class="preview-grid">
+                                        <div v-for="(image, index) in existingImages" :key="index" class="preview-item group">
+                                            <img :src="image.url" alt="Image Preview" class="preview-image"/>
+                                            <button
+                                                type="button"
+                                                @click.prevent="removeExistingImage(index)"
+                                                class="remove-button"
+                                            >
+                                                <span class="material-icons">close</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- New Images -->
+                            <div class="preview-section">
+                                <h4 class="preview-title">Upload New Images</h4>
+                                <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                    <span class="material-icons mr-2">cloud_upload</span>
+                                    Browse Files
+                                </label>
+                                <input
+                                    id="mediaFiles"
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    @change="handleNewFileChange"
+                                    class="hidden"
+                                />
+                                <InputError class="mt-2" :message="form.errors.mediaFiles" />
+
+                                <!-- Preview New Images -->
+                                <div v-if="previewNewImages.length" class="mt-4">
+                                    <div class="preview-grid">
+                                        <div v-for="(image, index) in previewNewImages" :key="index" class="preview-item group">
+                                            <img :src="image" alt="Image Preview" class="preview-image"/>
+                                            <button
+                                                type="button"
+                                                @click="removeNewImage(index)"
+                                                class="remove-button"
+                                            >
+                                                <span class="material-icons">close</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit and Cancel Buttons -->
+                        <div class="mt-6 pt-4 border-t border-opacity-20 border-cyan-200">
+                            <!-- Submit and Cancel Buttons for regular update -->
+                            <div v-if="!buttonStatus" class="flex items-center justify-between w-full">
+                                <Link :href="backRoute" class="cancel-button">Cancel</Link>
+
+                                <button
+                                    type="submit"
+                                    :disabled="form.processing"
+                                    class="create-button"
+                                    :class="{ 'opacity-50': form.processing }"
+                                >
+                                    Update Incident
+                                </button>
+                            </div>
+
+                            <!-- False and Verify buttons for pending cases -->
+                            <div v-else class="flex items-center justify-end gap-4 w-full">
+                                <Link :href="backRoute" class="cancel-button">Cancel</Link>
+
+                                <div class="flex space-x-3">
+                                    <button
+                                        :disabled="form.processing"
+                                        :class="{ 'opacity-50': form.processing }"
+                                        class="danger-button"
+                                        @click="falseIncident"
+                                        type="button"
+                                        formnovalidate
+                                    >
+                                        <span class="flex items-center">
+                                            <span class="material-icons mr-1">cancel</span>
+                                            Mark as False
+                                        </span>
+                                    </button>
+                                    <button
+                                        :disabled="form.processing"
+                                        :class="{ 'opacity-50': form.processing }"
+                                        class="verify-button"
+                                        type="button"
+                                        @click="verifyIncident"
+                                    >
+                                        <span class="flex items-center">
+                                            <span class="material-icons mr-1">check_circle</span>
+                                            Verify as True
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
+        <!-- Modal components with improved styling -->
         <Modal :show="showVerifyModal" @close="showVerifyModal = false">
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
+            <div class="modal-container verify-modal">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-green-500"></div>
+                <h2 class="modal-title">
+                    <span class="material-icons text-emerald-500 mr-2">check_circle</span>
                     Confirm Verification
                 </h2>
-                <p class="mt-3 text-sm text-gray-600">
+                <p class="modal-content">
                     Are you sure that the report is true and accurate?
                 </p>
-                <div class="mt-6 flex justify-end gap-3">
-
+                <div class="modal-actions">
                     <button
                         type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="modal-cancel-button"
                         @click="showVerifyModal = false"
                     >
                         Cancel
                     </button>
-                    <PrimaryButton @click="confirmVerify">
+                    <button @click="confirmVerify" class="modal-confirm-button verify-confirm-button">
                         Confirm
-                    </PrimaryButton>
+                    </button>
                 </div>
             </div>
         </Modal>
 
         <Modal :show="showFalseModal" @close="showFalseModal = false">
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
+            <div class="modal-container false-modal">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-400 to-red-600"></div>
+                <h2 class="modal-title">
+                    <span class="material-icons text-red-500 mr-2">cancel</span>
                     Confirm False Report
                 </h2>
-                <p class="mt-3 text-sm text-gray-600">
+                <p class="modal-content">
                     Are you sure the report is false?
                 </p>
-                <div class="mt-6 flex justify-end gap-3">
-
+                <div class="modal-actions">
                     <button
                         type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="modal-cancel-button"
                         @click="showFalseModal = false"
                     >
                         Cancel
                     </button>
-                    <PrimaryButton @click="confirmFalse">
+                    <button @click="confirmFalse" class="modal-confirm-button false-confirm-button">
                         Confirm
-                    </PrimaryButton>
+                    </button>
                 </div>
             </div>
         </Modal>
     </Sidebar>
 </template>
 <style scoped>
-/* Hide the file name (text) but keep the button */
-.file-input {
-  position: relative;
-  overflow: hidden;
-  width: 100%; /* Adjust as needed */
-  height: 40px; /* Adjust height as needed */
-  color: white;
-
-
+/* Oceanic Theme Base */
+.title-gradient {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.5px;
+    margin-bottom: 2.5rem;
 }
 
-/* Hide the file name text after file is selected */
-.file-input::-webkit-file-upload-button {
-  visibility: hidden; /* Hides the file name */
+.bg-gradient-overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 51, 102, 0.92) 0%,
+        rgba(0, 75, 150, 0.9) 50%,
+        rgba(0, 51, 102, 0.92) 100%
+    );
 }
 
-/* Optional: custom styling for the file input button */
-.file-input::before {
-  content: "Choose Files"; /* Text for the button */
-  display: inline-block;
-  background-color: indigo; /* Change to your preferred color */
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  text-align: center;
+.form-section {
+    background: rgba(0, 51, 102, 0.35);
+    backdrop-filter: blur(10px);
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 2rem;
 }
 
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.01em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.75rem;
+}
+
+/* Form Input Styles */
+input[type="text"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+textarea,
+select {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease;
+    width: 100% !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    padding: 0.75rem 1rem !important;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(0, 204, 255, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.25) !important;
+    outline: none !important;
+}
+
+textarea {
+    min-height: 8rem !important;
+    resize: vertical;
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' height='24' viewBox='0 0 24 24' width='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem !important;
+    border: 1px solid rgba(0, 204, 255, 0.4) !important;
+}
+
+/* Fix dropdown options contrast */
+select option {
+    background-color: #003366 !important;
+    color: white !important;
+}
+
+input[type="range"] {
+    accent-color: #00ccff;
+    height: 1.5rem;
+}
+
+/* Preview Styles */
+.preview-section {
+    background: rgba(0, 51, 102, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.preview-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-bottom: 1rem;
+    letter-spacing: 0.01em;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+    padding: 0.5rem;
+}
+
+.preview-item {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.preview-item:hover .preview-image {
+    transform: scale(1.05);
+}
+
+.remove-button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+}
+
+.preview-item:hover .remove-button {
+    opacity: 1;
+}
+
+.remove-button:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+}
+
+/* Map Styles */
+.map-container {
+    position: relative;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.map-coordinates {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: rgba(0, 51, 102, 0.8);
+    backdrop-filter: blur(4px);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.coordinate-label {
+    color: #00ccff;
+    font-weight: 600;
+}
+
+/* Button Styles */
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.location-button {
+    background: rgba(0, 204, 255, 0.15);
+    color: #00ccff;
+    border: 1px solid rgba(0, 204, 255, 0.3);
+}
+
+.location-button:hover {
+    background: rgba(0, 204, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.reset-button {
+    background: rgba(255, 177, 66, 0.15);
+    color: #ffb142;
+    border: 1px solid rgba(255, 177, 66, 0.3);
+}
+
+.reset-button:hover {
+    background: rgba(255, 177, 66, 0.25);
+    transform: translateY(-1px);
+}
+
+.remove-location-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(255, 68, 68, 0.15);
+    color: #ff4444;
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    transition: all 0.3s ease;
+}
+
+.remove-location-button:hover {
+    background: rgba(255, 68, 68, 0.25);
+    transform: translateY(-1px);
+}
+
+.browse-button {
+    display: inline-block;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+}
+
+.browse-button:hover,
+.browse-button:focus {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+    outline: none;
+}
+
+.create-button,
+.cancel-button,
+.danger-button,
+.verify-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 50px;
+    min-width: 140px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.create-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.cancel-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+.danger-button {
+    background: linear-gradient(135deg, #e53935, #ff5252);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.verify-button {
+    background: linear-gradient(135deg, #2e7d32, #4caf50);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-button:hover,
+.cancel-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.danger-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 82, 82, 0.4);
+}
+
+.verify-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.create-button:active,
+.cancel-button:active,
+.danger-button:active,
+.verify-button:active {
+    transform: translateY(0);
+}
+
+/* Error Container */
+.error-container {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 1.25rem;
+    color: #ff4444;
+    margin-bottom: 1.5rem;
+}
+
+/* Labels */
+label {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Back Button */
+.oceanic-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.oceanic-button:hover {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+}
+
+.oceanic-button a {
+    color: white !important;
+    text-decoration: none;
+}
+
+/* Modal Styling */
+.modal-container {
+    padding: 1.5rem;
+    position: relative;
+    background: rgba(0, 51, 102, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.modal-content {
+    margin: 1.5rem 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.modal-cancel-button {
+    padding: 0.5rem 1.25rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.modal-confirm-button {
+    padding: 0.5rem 1.25rem;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.verify-confirm-button {
+    background: linear-gradient(135deg, #2e7d32, #4caf50);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.verify-confirm-button:hover {
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    transform: translateY(-1px);
+}
+
+.false-confirm-button {
+    background: linear-gradient(135deg, #e53935, #ff5252);
+    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
+}
+
+.false-confirm-button:hover {
+    box-shadow: 0 6px 20px rgba(255, 82, 82, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Leaflet Map Customizations */
+:deep(.leaflet-control-zoom) {
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+:deep(.leaflet-control-zoom a) {
+    background: rgba(0, 51, 102, 0.8) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+:deep(.leaflet-control-zoom a:hover) {
+    background: rgba(0, 204, 255, 0.8) !important;
+}
+
+:deep(.leaflet-control-attribution) {
+    background: rgba(0, 51, 102, 0.8) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+:deep(.leaflet-popup-content-wrapper) {
+    background: rgba(0, 51, 102, 0.9) !important;
+    color: white !important;
+    backdrop-filter: blur(10px);
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:deep(.leaflet-popup-tip) {
+    background: rgba(0, 51, 102, 0.9) !important;
+}
 </style>
