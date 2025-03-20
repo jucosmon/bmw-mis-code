@@ -1,5 +1,4 @@
 <script setup>
-import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -102,164 +101,369 @@ const toggleActiveInactive = () => {
     <Head title="Manage Guideline" />
     <Sidebar>
         <template #header>
-
             <h2 v-if="!props.archived" class="text-xl font-semibold leading-tight text-gray-800">
                 {{ title }}
             </h2>
-            <SecondaryButton v-else @click="backRoute">
-                Back
-            </SecondaryButton>
+            <div v-else class="flex items-center">
+                <button @click="backRoute" class="action-button flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Back
+                </button>
+            </div>
         </template>
 
-        <!-- Table Container -->
-        <div class="container mx-auto px-7 py-8">
-            <div v-if="props?.success" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded relative" role="alert">
-                <strong class="font-bold">Success! </strong>
-                <span class="block sm:inline">{{ props?.success}}</span>
+        <div class="relative min-h-screen">
+            <!-- Background -->
+            <div class="absolute inset-0">
+                <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
             </div>
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex gap-4">
-                    <button
-                        :class="{'bg-blue-500 text-white': filterCategory === 'all', 'bg-gray-200': filterCategory !== 'all'}"
-                        @click="filterCategory = 'all'"
-                        class="px-4 py-2 rounded"
-                    >
-                        All
-                    </button>
-                    <button
-                        :class="{'bg-blue-500 text-white': filterCategory === 'marine_turtles', 'bg-gray-200': filterCategory !== 'marine_turtles'}"
-                        @click="filterCategory = 'marine_turtles'"
-                        class="px-4 py-2 rounded"
-                    >
-                        Marine Turtles
-                    </button>
-                    <button
-                        :class="{'bg-blue-500 text-white': filterCategory === 'marine_mammals', 'bg-gray-200': filterCategory !== 'marine_mammals'}"
-                        @click="filterCategory = 'marine_mammals'"
-                        class="px-4 py-2 rounded"
-                    >
-                        Marine Mammals
-                    </button>
-                    <button
-                        :class="{'bg-blue-500 text-white': filterCategory === 'sharks_rays', 'bg-gray-200': filterCategory !== 'sharks_rays'}"
-                        @click="filterCategory = 'sharks_rays'"
-                        class="px-4 py-2 rounded"
-                    >
-                        Sharks and Rays
-                    </button>
 
-                </div>
-                <div class="flex mx-10 gap-4">
-                    <div class="flex items-center mr-1">
-                        <span class="mr-2">{{ filterStatus === 'active' ? 'Active' : 'Inactive' }}</span>
-                        <div
-                            @click="toggleActiveInactive"
-                            class="w-10 h-7 bg-gray-300 rounded-full flex items-center p-1 cursor-pointer"
-                            :class="{ 'bg-green-400': filterStatus === 'active' }"
-                        >
-                            <div
-                                class="bg-white w-5 h-5 rounded-full shadow-md transition-transform duration-300 ease-in-out"
-                                :class="{ 'translate-x-3': filterStatus === 'active' }"
-                            ></div>
+            <!-- Content -->
+            <div class="relative py-6">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <!-- Success message -->
+                    <div v-if="props?.success" class="glass-panel mb-6 p-4 border border-green-400/30 text-green-400">
+                        <strong class="font-bold">Success! </strong>
+                        <span>{{ props?.success}}</span>
+                    </div>
+
+                    <!-- Header section -->
+                    <div class="mb-6">
+                        <h3 class="profile-title-gradient mb-4">
+                            {{ title }}
+                        </h3>
+                        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    @click="filterCategory = 'all'"
+                                    :class="[
+                                        'filter-button',
+                                        filterCategory === 'all' ? 'filter-button-active' : ''
+                                    ]"
+                                >
+                                    All
+                                </button>
+                                <button
+                                    @click="filterCategory = 'marine_turtles'"
+                                    :class="[
+                                        'filter-button',
+                                        filterCategory === 'marine_turtles' ? 'filter-button-active' : ''
+                                    ]"
+                                >
+                                    Marine Turtles
+                                </button>
+                                <button
+                                    @click="filterCategory = 'marine_mammals'"
+                                    :class="[
+                                        'filter-button',
+                                        filterCategory === 'marine_mammals' ? 'filter-button-active' : ''
+                                    ]"
+                                >
+                                    Marine Mammals
+                                </button>
+                                <button
+                                    @click="filterCategory = 'sharks_rays'"
+                                    :class="[
+                                        'filter-button',
+                                        filterCategory === 'sharks_rays' ? 'filter-button-active' : ''
+                                    ]"
+                                >
+                                    Sharks and Rays
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center">
+                                    <span class="text-white mr-2">{{ filterStatus === 'active' ? 'Active' : 'Inactive' }}</span>
+                                    <div
+                                        @click="toggleActiveInactive"
+                                        class="w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors duration-300"
+                                        :class="{ 'bg-green-400/50': filterStatus === 'active', 'bg-gray-300/30': filterStatus !== 'active' }"
+                                    >
+                                        <div
+                                            class="bg-white w-4 h-4 rounded-full shadow-md transition-transform duration-300 ease-in-out"
+                                            :class="{ 'translate-x-4': filterStatus === 'active' }"
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    @click="createGuideline"
+                                    class="create-button flex items-center gap-1"
+                                >
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Create
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Guidelines List -->
+                        <div class="glass-panel overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full table-auto">
+                                    <thead>
+                                        <tr class="border-b border-white/10">
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">ID</th>
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">Title</th>
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">Status</th>
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">Category</th>
+                                            <th class="px-4 py-3 text-center text-sm font-medium text-white/80">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="guideline in paginatedGuidelines" :key="guideline.id" class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                            <td class="px-4 py-3 text-sm text-white/70">#{{ guideline.id }}</td>
+                                            <td class="px-4 py-3 text-sm text-white/90 font-medium">{{ guideline.title }}</td>
+                                            <td class="px-4 py-3">
+                                                <span :class="{
+                                                    'status-badge': true,
+                                                    'status-active': guideline.is_active,
+                                                    'status-inactive': !guideline.is_active
+                                                }">
+                                                    {{ guideline.is_active ? 'Active' : 'Inactive' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-white/70">{{ guidelinesCategory(guideline.category) }}</td>
+                                            <td class="px-4 py-3 text-center">
+                                                <button
+                                                    class="view-button flex items-center gap-1 mx-auto"
+                                                    @click="viewGuideline(guideline.id)"
+                                                >
+                                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- No Guidelines Message -->
+                            <div v-if="paginatedGuidelines.length === 0" class="text-center py-10 px-4">
+                                <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="mt-4 text-lg sm:text-xl font-medium text-white">No guidelines found</h3>
+                                <p class="mt-2 text-sm text-white/60">No guidelines match the selected filters.</p>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="mt-6 flex justify-center items-center">
+                            <button
+                                v-if="currentPage > 1"
+                                class="action-button mr-2"
+                                @click="currentPage--"
+                            >
+                                Previous
+                            </button>
+
+                            <div class="flex gap-2">
+                                <button
+                                    v-for="page in totalPages"
+                                    :key="page"
+                                    class="pagination-button"
+                                    :class="{'pagination-active': currentPage === page}"
+                                    @click="currentPage = page"
+                                >
+                                    {{ page }}
+                                </button>
+                            </div>
+
+                            <button
+                                v-if="currentPage < totalPages"
+                                class="action-button ml-2"
+                                @click="currentPage++"
+                            >
+                                Next
+                            </button>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        @click="createGuideline"
-                        class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                    >
-                        Create
-                    </button>
                 </div>
-            </div>
-
-            <!-- Responsive Table -->
-            <div class="overflow-x-auto">
-                <table class="min-w-full table-auto border-collapse border border-gray-300">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="px-4 py-2 text-left border border-gray-300">ID</th>
-                            <th class="px-4 py-2 text-left border border-gray-300">Title</th>
-                            <th class="px-4 py-2 text-left border border-gray-300">Status</th>
-                            <th class="px-4 py-2 text-left border border-gray-300">Category</th>
-                            <th class="px-4 py-2 text-left border border-gray-300">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="guideline in paginatedGuidelines" :key="guideline.id">
-                            <td class="px-4 py-2 border border-gray-300">{{ guideline.id }}</td>
-                            <td class="px-4 py-2 border border-gray-300">{{ guideline.title }}</td>
-                            <td class="px-4 py-2 border border-gray-300"> {{ guideline.is_active ? 'Active' : 'Inactive' }}</td>
-                            <td class="px-4 py-2 border border-gray-300">{{ guidelinesCategory(guideline.category) }}</td>
-                            <td class="px-4 py-2 border border-gray-300 flex justify-center items-center">
-                                <button
-                                class="px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-900"
-                                @click="viewGuideline (guideline.id)"
-                                >
-                                    View
-                                </button>
-                            </td>
-
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="mt-4 flex justify-center items-center">
-                <button
-                    v-if="currentPage > 1"
-                    class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 mr-2"
-                    @click="currentPage--"
-                >
-                    Previous
-                </button>
-
-                <span v-for="page in totalPages" :key="page" class="mx-2">
-                    <button
-                        class="px-4 py-2 rounded-full"
-                        :class="{
-                            'bg-blue-500 text-white': currentPage === page,
-                            'bg-gray-200 hover:bg-gray-300': currentPage !== page,
-                        }"
-                        @click="currentPage = page"
-                    >
-                        {{ page }}
-                    </button>
-                </span>
-
-                <button
-                    v-if="currentPage < totalPages"
-                    class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 ml-2"
-                    @click="currentPage++"
-                >
-                    Next
-                </button>
             </div>
         </div>
     </Sidebar>
 </template>
 
 <style scoped>
-/* Ensure the table scrolls horizontally on smaller screens */
-@media (max-width: 640px) {
-  .overflow-x-auto {
-    overflow-x: auto;
-  }
+/* Ocean theme styling */
+.bg-gradient-overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 51, 102, 0.9) 0%,
+        rgba(0, 64, 128, 0.8) 50%,
+        rgba(0, 31, 63, 0.9) 100%
+    );
+}
 
-  table {
-    width: 100%;
-    min-width: 800px; /* You can adjust this according to your data */
-  }
+.profile-title-gradient {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: 1px;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-  th, td {
-    padding: 0.75rem;
-    text-align: center;
-  }
+/* Glass panels */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
 
-  .pagination {
-    flex-wrap: wrap;
+/* Buttons */
+.action-button, .filter-button, .view-button, .create-button, .pagination-button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.filter-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.filter-button-active {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 102, 204, 0.9) 0%,
+        rgba(0, 153, 255, 0.8) 100%
+    );
+    color: white;
+    border-color: rgba(0, 153, 255, 0.3);
+}
+
+.view-button {
+    background: rgba(77, 171, 247, 0.2);
+    color: #4dabf7;
+    border-color: rgba(77, 171, 247, 0.3);
+}
+
+.create-button {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 102, 204, 0.9) 0%,
+        rgba(0, 153, 255, 0.8) 100%
+    );
+    color: white;
+    border-color: rgba(0, 153, 255, 0.3);
+}
+
+.pagination-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
     justify-content: center;
-  }
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 9999px;
+}
+
+.pagination-active {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 102, 204, 0.9) 0%,
+        rgba(0, 153, 255, 0.8) 100%
+    );
+    color: white;
+    border-color: rgba(0, 153, 255, 0.3);
+}
+
+.action-button:hover, .filter-button:hover, .view-button:hover, .create-button:hover, .pagination-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
+}
+
+.view-button:hover {
+    background: rgba(77, 171, 247, 0.3);
+}
+
+.create-button:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 153, 255, 0.95) 0%,
+        rgba(0, 102, 204, 0.85) 100%
+    );
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-active {
+    background: rgba(109, 213, 167, 0.15);
+    color: #84e4b8;
+    border-color: rgba(109, 213, 167, 0.3);
+}
+
+.status-inactive {
+    background: rgba(165, 165, 165, 0.15);
+    color: #cccccc;
+    border-color: rgba(165, 165, 165, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .action-button, .filter-button, .view-button, .create-button, .pagination-button {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .profile-title-gradient {
+        font-size: 1.25rem;
+    }
+
+    .status-badge {
+        padding: 0.125rem 0.5rem;
+        font-size: 0.7rem;
+    }
+
+    .pagination-button {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    table {
+        font-size: 0.75rem;
+    }
+
+    th, td {
+        padding: 0.5rem 0.75rem;
+    }
 }
 </style>
