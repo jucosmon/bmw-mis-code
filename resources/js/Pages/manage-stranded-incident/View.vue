@@ -1147,7 +1147,7 @@ onUnmounted(() => {
                     <!-- Media Preview Modal -->
                     <Modal :show="showFileModal" @close="closeFileModal">
                         <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800 mb-4">Media Preview</h2>
+                            <h2 class="text-lg font-semibold text-gray-200 mb-4">Media Preview</h2>
                             <div class="mt-4" v-if="currentMediaFile">
                                 <template v-if="currentMediaFile.type.startsWith('image/')">
                                     <img :src="currentMediaFile.url" alt="Preview" class="w-full h-auto rounded-lg" />
