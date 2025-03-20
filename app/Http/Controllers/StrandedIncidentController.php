@@ -28,21 +28,25 @@ class StrandedIncidentController extends Controller
         if (in_array($user->user_role, ['bpemo_admin', 'bpemo_staff'])) {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('is_active', true)
+                ->with(['user'])
                 ->get();
         } elseif ($user->user_role === 'lgu_responder') {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('municipality_id', $user->municipality_id)
                 ->where('is_active', true)
+                ->with(['user'])
                 ->get();
         } elseif ($user->user_role === 'barangay_official') {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('barangay_id', $user->barangay_id)
                 ->where('is_active', true)
+                ->with(['user'])
                 ->get();
         } else {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed', 'resolved'])
                 ->where('user_id', $user->id)
                 ->where('is_active', true)
+                ->with(['user'])
                 ->get();
         }
 

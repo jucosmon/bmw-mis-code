@@ -34,7 +34,7 @@ class SightingController extends Controller
         }
 
         return Inertia::render('manage-sighting/index', [
-            'sightings' => $sightings->get(),
+            'sightings' => $sightings->with(['user'])->get(),
             'success' => session('success'),
             'municipalities' => Municipality::all(),
             'barangays' => Barangay::all()
