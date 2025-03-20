@@ -111,17 +111,6 @@ const closeFileModal = () => {
 <template>
     <Head title="View Species" />
     <Sidebar>
-        <template #header>
-            <div class="flex justify-between items-center w-full">
-                <SecondaryButton @click="$router.get(backRoute)" class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                    </svg>
-                    Back to Species List
-                </SecondaryButton>
-            </div>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background image -->
             <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0"
@@ -130,7 +119,7 @@ const closeFileModal = () => {
             </div>
 
             <!-- Main Content -->
-            <div class="relative z-10 max-w-4xl mx-auto p-6">
+            <div class="relative z-10 max-w-4xl mx-auto p-16">
                 <!-- Success Message Container -->
                 <div v-if="props?.success"
                      class="bg-blue-100/80 border-l-4 border-blue-500 text-blue-700 px-4 py-3 mb-6 rounded shadow-md backdrop-blur-sm flex items-center">

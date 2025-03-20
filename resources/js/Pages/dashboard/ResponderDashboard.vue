@@ -608,11 +608,6 @@ const getStatusBadgeClass = (status) => {
   <Head :title="dashboardTitle" />
 
   <Sidebar>
-    <template #header>
-      <h2 class="text-xl font-semibold leading-tight text-gray-800">
-        {{ dashboardTitle }}
-      </h2>
-    </template>
 
     <div class="relative min-h-screen">
       <!-- Background -->
@@ -622,10 +617,10 @@ const getStatusBadgeClass = (status) => {
       </div>
 
       <!-- Content -->
-      <div class="relative py-6">
+      <div class="relative py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <!-- Welcome message -->
-          <div class="mb-6">
+          <div class="mb-10 text-center">
             <h3 class="profile-title-gradient">
               Welcome {{ user.first_name }} {{ user.last_name }}
             </h3>

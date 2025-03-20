@@ -38,11 +38,6 @@ const backRoute = () => {
 <template>
     <Head title="View Guideline" />
     <Sidebar>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-white">
-                View Guideline
-            </h2>
-        </template>
 
         <div class="relative min-h-screen">
             <!-- Background -->
@@ -52,7 +47,7 @@ const backRoute = () => {
             </div>
 
             <!-- Content -->
-            <div class="relative container mx-auto px-4 py-8 max-w-4xl">
+            <div class="relative container mx-auto px-4 py-16 max-w-4xl">
                 <!-- Success Message -->
                 <div v-if="props?.success"
                      class="notification success-notification"

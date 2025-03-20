@@ -100,20 +100,6 @@ const toggleActiveInactive = () => {
 <template>
     <Head title="Manage Guideline" />
     <Sidebar>
-        <template #header>
-            <h2 v-if="!props.archived" class="text-xl font-semibold leading-tight text-gray-800">
-                {{ title }}
-            </h2>
-            <div v-else class="flex items-center">
-                <button @click="backRoute" class="action-button flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                    </svg>
-                    Back
-                </button>
-            </div>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background -->
             <div class="absolute inset-0">
@@ -122,7 +108,7 @@ const toggleActiveInactive = () => {
             </div>
 
             <!-- Content -->
-            <div class="relative py-6">
+            <div class="relative py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Success message -->
                     <div v-if="props?.success" class="glass-panel mb-6 p-4 border border-green-400/30 text-green-400">
@@ -131,8 +117,8 @@ const toggleActiveInactive = () => {
                     </div>
 
                     <!-- Header section -->
-                    <div class="mb-6">
-                        <h3 class="profile-title-gradient mb-4">
+                    <div class="mb-6 text-center">
+                        <h3 class="profile-title-gradient">
                             {{ title }}
                         </h3>
                         <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
@@ -306,7 +292,7 @@ const toggleActiveInactive = () => {
 }
 
 .profile-title-gradient {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 1px;
@@ -314,6 +300,7 @@ const toggleActiveInactive = () => {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
 }
 
 /* Glass panels */

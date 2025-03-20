@@ -100,22 +100,12 @@ const allowOnlyNumbers = (event) => {
 <template>
     <Head title="Update Profile" />
     <Sidebar>
-        <template #header>
-            <div class="p-4">
-                <button class="inline-flex items-center px-4 py-2 bg-transparent border border-white/20 rounded-lg shadow-sm hover:bg-[#003366] hover:text-white focus:ring-2 focus:ring-[#003366]/40 focus:outline-none transition-all duration-200 ease-in-out text-white">
-                    <Link :href="route('profile.view')" class="flex items-center space-x-2">
-                        <span>← Back</span>
-                    </Link>
-                </button>
-            </div>
-        </template>
-
         <div class="relative min-h-screen bg-image">
             <!-- Background gradient overlay -->
             <div class="absolute inset-0 bg-gradient-overlay"></div>
 
             <!-- Content -->
-            <div class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <h2 class="profile-title-gradient text-center mb-8">Update Your Profile</h2>
 
                 <div class="max-w-4xl mx-auto oceanic-container p-4 sm:p-6 lg:p-8 rounded-xl">

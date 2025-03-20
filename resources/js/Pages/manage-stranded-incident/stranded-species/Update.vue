@@ -258,14 +258,6 @@ onBeforeUnmount(() => {
   <Head title="Update Species Form" />
 
   <Sidebar>
-    <template #header>
-      <div>
-        <button class="oceanic-button">
-          <Link :href="backRoute" class="flex items-center">Back</Link>
-        </button>
-      </div>
-    </template>
-
     <div class="relative min-h-screen">
       <!-- Background image with oceanic overlay -->
       <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0" style="background-image: url('/images/landing.jpg');">
@@ -274,7 +266,7 @@ onBeforeUnmount(() => {
 
       <!-- Main content -->
       <div class="relative z-10">
-        <div class="container mx-auto px-4 py-8">
+        <div class="container mx-auto px-4 py-16">
           <h2 class="title-gradient mb-6">Update Species Form</h2>
 
           <form @submit.prevent="submit" class="space-y-8 max-w-4xl mx-auto">

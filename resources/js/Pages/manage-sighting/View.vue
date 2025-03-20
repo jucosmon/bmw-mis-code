@@ -250,13 +250,6 @@ const closeFileModal = () => {
 <template>
     <Head title="View Sighting" />
     <Sidebar>
-        <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight">
-                    View Sighting
-                </h2>
-            </div>
-        </template>
 
         <div class="relative min-h-screen">
             <!-- Background -->
@@ -266,7 +259,7 @@ const closeFileModal = () => {
             </div>
 
             <!-- Content -->
-            <div class="relative container mx-auto px-4 py-8 max-w-5xl">
+            <div class="relative container mx-auto px-4 py-16 max-w-5xl">
                 <!-- Success Message -->
                 <div v-if="props?.success" class="success-notification" role="alert">
                     <div class="flex-1 flex items-center">

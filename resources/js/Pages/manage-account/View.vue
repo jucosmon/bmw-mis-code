@@ -162,7 +162,7 @@ const disableUser = ()=> {
             </div>
 
             <!-- Content -->
-            <div class="relative container mx-auto px-4 py-8 max-w-4xl">
+            <div class="relative container mx-auto px-4 py-16 max-w-4xl">
                 <!-- Success Message -->
                 <div v-if="props?.success" class="success-alert">
                     <span class="material-icons material-icons-round mr-2">check_circle</span>

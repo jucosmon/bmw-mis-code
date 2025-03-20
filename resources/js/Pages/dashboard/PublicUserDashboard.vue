@@ -311,7 +311,7 @@ const paginatedActivities = computed(() => {
         <div class="min-h-screen bg-cover bg-center relative oceanic-overlay" style="background-image: url('/images/landing.jpg')">
             <div class="relative">
                 <!-- Hero Section -->
-                <div class="relative flex items-center justify-center min-h-[300px] pb-24 pt-12">
+                <div class="relative flex items-center justify-center min-h-[300px] py-24 pt-12">
                     <div class="absolute inset-0 bg-gradient-to-b from-blue-900/80 to-cyan-800/90"></div>
                     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div class="text-center text-white">

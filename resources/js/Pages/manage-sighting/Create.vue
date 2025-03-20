@@ -415,15 +415,6 @@ const sizeOptions = [
   <Head title="Create Sighting Report" />
 
   <Sidebar>
-    <template #header>
-      <div>
-        <button class="bg-white border rounded-lg shadow-sm px-4 py-2 hover:bg-indigo-900 hover:text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none transition">
-          <Link :href="backRoute" class="flex items-center">
-            Back
-          </Link>
-        </button>
-      </div>
-    </template>
 
     <div class="min-h-screen relative">
       <!-- Background image with overlay -->
@@ -435,7 +426,7 @@ const sizeOptions = [
       </div>
 
       <!-- Content container with higher z-index -->
-      <div class="container mx-auto px-4 py-8 relative z-10">
+      <div class="container mx-auto px-4 py-16 relative z-10">
         <h2 class="title-gradient mb-6">Create Sighting Report</h2>
 
         <!-- Rest of your form content -->

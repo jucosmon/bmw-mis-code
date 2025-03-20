@@ -198,16 +198,6 @@ const submit = () => {
     <Head title="Update Species" />
 
     <Sidebar>
-        <template #header>
-            <div>
-                <button class="oceanic-button">
-                    <Link :href="backRoute" class="flex items-center">
-                        Back
-                    </Link>
-                </button>
-            </div>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background image with oceanic overlay -->
             <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0"
@@ -218,7 +208,7 @@ const submit = () => {
 
             <!-- Existing content -->
             <div class="relative z-10">
-                <div class="container mx-auto px-4 py-8">
+                <div class="container mx-auto px-4 py-16">
                     <h2 class="title-gradient mb-6">Update Species</h2>
 
                     <div class="species-info-container max-w-4xl mx-auto">

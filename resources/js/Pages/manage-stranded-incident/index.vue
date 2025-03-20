@@ -54,12 +54,6 @@ const resolvedIncidentsButton = () => {
 <template>
     <Head title="Stranded Incidents" />
     <Sidebar>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Stranded Incidents
-            </h2>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background -->
             <div class="absolute inset-0">
@@ -68,7 +62,7 @@ const resolvedIncidentsButton = () => {
             </div>
 
             <!-- Content -->
-            <div class="relative py-6">
+            <div class="relative py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Success message -->
                     <div v-if="props?.success" class="glass-panel mb-6 p-4 border border-green-400/30 text-green-400">
@@ -77,8 +71,8 @@ const resolvedIncidentsButton = () => {
                     </div>
 
                     <!-- Header section -->
-                    <div class="mb-6">
-                        <h3 class="profile-title-gradient mb-2">
+                    <div class="mb-6 text-center">
+                        <h3 class="profile-title-gradient mb-5">
                             Active Stranded Incident List
                         </h3>
                         <div class="flex flex-wrap items-center gap-3">
@@ -327,7 +321,7 @@ const resolvedIncidentsButton = () => {
 }
 
 .profile-title-gradient {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 1px;

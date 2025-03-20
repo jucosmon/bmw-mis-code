@@ -49,11 +49,6 @@ const getSpeciesNames = (sighting) => {
 <template>
     <Head title="Marine Wildlife Sightings" />
     <Sidebar>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Sightings
-            </h2>
-        </template>
 
         <div class="relative min-h-screen">
             <!-- Background -->
@@ -63,7 +58,7 @@ const getSpeciesNames = (sighting) => {
             </div>
 
             <!-- Content -->
-            <div class="relative py-6">
+            <div class="relative py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Success message -->
                     <div v-if="props?.success" class="glass-panel mb-6 p-4 border border-green-400/30 text-green-400">
@@ -72,8 +67,8 @@ const getSpeciesNames = (sighting) => {
                     </div>
 
                     <!-- Header section -->
-                    <div class="mb-6">
-                        <h3 class="profile-title-gradient mb-4">
+                    <div class="mb-6 text-center">
+                        <h3 class="profile-title-gradient mb-5">
                             Marine Wildlife Sightings
                         </h3>
                         <div class="flex flex-wrap justify-between items-center gap-3">
@@ -214,7 +209,7 @@ const getSpeciesNames = (sighting) => {
 }
 
 .profile-title-gradient {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 1px;

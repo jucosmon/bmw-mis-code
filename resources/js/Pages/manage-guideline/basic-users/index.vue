@@ -59,11 +59,6 @@ const viewGuideline = (id) => {
 <template>
     <Head title="Guidelines" />
     <Sidebar>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                {{ title }}
-            </h2>
-        </template>
 
         <div class="relative min-h-screen">
             <!-- Background -->
@@ -73,7 +68,7 @@ const viewGuideline = (id) => {
             </div>
 
             <!-- Content -->
-            <div class="relative py-6">
+            <div class="relative py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Header section -->
                     <div class="mb-6">

@@ -1073,14 +1073,6 @@ const hasDataForChart = (chartName) => {
 <template>
     <Head title="Summary Report" />
     <Sidebar>
-        <template #header>
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                    Summary Report
-                </h2>
-            </div>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background -->
             <div class="absolute inset-0">
@@ -1108,8 +1100,8 @@ const hasDataForChart = (chartName) => {
                 </div>
             </div>
 
-            <div v-else class="relative container mx-auto px-4 py-4" id="dashboard-content">
-                <div class="mb-4">
+            <div v-else class="relative container mx-auto px-4 py-16" id="dashboard-content">
+                <div class="mb-4 text-center">
                     <h3 class="profile-title-gradient mb-0">
                         Marine Wildlife Analytics
                     </h3>

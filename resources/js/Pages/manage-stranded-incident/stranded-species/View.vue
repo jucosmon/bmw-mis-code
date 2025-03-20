@@ -3,7 +3,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -208,17 +208,6 @@ const getConditionDescription = (code) => {
 <template>
     <Head title="View Stranded Incident" />
     <Sidebar>
-        <template #header>
-            <button class="bg-blue-900/40 backdrop-blur-md text-white border border-blue-800/30 rounded-lg shadow-lg px-5 py-2.5 hover:shadow-xl focus:ring-4 focus:ring-blue-300 focus:outline-none transition duration-300 ease-in-out transform hover:-translate-y-1">
-                <Link :href="backRoute" class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back
-                </Link>
-            </button>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background image -->
             <div class="fixed top-0 left-0 w-full h-full bg-cover bg-center z-0"
@@ -227,7 +216,7 @@ const getConditionDescription = (code) => {
             </div>
 
             <!-- Main Content -->
-            <div class="relative z-10 container mx-auto px-6 pb-6 max-w-5xl">
+            <div class="relative z-10 container mx-auto px-6 py-16 max-w-5xl">
                 <div class="exportable-content">
                     <!-- Main Title Header -->
                     <div class="text-center mb-10">

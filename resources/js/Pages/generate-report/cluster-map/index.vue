@@ -443,12 +443,6 @@ const downloadPDF = async () => {
 <template>
     <Head title="Cluster Map" />
     <Sidebar>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Marine Wildlife Incident Cluster Map
-            </h2>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background -->
             <div class="absolute inset-0">
@@ -457,10 +451,10 @@ const downloadPDF = async () => {
             </div>
 
             <!-- Content -->
-            <div class="relative py-6">
+            <div class="relative py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Page Title with Gradient -->
-                    <div class="mb-6">
+                    <div class="mb-6 text-center">
                         <h3 class="profile-title-gradient">Marine Wildlife Incident Map</h3>
                         <p class="text-white text-opacity-80">Visualize and analyze incident clusters across Bohol</p>
                     </div>

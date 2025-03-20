@@ -73,11 +73,6 @@ const isPublicUser = computed(() => user.user_role === 'public_user');
 <template>
     <Head title="My Profile" />
     <Sidebar>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Profile
-            </h2>
-        </template>
         <div class="relative min-h-screen">
             <!-- Background -->
             <div class="absolute inset-0">
@@ -86,7 +81,7 @@ const isPublicUser = computed(() => user.user_role === 'public_user');
             </div>
 
             <!-- Content -->
-            <div class="relative container mx-auto px-4 py-8 max-w-4xl">
+            <div class="relative container mx-auto px-4 py-16 max-w-4xl">
                 <!-- Success Message -->
                 <div v-if="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded-lg flex items-center" role="alert">
                     <span class="material-icons material-icons-round mr-2">check_circle</span>

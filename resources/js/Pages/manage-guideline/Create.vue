@@ -135,12 +135,9 @@ const getFileName = (file) => {
   <Head title="Create Guideline" />
 
   <Sidebar>
-    <template #header>
-
-    </template>
 
     <div class="min-h-screen bg-cover bg-center bg-gradient-overlay" style="background-image: url('/images/landing.jpg')">
-      <div class="container mx-auto px-4 py-8">
+      <div class="container mx-auto px-4 py-16">
         <h2 class="title-gradient mb-6">Create New Guideline</h2>
 
         <form @submit.prevent="submit" class="space-y-8 max-w-4xl mx-auto">

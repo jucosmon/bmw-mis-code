@@ -1,6 +1,6 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -41,17 +41,6 @@ const backRoute = computed(() => {
 <template>
     <Head title="Stranded Incidents" />
     <Sidebar>
-        <template #header>
-            <div class="flex items-center">
-                <Link :href="backRoute" class="action-button flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                    </svg>
-                    Back
-                </Link>
-            </div>
-        </template>
-
         <div class="relative min-h-screen">
             <!-- Background -->
             <div class="absolute inset-0">
@@ -60,11 +49,11 @@ const backRoute = computed(() => {
             </div>
 
             <!-- Content -->
-            <div class="relative py-6">
+            <div class="relative py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Header section -->
-                    <div class="mb-6">
-                        <h3 class="profile-title-gradient mb-2">
+                    <div class="mb-6 text-center">
+                        <h3 class="profile-title-gradient mb-5">
                             {{ status }} Stranded Incident List
                         </h3>
                         <div class="flex items-center gap-3">
@@ -186,7 +175,7 @@ const backRoute = computed(() => {
 }
 
 .profile-title-gradient {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 1px;

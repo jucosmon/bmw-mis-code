@@ -95,7 +95,7 @@ const viewUser = (user_id)=> {
             </div>
 
             <!-- Content -->
-            <div class="relative py-6">
+            <div class="relative py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Success message -->
                     <div v-if="props?.success" class="glass-panel mb-6 p-4 border border-green-400/30 text-green-400">
@@ -105,7 +105,7 @@ const viewUser = (user_id)=> {
 
                     <!-- Header section -->
                     <div class="mb-6">
-                        <h3 class="profile-title-gradient mb-2">
+                        <h3 class="profile-title-gradient mb-2 text-center">
                             {{ userRole }}s List
                         </h3>
                         <div class="flex flex-wrap items-center gap-3">

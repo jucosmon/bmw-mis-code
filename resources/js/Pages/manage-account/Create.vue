@@ -1,7 +1,6 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
@@ -111,6 +110,8 @@ const allowOnlyNumbers = (event) => {
 </script>
 
 <template>
+<Sidebar>
+
     <Head title="Create Account" />
 
     <div class="min-h-screen relative">
@@ -122,14 +123,7 @@ const allowOnlyNumbers = (event) => {
 
         <!-- Main Content -->
         <div class="relative z-10">
-            <div class="container mx-auto px-4 py-8">
-                <!-- Back Button -->
-                <button class="nav-button back-btn mb-4">
-                    <Link :href="backRoute" class="flex items-center text-white">
-                        Back
-                    </Link>
-                </button>
-
+            <div class="container mx-auto px-4 py-16">
                 <h2 class="title-gradient mb-6">Create an Account ({{ userRole }})</h2>
 
                 <div class="create-container mx-auto">
@@ -222,10 +216,10 @@ const allowOnlyNumbers = (event) => {
                         <!-- Submit and Cancel Buttons -->
                         <div class="flex items-center justify-between mt-6">
                             <Link :href="backRoute" class="text-sm text-white hover:text-gray-200 underline">Cancel</Link>
-                            <button 
-                                type="submit" 
-                                :disabled="form.processing" 
-                                class="oceanic-button" 
+                            <button
+                                type="submit"
+                                :disabled="form.processing"
+                                class="oceanic-button"
                                 :class="{ 'opacity-25': form.processing }"
                             >
                                 Create Account
@@ -236,6 +230,7 @@ const allowOnlyNumbers = (event) => {
             </div>
         </div>
     </div>
+</Sidebar>
 </template>
 
 <style scoped>
