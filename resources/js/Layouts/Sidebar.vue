@@ -719,13 +719,13 @@ const handleToastClick = (toast) => {
 
     <!-- Main content -->
     <div class="flex-1 flex flex-col min-h-screen w-full relative">
+
       <!-- Floating action buttons on left side (hamburger and header) -->
       <div class="absolute top-4 left-4 z-50 flex items-center gap-3 pl-1">
         <!-- Hamburger/Menu Button - Floating on left -->
         <button class="oceanic-float-button hamburger-btn" @click="toggleSidebar">
           <span class="material-icons">{{ state.sidebarOpen ? 'menu_open' : 'menu' }}</span>
         </button>
-
       </div>
 
       <!-- Floating action buttons on right side -->
@@ -779,7 +779,8 @@ const handleToastClick = (toast) => {
 
       <!-- Main content area -->
       <main class="flex-1 overflow-y-auto relative">
-        <slot/>
+          <slot/>
+
 
         <!-- Move modals and toasts outside the main scrollable area -->
         <Modal v-if="isFalseNotificationModalOpen"
