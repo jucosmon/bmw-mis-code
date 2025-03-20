@@ -885,7 +885,7 @@ watch(showMap, async (newValue) => {
                             <div v-else class="flex items-center justify-end gap-4 w-full">
                                 <Link :href="backRoute" class="cancel-button">Cancel</Link>
 
-                                <div class="flex space-x-3">
+                                <div class="flex flex-wrap sm:flex-nowrap gap-3">
                                     <button
                                         :disabled="form.processing"
                                         :class="{ 'opacity-50': form.processing }"
@@ -894,9 +894,9 @@ watch(showMap, async (newValue) => {
                                         type="button"
                                         formnovalidate
                                     >
-                                        <span class="flex items-center">
+                                        <span class="flex items-center justify-center">
                                             <span class="material-icons mr-1">cancel</span>
-                                            Mark as False
+                                            <span class="hidden sm:inline">Mark as False</span>
                                         </span>
                                     </button>
                                     <button
@@ -906,9 +906,9 @@ watch(showMap, async (newValue) => {
                                         type="button"
                                         @click="verifyIncident"
                                     >
-                                        <span class="flex items-center">
+                                        <span class="flex items-center justify-center">
                                             <span class="material-icons mr-1">check_circle</span>
-                                            Verify as True
+                                            <span class="hidden sm:inline">Verify as True</span>
                                         </span>
                                     </button>
                                 </div>
@@ -920,50 +920,56 @@ watch(showMap, async (newValue) => {
         </div>
 
         <!-- Modal components with improved styling -->
-        <Modal :show="showVerifyModal" @close="showVerifyModal = false">
-            <div class="modal-container verify-modal">
+        <Modal :show="showVerifyModal" @close="showVerifyModal = false" max-width="md">
+            <div class="verify-modal">
                 <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-green-500"></div>
-                <h2 class="modal-title">
-                    <span class="material-icons text-emerald-500 mr-2">check_circle</span>
-                    Confirm Verification
-                </h2>
-                <p class="modal-content">
+                <div class="flex items-center justify-center mt-8 mb-4">
+                    <span class="material-icons text-emerald-500 text-5xl">check_circle</span>
+                </div>
+                <h2 class="text-2xl font-bold text-white text-center mb-6">Confirm Verification</h2>
+                <p class="text-white/90 text-center text-lg mb-8">
                     Are you sure that the report is true and accurate?
                 </p>
-                <div class="modal-actions">
+                <div class="flex justify-center gap-4 mb-6">
                     <button
                         type="button"
-                        class="modal-cancel-button"
+                        class="px-6 py-3 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-full min-w-[120px] transition-all duration-300 hover:-translate-y-1"
                         @click="showVerifyModal = false"
                     >
                         Cancel
                     </button>
-                    <button @click="confirmVerify" class="modal-confirm-button verify-confirm-button">
+                    <button
+                        @click="confirmVerify"
+                        class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-full min-w-[120px] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-500/30"
+                    >
                         Confirm
                     </button>
                 </div>
             </div>
         </Modal>
 
-        <Modal :show="showFalseModal" @close="showFalseModal = false">
-            <div class="modal-container false-modal">
+        <Modal :show="showFalseModal" @close="showFalseModal = false" max-width="md">
+            <div class="false-modal">
                 <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-400 to-red-600"></div>
-                <h2 class="modal-title">
-                    <span class="material-icons text-red-500 mr-2">cancel</span>
-                    Confirm False Report
-                </h2>
-                <p class="modal-content">
+                <div class="flex items-center justify-center mt-8 mb-4">
+                    <span class="material-icons text-red-500 text-5xl">cancel</span>
+                </div>
+                <h2 class="text-2xl font-bold text-white text-center mb-6">Confirm False Report</h2>
+                <p class="text-white/90 text-center text-lg mb-8">
                     Are you sure the report is false?
                 </p>
-                <div class="modal-actions">
+                <div class="flex justify-center gap-4 mb-6">
                     <button
                         type="button"
-                        class="modal-cancel-button"
+                        class="px-6 py-3 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-full min-w-[120px] transition-all duration-300 hover:-translate-y-1"
                         @click="showFalseModal = false"
                     >
                         Cancel
                     </button>
-                    <button @click="confirmFalse" class="modal-confirm-button false-confirm-button">
+                    <button
+                        @click="confirmFalse"
+                        class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-full min-w-[120px] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-500/30"
+                    >
                         Confirm
                     </button>
                 </div>
@@ -1370,109 +1376,129 @@ label {
 }
 
 /* Modal Styling */
-.modal-container {
-    padding: 1.5rem;
+.verify-modal {
     position: relative;
-    background: rgba(0, 51, 102, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    color: white;
+    padding: 2rem;
+    text-align: center;
+    overflow: hidden;
 }
 
-.modal-title {
-    font-size: 1.25rem;
+.false-modal {
+    position: relative;
+    padding: 2rem;
+    text-align: center;
+    overflow: hidden;
+}
+
+.verify-modal .p-dialog-content,
+.false-modal .p-dialog-content {
+    background: #002147;
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.verify-modal .modal-title {
+    font-size: 1.75rem;
     font-weight: 600;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
+    margin-bottom: 1.5rem;
+    color: white;
+    text-align: center;
 }
 
-.modal-content {
+.verify-modal .modal-content {
     margin: 1.5rem 0;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    text-align: center;
+    line-height: 1.6;
 }
 
 .modal-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 1rem;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
 }
 
 .modal-cancel-button {
-    padding: 0.5rem 1.25rem;
+    padding: 0.75rem 1.5rem;
     background: rgba(255, 255, 255, 0.1);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.3s ease;
+    min-width: 120px;
 }
 
 .modal-confirm-button {
-    padding: 0.5rem 1.25rem;
+    padding: 0.75rem 1.5rem;
     color: white;
     border: none;
     border-radius: 50px;
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.3s ease;
+    min-width: 120px;
 }
 
 .verify-confirm-button {
-    background: linear-gradient(135deg, #2e7d32, #4caf50);
+    background: #4caf50;
     box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
 
 .verify-confirm-button:hover {
+    background: #43a047;
     box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
     transform: translateY(-1px);
 }
 
 .false-confirm-button {
-    background: linear-gradient(135deg, #e53935, #ff5252);
+    background: #f44336;
     box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
 }
 
 .false-confirm-button:hover {
+    background: #e53935;
     box-shadow: 0 6px 20px rgba(255, 82, 82, 0.4);
     transform: translateY(-1px);
 }
 
-/* Leaflet Map Customizations */
-:deep(.leaflet-control-zoom) {
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+.modal-cancel-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
 }
 
-:deep(.leaflet-control-zoom a) {
-    background: rgba(0, 51, 102, 0.8) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+/* Custom Modal Styling for Inertia Modal Component */
+:deep(.p-dialog) {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-:deep(.leaflet-control-zoom a:hover) {
-    background: rgba(0, 204, 255, 0.8) !important;
+:deep(.p-dialog-content) {
+    border-radius: inherit;
 }
 
-:deep(.leaflet-control-attribution) {
-    background: rgba(0, 51, 102, 0.8) !important;
-    color: rgba(255, 255, 255, 0.7) !important;
-}
+@media (max-width: 640px) {
+    .modal-content-direct {
+        padding: 1.5rem;
+    }
 
-:deep(.leaflet-popup-content-wrapper) {
-    background: rgba(0, 51, 102, 0.9) !important;
-    color: white !important;
-    backdrop-filter: blur(10px);
-    border-radius: 8px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
+    .modal-title {
+        font-size: 1.5rem;
+    }
 
-:deep(.leaflet-popup-tip) {
-    background: rgba(0, 51, 102, 0.9) !important;
+    .modal-content {
+        font-size: 1rem;
+    }
+
+    .modal-cancel-button,
+    .modal-confirm-button {
+        padding: 0.75rem 1rem;
+        min-width: 100px;
+    }
 }
 </style>

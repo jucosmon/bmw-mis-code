@@ -1525,36 +1525,50 @@ select option {
 }
 
 /* Modal styling */
-.modal-container {
-    background: rgba(0, 51, 102, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 2rem;
-    width: 100%;
-    max-width: 500px;
+/* Modal Styling */
+.verify-modal {
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    text-align: center;
+    overflow: hidden;
 }
 
-.modal-title {
-    display: flex;
-    align-items: center;
-    font-size: 1.5rem;
+.false-modal {
+    position: relative;
+    padding: 2rem;
+    text-align: center;
+    overflow: hidden;
+}
+
+.verify-modal .p-dialog-content,
+.false-modal .p-dialog-content {
+    background: #002147;
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.verify-modal .modal-title {
+    font-size: 1.75rem;
     font-weight: 600;
+    margin-bottom: 1.5rem;
     color: white;
-    margin-bottom: 1rem;
+    text-align: center;
 }
 
-.modal-content {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
+.verify-modal .modal-content {
+    margin: 1.5rem 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    text-align: center;
+    line-height: 1.6;
 }
 
 .modal-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 1rem;
+    margin-top: 2rem;
 }
 
 .modal-cancel-button {
@@ -1563,29 +1577,81 @@ select option {
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.3s ease;
+    min-width: 120px;
 }
 
 .modal-confirm-button {
     padding: 0.75rem 1.5rem;
+    color: white;
+    border: none;
     border-radius: 50px;
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.3s ease;
-    color: white;
+    min-width: 120px;
 }
 
 .verify-confirm-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+    background: #4caf50;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.verify-confirm-button:hover {
+    background: #43a047;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    transform: translateY(-1px);
 }
 
 .false-confirm-button {
-    background: linear-gradient(135deg, #cc0000, #ff3333);
-    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+    background: #f44336;
+    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
 }
+
+.false-confirm-button:hover {
+    background: #e53935;
+    box-shadow: 0 6px 20px rgba(255, 82, 82, 0.4);
+    transform: translateY(-1px);
+}
+
+.modal-cancel-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Custom Modal Styling for Inertia Modal Component */
+:deep(.p-dialog) {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+:deep(.p-dialog-content) {
+    border-radius: inherit;
+}
+
+@media (max-width: 640px) {
+    .modal-content-direct {
+        padding: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+    }
+
+    .modal-content {
+        font-size: 1rem;
+    }
+
+    .modal-cancel-button,
+    .modal-confirm-button {
+        padding: 0.75rem 1rem;
+        min-width: 100px;
+    }
+}
+
 
 .verify-button {
     background: linear-gradient(135deg, #00a3cc, #00ccff);
