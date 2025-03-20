@@ -254,10 +254,16 @@ const closeFalseNotificationModal = () => {
 };
 
 const openNotification = async (notification) => {
-    const userRole = user.value.user_role; // Adjust this based on how you access the user role
+    const userRole = user.value?.user_role; // Add null check
 
     if (notification.category === 'general' && notification.type === 'stranding') {
         try {
+            // Check if stranded_incident_id exists to prevent errors
+            if (!notification.stranded_incident_id) {
+                openFalseNotificationModal(notification.content);
+                return;
+            }
+
             // Use fetch to call the controller method
             const response = await fetch(`/stranded-incidents/${notification.stranded_incident_id}/status`);
 
@@ -273,15 +279,34 @@ const openNotification = async (notification) => {
                 // Show the modal instead of navigating
                 openFalseNotificationModal(notification.content);
             } else {
-                // Navigate to the Inertia route
-                router.get(route('stranded.incident.view', { id: notification.stranded_incident_id }));
+                // Check if route exists before navigating
+                if (route().has('stranded.incident.view')) {
+                    router.get(route('stranded.incident.view', { id: notification.stranded_incident_id }));
+                } else {
+                    // Fallback if route doesn't exist
+                    openFalseNotificationModal('Cannot navigate to this notification.');
+                }
             }
         } catch (error) {
             console.error('Error fetching stranded incident status:', error);
+            openFalseNotificationModal('Error loading notification details.');
         }
     } else if (notification.category === 'general' && notification.type === 'sighting') {
-        router.get(); // Add your logic here
+        // Safer handling for sighting type
+        try {
+            if (notification.sighting_id && route().has('sighting.view')) {
+                router.get(route('sighting.view', { id: notification.sighting_id }));
+            } else {
+                openFalseNotificationModal(notification.content);
+            }
+        } catch (error) {
+            console.error('Error navigating to sighting:', error);
+            openFalseNotificationModal(notification.content);
+        }
     } else if (notification.category === 'false' || notification.category === 'warning') {
+        openFalseNotificationModal(notification.content);
+    } else {
+        // Fallback for other notification types
         openFalseNotificationModal(notification.content);
     }
 };
@@ -431,28 +456,28 @@ const handleToastClick = (toast) => {
 </script>
 
 <template>
-  <!-- Change the root div to have a relative position -->
-  <div class="relative flex h-screen overflow-hidden">
-    <!-- Update sidebar classes -->
+  <!-- Change the root div to have a relative position without white bg -->
+  <div class="relative flex h-screen overflow-hidden bg-transparent">
+    <!-- Sidebar with oceanic glass design - increase z-index -->
     <div
-      class="sidebar flex flex-col flex-shrink-0 text-indigo-700 bg-white dark:text-indigo-200 dark:bg-indigo-900 h-screen fixed md:relative top-0 transition-all duration-300 z-40"
+      class="sidebar flex flex-col flex-shrink-0 h-screen fixed md:relative top-0 transition-all duration-300 z-[999] oceanic-glass-sidebar"
       :class="{
         'w-64': state.sidebarOpen,
-        'w-0': !state.sidebarOpen
+        'w-0 -translate-x-full pointer-events-none': !state.sidebarOpen
       }"
     >
-      <!-- Sidebar header with close button -->
+      <!-- Sidebar header with logo -->
       <div class="flex items-center justify-between p-4">
         <Link
           href="#"
-          class="text-lg font-semibold tracking-widest text-indigo-900 uppercase dark:text-white"
+          class="text-lg font-semibold tracking-widest text-white uppercase sidebar-logo"
           :class="{ 'hidden': !state.sidebarOpen }"
         >
-          BMW-MIS
+          <span class="ocean-text-gradient">BMW-MIS</span>
         </Link>
         <!-- Close button -->
         <button
-          class="rounded-lg focus:outline-none focus:shadow-outline"
+          class="rounded-lg focus:outline-none focus:shadow-outline text-white/80 hover:text-white transition-colors"
           :class="{ 'hidden': !state.sidebarOpen }"
           @click="closeSidebar"
         >
@@ -464,40 +489,44 @@ const handleToastClick = (toast) => {
       <nav class="flex-grow px-4 pb-4 overflow-y-auto">
         <!-- Dashboard -->
         <Link :href="route('dashboard')"
-            class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+            class="flex items-center px-4 py-2 mt-2 text-sm font-semibold rounded-lg nav-link"
+            :class="$page.url === route('dashboard') ? 'nav-link-active' : 'nav-link-inactive'"
             @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">home</span>
             <span class="ml-2">Dashboard</span>
         </Link>
         <!-- Manage Stranded Incident -->
-        <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+        <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold rounded-lg nav-link"
         :href="route('stranded.incident.index')"
+        :class="$page.url.startsWith(route('stranded.incident.index')) ? 'nav-link-active' : 'nav-link-inactive'"
         @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">medication</span>
             <span class="ml-2">Stranded Incident</span>
         </Link>
 
         <!-- Manage Sightings -->
-        <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+        <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold rounded-lg nav-link"
           :href="route('sighting.index')"
+          :class="$page.url.startsWith(route('sighting.index')) ? 'nav-link-active' : 'nav-link-inactive'"
           @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">visibility</span>
             <span class="ml-2">Sightings</span>
         </Link>
 
         <!-- Manage Species  -->
-         <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+         <Link class="flex items-center px-4 py-2 mt-2 text-sm font-semibold rounded-lg nav-link"
          :href="route('species.index')"
+         :class="$page.url.startsWith(route('species.index')) ? 'nav-link-active' : 'nav-link-inactive'"
          @click="closeSidebar">
             <span class="material-icons text-lg mr-2 leading-none">manage_search</span>
             <span class="ml-2">Explore Species</span>
         </Link>
 
         <!-- Manage Guidelines Dropdown -->
-        <div v-if="user.user_role==='bpemo_admin'" class="relative">
+        <div v-if="user.user_role==='bpemo_admin'" class="relative mt-2">
           <button
             @click="toggleDropdown('manageGuidelines', $event)"
-            class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+            class="flex flex-row items-center w-full px-4 py-2 text-sm font-semibold text-left rounded-lg nav-link nav-link-inactive"
           >
             <span class="material-icons text-lg mr-2 leading-none">article</span>
             <span class="ml-2">Manage Guidelines</span>
@@ -517,10 +546,10 @@ const handleToastClick = (toast) => {
 
           <div
             v-if="state.activeDropdown === 'manageGuidelines'"
-            class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
+            class="w-full mt-2 dropdown-menu"
           >
             <Link
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('manage.guideline.index', {user_role: 'lgu_responder', archived: false})"
               @click="closeSidebar"
             >
@@ -528,7 +557,7 @@ const handleToastClick = (toast) => {
               <span class="ml-2">LGU Responder</span>
             </Link>
             <Link
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('manage.guideline.index', {user_role: 'barangay_official', archived: false})"
               @click="closeSidebar"
             >
@@ -536,7 +565,7 @@ const handleToastClick = (toast) => {
               <span class="ml-2">Barangay Official</span>
             </Link>
             <Link
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('manage.guideline.index', {user_role: 'public_user', archived: false})"
               @click="closeSidebar"
             >
@@ -549,7 +578,8 @@ const handleToastClick = (toast) => {
         <!-- View guidelines for specific user roles -->
         <Link
           v-if="user.user_role==='lgu_responder' || user.user_role==='barangay_official' || user.user_role==='public_user'"
-          class="flex items-center px-4 py-2 mt-2 text-sm font-semibold text-indigo-900 bg-indigo-200 rounded-lg dark:bg-transparent dark:hover:bg-indigo-700 dark:focus:bg-indigo-700 dark:focus:text-white dark:hover:text-white dark:text-indigo-200 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+          class="flex items-center px-4 py-2 mt-2 text-sm font-semibold rounded-lg nav-link"
+          :class="$page.url.startsWith(route('guideline.index')) ? 'nav-link-active' : 'nav-link-inactive'"
           :href="route('guideline.index')"
           @click="closeSidebar">
           <span class="material-icons text-lg mr-2 leading-none">article</span>
@@ -557,10 +587,10 @@ const handleToastClick = (toast) => {
         </Link>
 
         <!-- Generate Report Dropdown -->
-        <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff'" class="relative">
+        <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff'" class="relative mt-2">
           <button
             @click="toggleDropdown('generateReport', $event)"
-            class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+            class="flex flex-row items-center w-full px-4 py-2 text-sm font-semibold text-left rounded-lg nav-link nav-link-inactive"
           >
             <span class="material-icons text-lg mr-2 leading-none">assessment</span>
             <span class="ml-2">Generate Report</span>
@@ -579,10 +609,10 @@ const handleToastClick = (toast) => {
           </button>
           <div
             v-if="state.activeDropdown === 'generateReport'"
-            class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
+            class="w-full mt-2 dropdown-menu"
           >
             <Link
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('generate.report.cluster.map')"
               @click="closeSidebar"
             >
@@ -590,7 +620,7 @@ const handleToastClick = (toast) => {
               <span class="ml-2">Cluster Map</span>
             </Link>
             <Link
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('generate.report.summary.report')"
               @click="closeSidebar"
             >
@@ -601,10 +631,10 @@ const handleToastClick = (toast) => {
         </div>
 
         <!-- Manage Account Dropdown -->
-        <div class="relative" v-if="user.user_role==='bpemo_admin' || user.user_role==='lgu_responder'">
+        <div class="relative mt-2" v-if="user.user_role==='bpemo_admin' || user.user_role==='lgu_responder'">
           <button
             @click="toggleDropdown('manageAccount', $event)"
-            class="flex flex-row items-center w-full px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark:bg-transparent dark:focus:text-white dark:hover:text-white dark:focus:bg-indigo-700 dark:hover:bg-indigo-700 hover:text-indigo-900 focus:text-indigo-900 hover:bg-indigo-200 focus:bg-indigo-200 focus:outline-none focus:shadow-outline"
+            class="flex flex-row items-center w-full px-4 py-2 text-sm font-semibold text-left rounded-lg nav-link nav-link-inactive"
           >
             <span class="material-icons text-lg mr-2 leading-none">manage_accounts</span>
             <span class="ml-2">Manage Account</span>
@@ -624,11 +654,11 @@ const handleToastClick = (toast) => {
 
           <div
             v-if="state.activeDropdown === 'manageAccount'"
-            class="w-full mt-2 bg-white rounded-md shadow-lg dark:bg-indigo-800"
+            class="w-full mt-2 dropdown-menu"
           >
             <DropdownLink
               v-if="user.user_role === 'bpemo_admin'"
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_admin'})"
               @click="closeSidebar"
             >
@@ -637,7 +667,7 @@ const handleToastClick = (toast) => {
             </DropdownLink>
             <DropdownLink
               v-if="user.user_role === 'bpemo_admin'"
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('bpemo.admin.manage.account.index', {type: 'bpemo_staff'})"
               @click="closeSidebar"
             >
@@ -646,7 +676,7 @@ const handleToastClick = (toast) => {
             </DropdownLink>
             <DropdownLink
               v-if="user.user_role === 'bpemo_admin'"
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('bpemo.admin.manage.account.index', { type: 'lgu_responder'})"
               @click="closeSidebar"
             >
@@ -655,7 +685,7 @@ const handleToastClick = (toast) => {
             </DropdownLink>
             <DropdownLink
               v-if="user.user_role === 'bpemo_admin'"
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('bpemo.admin.manage.account.index', {type: 'barangay_official'})"
               @click="closeSidebar"
             >
@@ -664,7 +694,7 @@ const handleToastClick = (toast) => {
             </DropdownLink>
             <DropdownLink
               v-if="user.user_role === 'bpemo_admin'"
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('bpemo.admin.manage.account.index', {type: 'public_user'})"
               @click="closeSidebar"
             >
@@ -675,7 +705,7 @@ const handleToastClick = (toast) => {
             <!-- Manage Barangay Official Accounts for LGU Responder user -->
             <DropdownLink
               v-if="user.user_role === 'lgu_responder'"
-              class="block px-4 py-2 text-sm font-semibold text-indigo-900 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-700 dark:text-white"
+              class="block px-4 py-2 text-sm font-semibold text-white rounded-lg dropdown-item"
               :href="route('lgu.responder.manage.account.index', {type: 'barangay_official'})"
               @click="closeSidebar"
             >
@@ -689,98 +719,94 @@ const handleToastClick = (toast) => {
 
     <!-- Main content -->
     <div class="flex-1 flex flex-col min-h-screen w-full relative">
-      <!-- Header with hamburger button -->
-      <header class="sticky top-0 bg-white shadow-md z-30">
-        <div class="mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div class="flex items-center gap-5">
-            <!-- Hamburger button -->
-            <button
-              class="hamburger-btn rounded-lg focus:outline-none focus:shadow-outline hover:bg-gray-100 p-2"
-              @click="toggleSidebar"
-            >
-              <span class="material-icons text-2xl">menu</span>
-            </button>
-            <slot name="header" />
-          </div>
+      <!-- Floating action buttons on left side (hamburger and header) -->
+      <div class="absolute top-4 left-4 z-50 flex items-center gap-3 pl-1">
+        <!-- Hamburger/Menu Button - Floating on left -->
+        <button class="oceanic-float-button hamburger-btn" @click="toggleSidebar">
+          <span class="material-icons">{{ state.sidebarOpen ? 'menu_open' : 'menu' }}</span>
+        </button>
 
-          <div class="flex gap-5 items-center">
-            <!-- Notifications Button -->
-            <button @click="toggleNotificationsDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
-              <span class="material-icons text-indigo-900">notifications</span>
-              <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 mt-2 md:w-80 bg-white rounded-md shadow-lg z-20">
-                  <div class="py-2">
-                      <div class="flex justify-between px-4 ">
-                          <select v-model="filterType" @change="updateFilterType(filterType)" class="text-sm w-full text-center" @click.stop>
-                              <option value="all">All Notifications</option>
-                              <option value="stranding">Stranding</option>
-                              <option value="sighting">Sightings</option>
-                          </select>
-                      </div>
-                      <div class="max-h-60 overflow-y-auto">
-                          <template v-if="displayedNotifications.length > 0">
-                              <div v-for="notification in displayedNotifications" :key="notification.id" class="block px-4 py-2 text-sm text-left text-gray-800 hover:bg-gray-100" @click="openNotification(notification)" @click.stop>
-                                  {{ notification.content }}
-                              </div>
-                          </template>
-                          <template v-else>
-                              <div class="px-4 py-2 text-sm text-gray-500">No notifications available.</div>
-                          </template>
-                      </div>
-                      <div class="px-4 py-2">
-                          <button v-if="hasMoreNotifications" @click="showMoreNotifications" class="text-blue-500 text-sm" @click.stop>Show More</button>
-                      </div>
+      </div>
+
+      <!-- Floating action buttons on right side -->
+      <div class="absolute top-4 right-4 z-50 flex gap-3">
+        <!-- Notifications Button - Floating -->
+        <button @click="toggleNotificationsDropdown($event)" class="oceanic-float-button relative">
+          <span class="material-icons">notifications</span>
+          <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 top-full mt-2 md:w-80 oceanic-glass-panel rounded-lg shadow-lg z-20">
+              <div class="py-2">
+                  <div class="flex justify-between px-4">
+                      <select v-model="filterType" @change="updateFilterType(filterType)" class="oceanic-select w-full text-center text-sm" @click.stop>
+                          <option value="all">All Notifications</option>
+                          <option value="stranding">Stranding</option>
+                          <option value="sighting">Sightings</option>
+                      </select>
+                  </div>
+                  <div class="max-h-60 overflow-y-auto">
+                      <template v-if="displayedNotifications.length > 0">
+                          <div v-for="notification in displayedNotifications" :key="notification.id"
+                              class="block px-4 py-3 text-sm text-left text-white hover:bg-white/10 transition-all duration-200"
+                              @click="openNotification(notification)" @click.stop>
+                              {{ notification.content }}
+                          </div>
+                      </template>
+                      <template v-else>
+                          <div class="px-4 py-3 text-sm text-white/60">No notifications available.</div>
+                      </template>
+                  </div>
+                  <div class="px-4 py-2">
+                      <button v-if="hasMoreNotifications" @click="showMoreNotifications" class="text-blue-300 hover:text-blue-200 text-sm" @click.stop>Show More</button>
                   </div>
               </div>
-          </button>
-
-              <!-- Profile Button -->
-            <button @click="toggleProfileDropdown($event)" class="relative rounded-lg focus:outline-none focus:shadow-outline">
-              <span class="material-icons text-indigo-900">account_circle</span>
-              <div v-if="state.profileDropdownOpen" class="dropdown-container absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 text-center">
-                <div class="py-2">
-                  <DropdownLink class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" :href="route('profile.view')">
-                    Profile
-                  </DropdownLink>
-                  <DropdownLink class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100" :href="route('logout')" method="post" as="button">
-                    Logout
-                  </DropdownLink>
-                </div>
-              </div>
-            </button>
           </div>
-        </div>
-      </header>
+        </button>
 
-      <!-- Update main content area -->
+        <!-- Profile Button - Floating -->
+        <button @click="toggleProfileDropdown($event)" class="oceanic-float-button relative">
+          <span class="material-icons">account_circle</span>
+          <div v-if="state.profileDropdownOpen" class="dropdown-container absolute right-0 top-full mt-2 w-48 oceanic-glass-panel rounded-lg shadow-lg z-20">
+            <div class="py-2">
+              <DropdownLink class="block px-4 py-2 text-sm text-white hover:bg-white/10 transition-all duration-200" :href="route('profile.view')">
+                Profile
+              </DropdownLink>
+              <DropdownLink class="block px-4 py-2 text-sm text-white hover:bg-white/10 transition-all duration-200" :href="route('logout')" method="post" as="button">
+                Logout
+              </DropdownLink>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Main content area -->
       <main class="flex-1 overflow-y-auto relative">
-        <slot />
+        <slot/>
 
         <!-- Move modals and toasts outside the main scrollable area -->
         <Modal v-if="isFalseNotificationModalOpen"
                :show="isFalseNotificationModalOpen"
                @close="closeFalseNotificationModal"
-               class="fixed inset-0 z-50">
-          <div class="p-6 bg-white rounded shadow-lg">
-            <h2 class="text-lg font-semibold text-slate-800">
+               class="fixed inset-0 z-50 modal-content">
+          <div class="oceanic-glass-panel p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-semibold text-white/90 ocean-text-gradient">
               Notification Details
             </h2>
-            <p>{{ modalContent }}</p>
+            <p class="text-white/80 mt-2">{{ modalContent }}</p>
             <div class="mt-6 space-x-4 flex justify-end">
-              <PrimaryButton @click="closeFalseNotificationModal">Ok</PrimaryButton>
+              <PrimaryButton @click="closeFalseNotificationModal" class="oceanic-button">Ok</PrimaryButton>
             </div>
           </div>
         </Modal>
 
-        <!-- Update toast container positioning -->
-        <div class="fixed top-4 right-4 z-40 space-y-2 max-w-md w-full pointer-events-none">
+        <!-- Update toast container positioning - move to bottom -->
+        <div class="fixed bottom-4 right-4 z-40 space-y-2 max-w-md w-full pointer-events-none">
           <transition-group name="toast">
             <div v-for="toast in toasts" :key="toast.id"
               v-show="toast.show"
-              class="toast-notification pointer-events-auto"
+              class="toast-notification pointer-events-auto mx-auto mb-2"
               :class="{
-                'bg-blue-50 border-l-4 border-blue-500': toast.type === 'stranding',
-                'bg-green-50 border-l-4 border-green-500': toast.type === 'sighting',
-                'bg-yellow-50 border-l-4 border-yellow-500': toast.type === 'warning'
+                'toast-stranding': toast.type === 'stranding',
+                'toast-sighting': toast.type === 'sighting',
+                'toast-warning': toast.type === 'warning'
               }"
               @click="handleToastClick(toast)"
             >
@@ -789,9 +815,9 @@ const handleToastClick = (toast) => {
                   <div class="flex-shrink-0">
                     <span class="material-icons text-xl"
                       :class="{
-                        'text-blue-600': toast.type === 'stranding',
-                        'text-green-600': toast.type === 'sighting',
-                        'text-yellow-600': toast.type === 'warning'
+                        'text-blue-300': toast.type === 'stranding',
+                        'text-green-300': toast.type === 'sighting',
+                        'text-yellow-300': toast.type === 'warning'
                       }">
                       {{ toast.type === 'stranding' ? 'warning' :
                          toast.type === 'sighting' ? 'visibility' : 'info' }}
@@ -800,19 +826,19 @@ const handleToastClick = (toast) => {
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold mb-1"
                       :class="{
-                        'text-blue-800': toast.type === 'stranding',
-                        'text-green-800': toast.type === 'sighting',
-                        'text-yellow-800': toast.type === 'warning'
+                        'text-blue-300': toast.type === 'stranding',
+                        'text-green-300': toast.type === 'sighting',
+                        'text-yellow-300': toast.type === 'warning'
                       }">
                       {{ toast.type.charAt(0).toUpperCase() + toast.type.slice(1) }} Notification
                     </p>
-                    <p class="text-sm text-gray-700 line-clamp-2">
+                    <p class="text-sm text-white/80 line-clamp-2">
                       {{ toast.content }}
                     </p>
                   </div>
                 </div>
                 <button @click.stop="toast.show = false"
-                        class="flex-shrink-0 ml-4 text-gray-500 hover:text-gray-700 focus:outline-none">
+                        class="flex-shrink-0 ml-4 text-white/60 hover:text-white/90 focus:outline-none">
                   <span class="material-icons text-sm">close</span>
                 </button>
               </div>
@@ -825,262 +851,321 @@ const handleToastClick = (toast) => {
 </template>
 
 <style scoped>
-/* Add these styles to ensure smooth transitions */
-.sidebar-text {
-  transition: opacity 0.3s ease;
+/* Ocean theme styling for sidebar */
+.oceanic-glass-sidebar {
+  background: rgba(0, 51, 102, 0.9);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
 }
 
-@media (max-width: 768px) {
-  .sidebar-text {
-    display: inline !important; /* Force show text on mobile when menu is open */
-  }
-
-  .hidden.sidebar-text {
-    display: none !important;
-  }
+.oceanic-glass-panel {
+  background: rgba(0, 51, 102, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Add this to ensure dropdown text behaves correctly */
-.dropdown-menu-text {
-  transition: opacity 0.3s ease;
+/* Ocean gradient text */
+.ocean-text-gradient {
+  background: linear-gradient(to right, #ffffff, #4dabf7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-@media (min-width: 768px) {
-  .dropdown-menu-text.hidden {
-    display: none !important;
-  }
+.sidebar-logo {
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
-/* Update styles to handle fixed positioning and scrolling */
-.sidebar-text {
-  transition: opacity 0.3s ease;
-}
-
-/* Ensure proper z-index for fixed sidebar */
-.fixed {
-  z-index: 40;
-}
-
-/* Handle mobile view */
-@media (max-width: 768px) {
-  .sidebar-text {
-    display: inline !important;
-  }
-
-  .hidden.sidebar-text {
-    display: none !important;
-  }
-
-  /* Adjust sidebar for mobile */
-  .fixed {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 50;
-  }
-}
-
-/* Handle dropdown positioning */
-.dropdown-container {
-  position: absolute;
-  z-index: 60;
-}
-
-/* Add transition for sidebar */
-.fixed, .sticky {
+/* Floating buttons */
+.oceanic-float-button {
+  background: rgba(0, 51, 102, 0.85);
+  backdrop-filter: blur(8px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-.fixed {
-  z-index: 40;
-  transition: transform 0.3s ease;
+.oceanic-float-button:hover {
+  background: rgba(0, 71, 142, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
 }
 
-/* Simplified mobile styles */
-@media (max-width: 768px) {
-  .w-0 {
-    width: 0;
-    visibility: hidden;
+/* Navigation links */
+.nav-link {
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  border: 1px solid transparent;
+}
+
+.nav-link-active {
+  background: rgba(77, 171, 247, 0.3);
+  color: white;
+  border-color: rgba(77, 171, 247, 0.5);
+  font-weight: 600;
+}
+
+.nav-link-inactive {
+  color: white;
+}
+
+.nav-link-inactive:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+  background: rgba(0, 51, 102, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.dropdown-item {
+  transition: all 0.2s ease;
+  margin: 0.25rem 0.5rem;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Select styling */
+.oceanic-select {
+  background: rgba(0, 51, 102, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 0.375rem;
+  padding: 0.375rem 2rem 0.375rem 0.75rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+.oceanic-button {
+  background: rgba(77, 171, 247, 0.3);
+  color: white;
+  border-color: rgba(77, 171, 247, 0.5);
+  font-weight: 600;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.oceanic-button:hover {
+  background: rgba(77, 171, 247, 0.5);
+}
+
+/* Toast notifications */
+.toast-notification {
+  backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+  margin-bottom: 0.5rem;
+  max-width: 400px;
+}
+
+.toast-stranding {
+  background: rgba(0, 102, 204, 0.7);
+  border-left: 4px solid rgba(77, 171, 247, 0.8);
+}
+
+.toast-sighting {
+  background: rgba(0, 153, 102, 0.7);
+  border-left: 4px solid rgba(64, 192, 128, 0.8);
+}
+
+.toast-warning {
+  background: rgba(204, 153, 0, 0.7);
+  border-left: 4px solid rgba(255, 193, 7, 0.8);
+}
+
+.toast-notification:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Toast animations */
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
   }
-
-  .w-64 {
-    width: 16rem;
-    visibility: visible;
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
-/* Ensure dropdowns stay on top */
-.dropdown-container {
-  z-index: 50;
-}
-
-.sidebar {
-  transition: all 0.3s ease-in-out;
-}
-
-.sidebar.invisible {
-  pointer-events: none;
-}
-
-/* Add Toast Animation Styles */
 .toast-enter-active,
 .toast-leave-active {
   transition: all 0.3s ease;
 }
 
 .toast-enter-from {
-  transform: translateX(100%);
+  transform: translateY(100%);
   opacity: 0;
 }
 
 .toast-leave-to {
-  transform: translateX(100%);
+  transform: translateY(100%);
   opacity: 0;
 }
 
-.toast-notification {
-  animation: slideIn 0.3s ease-out;
-  max-width: calc(100vw - 2rem);
-  word-break: break-word;
-  transition: background-color 0.2s ease;
-}
-
-.toast-notification:hover {
-  transform: translateY(-1px);
-  transition: transform 0.2s ease;
-}
-
-/* Responsive styles for different screen sizes */
+/* Responsive toast handling */
 @media (max-width: 640px) {
   .toast-notification {
-    width: calc(100vw - 2rem);
-    margin-left: 1rem;
-    margin-right: 1rem;
+    width: calc(100vw - 2rem) !important;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+  }
+
+  /* Fix main content spacing on mobile */
+  .mt-16 {
+    margin-top: 4.5rem !important;
   }
 }
 
-@media (min-width: 641px) {
+@media (min-width: 641px) and (max-width: 1024px) {
   .toast-notification {
-    width: 400px;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
-/* Update existing styles */
-.sidebar {
-  transition: all 0.3s ease-in-out;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Remove any invisible class handling that might interfere with clicking */
-.sidebar.w-0 {
-  overflow: hidden;
-  visibility: hidden;
-  opacity: 0;
-}
-
-/* Ensure dropdowns are clickable */
-.dropdown-container {
-  position: absolute;
-  z-index: 60;
-  pointer-events: auto;
-}
-
-/* Update toast container styles */
-.toast-notification {
-  position: relative;
-  background: white;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  animation: slideIn 0.3s ease-out;
-  max-width: calc(100vw - 2rem);
-  word-break: break-word;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-/* Ensure proper stacking context */
-.z-40 {
-  z-index: 40;
-}
-
-.z-30 {
-  z-index: 30;
-}
-
-/* Remove any conflicting pointer-events styles */
+/* Sidebar handling on mobile */
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
-    pointer-events: auto;
+    top: 0;
+    left: 0;
   }
 
-  .sidebar.w-0 {
-    pointer-events: none;
-  }
-}
-
-/* Update toast notification styles */
-.toast-notification {
-  width: 384px; /* w-96 equivalent */
-  transform-origin: top right;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.toast-notification:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Toast animations */
-.toast-enter-active {
-  animation: toast-in-right 0.3s ease-out forwards;
-}
-
-.toast-leave-active {
-  animation: toast-out-right 0.3s ease-in forwards;
-}
-
-@keyframes toast-in-right {
-  from {
-    transform: translateX(100%);
+  .w-0 {
+    transform: translateX(-100%);
+    visibility: hidden;
     opacity: 0;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
   }
-  to {
+
+  .w-64 {
     transform: translateX(0);
+    visibility: visible;
     opacity: 1;
+    width: 16rem;
+  }
+
+  /* Update main content area to provide better padding on small screens */
+  main .mt-16 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-top: 4rem !important;
   }
 }
 
-@keyframes toast-out-right {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-/* Responsive toast width */
-@media (max-width: 640px) {
-  .toast-notification {
-    width: calc(100vw - 2rem);
-    margin-left: 1rem;
-    margin-right: 1rem;
-  }
-}
-
-/* Add text truncation */
+/* Text truncation */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.oceanic-header-panel {
+  background: rgba(0, 51, 102, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.oceanic-header-panel:hover {
+  background: rgba(0, 71, 142, 0.95);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 640px) {
+  .oceanic-header-panel {
+    max-width: calc(100vw - 7rem);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .oceanic-header-panel h2 {
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Modal styling */
+.modal-content .oceanic-glass-panel {
+  background: rgba(0, 51, 102, 0.95);
+  border: 1px solid rgba(77, 171, 247, 0.3);
+}
+
+/* Global style overrides to remove white backgrounds */
+:deep(body),
+:deep(#app),
+:deep(.min-h-screen),
+:deep(.bg-white),
+:deep(header),
+:deep(nav) {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Make floating elements more visible against the background */
+.oceanic-float-button,
+.oceanic-header-panel {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Ensure sidebar is topmost */
+.sidebar {
+  z-index: 999 !important;
+}
+
+/* Sidebar base state when closed */
+.sidebar.w-0 {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  pointer-events: none !important;
+  transform: translateX(-100%);
+  border: none !important;
 }
 </style>
