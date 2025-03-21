@@ -1065,7 +1065,7 @@ onUnmounted(() => {
                                 </p>
                             </div>
                             <div class="mt-6 flex justify-end space-x-4">
-                                <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
+                                <SecondaryButton class="text-white" @click="closeModal">Cancel</SecondaryButton>
                                 <DangerButton @click="archiveIncident">Confirm</DangerButton>
                             </div>
                         </div>
@@ -1073,7 +1073,7 @@ onUnmounted(() => {
 
                     <Modal :show="respondModalVisible" @close="respondModalVisible = false">
                         <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800">
+                            <h2 class="text-lg font-semibold text-gray-100">
                                 Can you go to the incident location now?
                             </h2>
                             <div class="mt-4 flex justify-between space-x-2">
@@ -1101,11 +1101,11 @@ onUnmounted(() => {
 
                     <Modal :show="completeModalVisible" @close="completeModalVisible = false">
                         <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800">
+                            <h2 class="text-lg font-semibold text-gray-100">
                                 Are you sure the response is finished and all species forms are complete?
                             </h2>
                             <div class="mt-6 flex justify-end space-x-4">
-                                <SecondaryButton @click="completeModalVisible = false">No</SecondaryButton>
+                                <SecondaryButton class="text-white" @click="completeModalVisible = false">No</SecondaryButton>
                                 <DangerButton @click="handleCompleteAction('yes')">Yes</DangerButton>
                             </div>
                         </div>
@@ -1113,11 +1113,11 @@ onUnmounted(() => {
 
                     <Modal :show="resolveModalVisible" @close="resolveModalVisible = false">
                         <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800">
+                            <h2 class="text-lg font-semibold text-gray-100">
                                 Do you confirm to resolve the incident?
                             </h2>
                             <div class="mt-6 flex justify-end space-x-4">
-                                <SecondaryButton @click="resolveModalVisible = false">Cancel</SecondaryButton>
+                                <SecondaryButton class="text-white" @click="resolveModalVisible = false">Cancel</SecondaryButton>
                                 <DangerButton @click="handleResolveAction('yes')">Confirm</DangerButton>
                             </div>
                         </div>
@@ -1125,7 +1125,7 @@ onUnmounted(() => {
 
                     <Modal :show="unresolveModalVisible" @close="unresolveModalVisible = false">
                         <div class="p-6">
-                            <h2 class="text-lg font-semibold text-gray-800">
+                            <h2 class="text-lg font-semibold text-gray-100">
                                 Do you confirm to unresolve the incident?
                             </h2>
                             <div class="mt-6 flex justify-end space-x-4">

@@ -4,6 +4,7 @@ import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
@@ -245,6 +246,66 @@ const closeFileModal = () => {
     showFileModal.value = false;
     currentMediaFile.value = null;
 };
+
+// Download functionality
+const showDownloadConfirmModal = ref(false);
+
+const confirmDownload = () => {
+    showDownloadConfirmModal.value = true; // Show the confirmation modal
+};
+
+const closeDownloadModal = () => {
+    showDownloadConfirmModal.value = false; // Close the modal
+};
+
+const downloadReport = () => {
+    const element = document.querySelector(".exportable-content");
+
+    // Add PDF-specific class before generating
+    element.classList.add('pdf-mode');
+
+    // Add report title and timestamp at the top
+    const reportHeader = document.createElement('div');
+    reportHeader.className = 'pdf-header';
+    reportHeader.innerHTML = `
+        <h1 style="text-align: center; font-size: 24px; color: #00366b; margin-bottom: 8px;">Marine Wildlife Sighting Report</h1>
+        <p style="text-align: center; font-size: 14px; color: #666; margin-bottom: 20px;">Generated on ${new Date().toLocaleString()}</p>
+        <div style="border-bottom: 2px solid #00366b; margin-bottom: 20px;"></div>
+    `;
+
+    // Insert the header at the beginning of the content
+    element.insertBefore(reportHeader, element.firstChild);
+
+    const options = {
+        filename: `Sighting_Report_${props.sighting.id}.pdf`,
+        margin: [15, 15, 15, 15], // Top, right, bottom, left margins
+        jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+            compress: true
+        },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            letterRendering: true
+        },
+        image: {
+            type: 'jpeg',
+            quality: 1
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    html2pdf().from(element).set(options).save().then(() => {
+        // Clean up after PDF generation
+        element.removeChild(reportHeader);
+        element.classList.remove('pdf-mode');
+        closeDownloadModal();
+    });
+};
 </script>
 
 <template>
@@ -260,6 +321,7 @@ const closeFileModal = () => {
 
             <!-- Content -->
             <div class="relative container mx-auto px-4 py-16 max-w-5xl">
+                <div class="exportable-content">
                 <!-- Success Message -->
                 <div v-if="props?.success" class="success-notification" role="alert">
                     <div class="flex-1 flex items-center">
@@ -334,6 +396,15 @@ const closeFileModal = () => {
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">gpp_bad</span>
                                     Unverify
+                                </button>
+
+                                <button
+                                    class="action-button-gradient info text-sm mb-2"
+                                    @click="confirmDownload"
+                                    v-if="isBpemoAdmin || isBpemoStaff"
+                                >
+                                    <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">download</span>
+                                    Download
                                 </button>
                             </div>
                         </div>
@@ -523,18 +594,18 @@ const closeFileModal = () => {
 
                 <Modal :show="unverifyModalVisible" @close="closeUnverifyModal">
                     <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-800">
+                        <h2 class="text-lg font-semibold text-gray-100">
                             Are you sure you want to unverify this verified sighting report?
                         </h2>
                         <div class="mt-4">
-                            <label for="bpemo-password" class="text-sm text-gray-500">
+                            <label for="bpemo-password" class="text-sm text-gray-250">
                                 Confirm by entering your password
                             </label>
                             <input
                                 type="password"
                                 id="bpemo-password"
                                 v-model="form.unverify_password"
-                                class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 placeholder="Enter your password"
                             />
                             <p v-if="form.errors.unverify_password" class="text-sm text-red-500 mt-1">
@@ -542,7 +613,7 @@ const closeFileModal = () => {
                             </p>
                         </div>
                         <div class="mt-6 flex justify-end space-x-4">
-                            <SecondaryButton @click="closeUnverifyModal">Cancel</SecondaryButton>
+                            <SecondaryButton class="text-white" @click="closeUnverifyModal">Cancel</SecondaryButton>
                             <DangerButton @click="handleUnverifyAction">Confirm</DangerButton>
                         </div>
                     </div>
@@ -551,7 +622,7 @@ const closeFileModal = () => {
                 <!-- Media Preview Modal -->
                 <Modal :show="showFileModal" @close="closeFileModal">
                     <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Media Preview</h2>
+                        <h2 class="text-lg font-semibold text-gray-100 mb-4">Media Preview</h2>
                         <div class="mt-4" v-if="currentMediaFile">
                             <template v-if="currentMediaFile.type.startsWith('image/')">
                                 <img :src="currentMediaFile.url" alt="Preview" class="w-full h-auto rounded-lg" />
@@ -565,6 +636,44 @@ const closeFileModal = () => {
                         </div>
                     </div>
                 </Modal>
+
+                <!-- Download Confirmation Modal -->
+                <Modal :show="showDownloadConfirmModal" @close="closeDownloadModal">
+                    <div class="p-6 bg-blue-900/90 backdrop-blur-md rounded-lg border border-blue-800/30">
+                        <div class="flex items-center mb-4">
+                            <div class="flex-shrink-0 bg-blue-100/20 rounded-full p-2 mr-3">
+                                <span class="material-icons material-icons-round text-blue-300">file_download</span>
+                            </div>
+                            <h3 class="text-lg font-medium text-white">
+                                Download Sighting Report
+                            </h3>
+                        </div>
+                        <div class="mt-2">
+                            <p class="text-sm text-blue-200 mb-2">
+                                You are about to download a PDF report for this marine wildlife sighting:
+                            </p>
+                            <div class="bg-blue-950/50 p-3 rounded-lg border border-blue-800/40 text-sm">
+                                <p class="text-white mb-1"><span class="text-blue-300">ID:</span> {{ props.sighting.id }}</p>
+                                <p class="text-white mb-1"><span class="text-blue-300">Date:</span> {{ props.sighting.date }}</p>
+                                <p class="text-white"><span class="text-blue-300">Status:</span> {{ props.sighting.report_status }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-4">
+                            <SecondaryButton @click="closeDownloadModal">
+                                <span class="material-icons material-icons-round text-sm mr-1">close</span>
+                                Cancel
+                            </SecondaryButton>
+                            <button
+                                class="action-button-gradient info text-sm"
+                                @click="downloadReport"
+                            >
+                                <span class="material-icons material-icons-round text-sm mr-1">download</span>
+                                Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+                </div>
             </div>
         </div>
     </Sidebar>
@@ -739,6 +848,10 @@ const closeFileModal = () => {
     background: linear-gradient(135deg, #d97706, #92400e) !important;
 }
 
+.action-button-gradient.info {
+    background: linear-gradient(135deg, #00ccff, #007bff) !important;
+}
+
 .action-button-gradient:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
@@ -787,6 +900,86 @@ const closeFileModal = () => {
     .media-item {
         height: 90px;
     }
+}
+
+/* PDF Generation Styles */
+.pdf-mode {
+    background: white !important;
+    color: #111827 !important;
+    padding: 10px !important;
+    max-width: 100% !important;
+    font-family: Arial, sans-serif !important;
+}
+
+.pdf-mode .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+}
+
+.pdf-mode .text-center {
+    text-align: center !important;
+    margin-bottom: 1rem !important;
+}
+
+.pdf-mode .profile-card {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    page-break-inside: avoid !important;
+}
+
+.pdf-mode .profile-header,
+.pdf-mode .section-header {
+    background: #f3f4f6 !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    padding: 12px 16px !important;
+}
+
+.pdf-mode .profile-title-gradient,
+.pdf-mode .section-title,
+.pdf-mode .info-card-title,
+.pdf-mode .info-row,
+.pdf-mode .species-name {
+    color: #00366b !important;
+    -webkit-text-fill-color: #00366b !important;
+    text-shadow: none !important;
+    font-weight: bold !important;
+}
+
+.pdf-mode .info-card-content,
+.pdf-mode .species-description,
+.pdf-mode p {
+    color: #374151 !important;
+}
+
+.pdf-mode .material-icons-round {
+    color: #4f46e5 !important;
+}
+
+.pdf-mode .info-card,
+.pdf-mode .info-row,
+.pdf-mode .species-card {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 8px !important;
+}
+
+.pdf-mode .success-notification,
+.pdf-mode .action-buttons {
+    display: none !important;
+}
+
+.pdf-mode #map {
+    height: 250px !important;
+    margin-bottom: 10px !important;
+    page-break-inside: avoid !important;
+}
+
+/* PDF Header styles */
+.pdf-header {
+    margin-bottom: 20px;
+    page-break-after: avoid !important;
 }
 
 /* Notifications */
