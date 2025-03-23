@@ -70,7 +70,7 @@ class StrandedSpeciesController extends Controller
         // Create the strandedSpecies record
         StrandedSpecies::create($strandedSpeciesData);
 
-        return redirect()->route('stranded.incident.view', $id)->with('success', 'Stranded Incident created successfully!');
+        return redirect()->route('stranded.incident.view', $id)->with('success', 'Detailed Species Form created successfully!');
     }
 
     public function view($id)

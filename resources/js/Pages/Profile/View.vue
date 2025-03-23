@@ -175,7 +175,7 @@ const isPublicUser = computed(() => user.user_role === 'public_user');
                             @click="updateUser"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">edit</span>
-                            Edit Profile
+                            Update Profile
                         </button>
                     </div>
                 </div>

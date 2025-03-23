@@ -196,7 +196,7 @@ const updateButton = () => {
                             @click="showArchiveModal"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">archive</span>
-                            Archive Guideline
+                            Archive
                         </button>
                         <button
                             v-else
@@ -204,7 +204,7 @@ const updateButton = () => {
                             @click="showArchiveModal"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">unarchive</span>
-                            Unarchive Guideline
+                            Unarchive
                         </button>
                         <button
                             v-if="props.guideline.is_active"
@@ -212,7 +212,7 @@ const updateButton = () => {
                             @click="updateButton"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">edit</span>
-                            Update Guideline
+                            Update
                         </button>
                     </div>
                 </div>

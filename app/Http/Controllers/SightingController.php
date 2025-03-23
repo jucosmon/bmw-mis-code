@@ -25,12 +25,8 @@ class SightingController extends Controller
         // Retrieve pending sightings based on user role with sightedSpecies relationship
         $sightings = Sighting::with('sightedSpecies.species')->where('is_active', true);
 
-        if ($user->user_role === 'public_user') {
+        if ($user->user_role === 'public_user' || $user->user_role === 'lgu_responder' || $user->user_role === 'barangay_official') {
             $sightings->where('user_id', $user->id);
-        }else if($user->user_role === 'lgu_responder'){
-            $sightings->where('municipality_id', $user->municipality_id);
-        }else if($user->user_role === 'barangay_official'){
-            $sightings->where('barangay_id', $user->barangay_id);
         }
 
         return Inertia::render('manage-sighting/index', [

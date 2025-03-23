@@ -259,7 +259,7 @@ const allowOnlyNumbers = (event) => {
                                 :class="{ 'opacity-25': form.processing }"
                                 class="oceanic-button"
                             >
-                                Update Account
+                                Save
                             </PrimaryButton>
                         </div>
                     </form>

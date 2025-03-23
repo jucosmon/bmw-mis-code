@@ -214,7 +214,7 @@ const resolvedIncidentsButton = () => {
                         <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <h3 class="mt-4 text-lg sm:text-xl font-medium text-white">No incidents found</h3>
+                        <h3 class="mt-4 text-lg sm:text-xl font-medium text-white">No stranded incidents found</h3>
                         <p class="mt-2 text-sm text-white/60">No incidents match the selected status.</p>
                     </div>
 

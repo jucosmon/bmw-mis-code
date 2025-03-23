@@ -587,7 +587,7 @@ const handleToastClick = (toast) => {
         </Link>
 
         <!-- Generate Report Dropdown -->
-        <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff'" class="relative mt-2">
+        <div v-if="user.user_role==='bpemo_admin' || user.user_role==='bpemo_staff' || user.user_role==='lgu_responder'" class="relative mt-2">
           <button
             @click="toggleDropdown('generateReport', $event)"
             class="flex flex-row items-center w-full px-4 py-2 text-sm font-semibold text-left rounded-lg nav-link nav-link-inactive"

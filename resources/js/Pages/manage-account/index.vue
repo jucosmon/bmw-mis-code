@@ -115,7 +115,6 @@ const viewUser = (user_id)=> {
                             >
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
-                                <option value="all">All</option>
                             </select>
                             <button v-if="type !== 'public_user'"
                                 type="button"
@@ -132,6 +131,7 @@ const viewUser = (user_id)=> {
 
                     <!-- User Cards -->
                     <div class="space-y-2 sm:space-y-3">
+                        <p v-if="filteredUsers.length < 1" class="text-gradient text-center mt-5">No users found</p>
                         <div v-for="user in paginatedUsers" :key="user.id" class="incident-card">
                             <div class="p-3 sm:p-4">
                                 <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center justify-between">
@@ -246,7 +246,7 @@ const viewUser = (user_id)=> {
 }
 
 .profile-title-gradient {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 1px;
@@ -254,6 +254,16 @@ const viewUser = (user_id)=> {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.text-gradient{
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: 1px;
+    background: linear-gradient(to right, #ffffff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 /* Glass panels */

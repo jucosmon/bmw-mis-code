@@ -450,7 +450,7 @@ const getFileName = (file) => {
                             :disabled="form.processing"
                             class="create-button"
                             :class="{ 'opacity-25': form.processing }">
-                Update Guideline
+                Update
               </PrimaryButton>
             </div>
           </form>

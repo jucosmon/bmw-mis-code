@@ -457,7 +457,7 @@ const getConditionDescription = (code) => {
                 <div class="mt-6 flex justify-end space-x-3">
                     <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
                     <DangerButton @click="archiveIncident">
-                        {{ props.strandedSpecies.is_active ? 'Archive' : 'Unarchive' }}
+                        Confirm
                     </DangerButton>
                 </div>
             </div>

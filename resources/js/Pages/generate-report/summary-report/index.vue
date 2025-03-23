@@ -1,7 +1,7 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale, LineController, LineElement, PieController, PointElement, Tooltip } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import html2canvas from 'html2canvas';
@@ -19,6 +19,8 @@ const filters = ref({
     category: '',
     eventType: ''
 });
+
+const page = usePage();
 
 const years = ref([2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]);
 const municipalities = ref([]);
@@ -1157,7 +1159,7 @@ const hasDataForChart = (chartName) => {
                         <button @click="showDownloadConfirmation" class="action-button primary-button" data-action="download">
                             <i class="fas fa-file-pdf mr-1"></i>PDF
                         </button>
-                        <button @click="showExportConfirmation" class="action-button primary-button" data-action="export">
+                        <button v-if="page.props.auth.user.user_role!=='lgu_responder'" @click="showExportConfirmation" class="action-button primary-button" data-action="export">
                             <i class="fas fa-file-excel mr-1"></i>Excel
                         </button>
                     </div>

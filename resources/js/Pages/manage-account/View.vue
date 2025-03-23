@@ -253,7 +253,7 @@ const disableUser = ()=> {
                             @click="confirmDisableUser"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">block</span>
-                            Disable Account
+                            Disable
                         </button>
                         <button
                             v-if="props.user.is_active===false"
@@ -261,14 +261,14 @@ const disableUser = ()=> {
                             @click="confirmDisableUser"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">check_circle</span>
-                            Activate Account
+                            Activate
                         </button>
                         <button
                             class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center group"
                             @click="updateUser()"
                         >
                             <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">edit</span>
-                            Update Account
+                            Update
                         </button>
                     </div>
                 </div>

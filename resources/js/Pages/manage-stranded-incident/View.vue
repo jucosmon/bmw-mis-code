@@ -632,9 +632,9 @@ onUnmounted(() => {
                                         (props.strandedIncident.report_status==='pending' || props.strandedIncident.report_status==='false') && !isPublicUser
                                             ? 'verified' : 'edit' }}
                                     </span>
-                                    {{ (userRespondStatus === 'ongoing' || userRespondStatus === 'onsite') &&
-                                    (props.strandedIncident.report_status==='pending' || props.strandedIncident.report_status==='false') && !isPublicUser
-                                        ? 'Verify Incident' : 'Update Incident' }}
+                                    {{ ((userRespondStatus === 'ongoing' || userRespondStatus === 'onsite') &&
+                                    (props.strandedIncident.report_status==='pending')) || (props.strandedIncident.report_status==='false') && !isPublicUser
+                                        ? 'Verify Incident' : 'Update' }}
                                 </button>
                                 <button
                                     v-if="respondButtonStatus"
@@ -972,7 +972,7 @@ onUnmounted(() => {
                                         @click="submitComment"
                                     >
                                         <span class="material-icons material-icons-round text-sm mr-1">send</span>
-                                        Post
+                                        Submit
                                     </button>
                                 </div>
                                 <p v-if="form.errors.text" class="text-sm text-red-300 mt-1">{{ form.errors.text }}</p>
@@ -1034,7 +1034,7 @@ onUnmounted(() => {
                                         </button>
                                         <button class="action-button-gradient primary text-xs" @click="submitEditComment(comment.id)">
                                             <span class="material-icons material-icons-round text-xs mr-1">save</span>
-                                            Update
+                                            Save
                                         </button>
                                     </div>
                                 </div>
@@ -1102,7 +1102,7 @@ onUnmounted(() => {
                     <Modal :show="completeModalVisible" @close="completeModalVisible = false">
                         <div class="p-6">
                             <h2 class="text-lg font-semibold text-gray-100">
-                                Are you sure the response is finished and all species forms are complete?
+                                Do you confirm that the incident response is finished and all needed data are complete?
                             </h2>
                             <div class="mt-6 flex justify-end space-x-4">
                                 <SecondaryButton class="text-white" @click="completeModalVisible = false">No</SecondaryButton>
