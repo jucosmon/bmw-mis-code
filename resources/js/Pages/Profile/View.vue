@@ -15,10 +15,16 @@ const props = defineProps({
         type: Array,
         required: true,
         default: () => []
+    },
+    successMessage: {
+        type: String,
+        required: false,
+        default: ''
     }
 });
 
 const page = usePage();
+const successMessage = ref(page.props.success || '');
 const user = page.props.auth.user;
 
 const userRole = computed(() => {
@@ -51,7 +57,6 @@ const barangayName = computed(() => {
 });
 
 const showUpdatePasswordModal = ref(false);
-const successMessage = ref('');
 
 const updateUser = () => router.visit(route('profile.edit'));
 const closeModal = () => showUpdatePasswordModal.value = false;

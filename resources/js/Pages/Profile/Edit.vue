@@ -65,8 +65,15 @@ const submit = () => {
         alert("Contact number must be at least 11 digits long.");
         return; // Prevent form submission
     }
-    // Check for changes in the form data compared to page.props.auth.user
-    const hasChanges = Object.keys(form.data()).some((key) => {
+    const hasChanges = Object.keys(form.data())
+    .filter(key => {
+        // Exclude fields not applicable to public users
+        if (page.props.auth.user.user_role === 'public_user') {
+            return ['first_name', 'last_name', 'email', 'contact_number', 'birthdate', 'sex'].includes(key);
+        }
+        return true;
+    })
+    .some((key) => {
         return form.data()[key] !== page.props.auth.user[key];
     });
 
@@ -102,7 +109,10 @@ const allowOnlyNumbers = (event) => {
     <Sidebar>
         <div class="relative min-h-screen bg-image">
             <!-- Background gradient overlay -->
-            <div class="absolute inset-0 bg-gradient-overlay"></div>
+            <div class="absolute inset-0">
+                <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
+                <div class="absolute inset-0 bg-gradient-overlay"></div>
+            </div>
 
             <!-- Content -->
             <div class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16">

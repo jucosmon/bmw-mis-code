@@ -308,6 +308,7 @@ const paginatedActivities = computed(() => {
     <Head title="Dashboard" />
 
     <Sidebar>
+
         <div class="min-h-screen bg-cover bg-center relative oceanic-overlay" style="background-image: url('/images/landing.jpg')">
             <div class="relative">
                 <!-- Hero Section -->
@@ -469,14 +470,14 @@ const paginatedActivities = computed(() => {
                                             </div>
                                         </div>
                                         <div v-if="filteredActivities.length === 0"
-                                            class="text-center text-gray-500 py-4">
+                                            class="text-center text-gray-200 py-4">
                                             No recent activities
                                         </div>
 
                                         <!-- Pagination Controls -->
                                         <div v-if="filteredActivities.length > 0"
                                             class="mt-4 flex items-center justify-between border-t pt-4">
-                                            <span class="text-sm text-gray-700">
+                                            <span class="text-sm text-gray-300">
                                                 Showing {{ ((currentPage - 1) * perPage) + 1 }} to
                                                 {{ Math.min(currentPage * perPage, totalActivities) }}
                                                 of {{ totalActivities }} entries

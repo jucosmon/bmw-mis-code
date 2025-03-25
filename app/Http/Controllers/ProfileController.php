@@ -23,7 +23,8 @@ class ProfileController extends Controller
         $barangays = Barangay::all();
         return Inertia::render('Profile/View', [
             'municipalities' => $municipalities,
-            'barangays' => $barangays
+            'barangays' => $barangays,
+            'success' => session('success'),
         ]);
     }
 
@@ -52,7 +53,7 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.view');
+        return Redirect::route('profile.view')->with('success', 'Profile updated successfully');
     }
 
     /**
