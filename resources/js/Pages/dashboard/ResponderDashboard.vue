@@ -658,7 +658,7 @@ const getStatusBadgeClass = (status) => {
               <div class="p-6">
                 <h3 class="text-xl font-semibold text-white mb-4">Location Overview</h3>
                 <div class="map-container">
-                  <div id="map" class="h-[400px] md:h-[500px] rounded-lg"></div>
+                  <div id="map" class="h-[300px] md:h-[500px]"></div>
                 </div>
                 <div class="flex flex-wrap gap-2 mt-4">
                   <div v-for="status in ['Pending', 'Verified', 'Completed']"
