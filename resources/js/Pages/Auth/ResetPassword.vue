@@ -1,10 +1,8 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     email: {
@@ -99,7 +97,7 @@ const submit = () => {
                         </button>
 
                         <p class="text-center text-white text-sm mt-4">
-                            Remember your password? 
+                            Remember your password?
                             <Link :href="route('login')" class="signup-link">
                                 Sign in
                             </Link>
