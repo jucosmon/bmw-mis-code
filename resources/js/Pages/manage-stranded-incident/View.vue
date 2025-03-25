@@ -329,56 +329,74 @@ const submitComment = () => {
         form.errors.text = 'Comment cannot be empty.';
         return;
     }
-    router.post(route('stranded.incident.comment.create'), {
+
+    const commentData = {
         text: form.text,
-        stranded_incident_id: props.strandedIncident.id // Ensure this is included
-    }, {
-        onSuccess: (response) => {
-            // Create a complete comment object with all required properties
-            const newComment = {
-                id: response.props?.comment?.id || Date.now(), // Fallback to timestamp if id is missing
-                text: form.text,
-                user: page.props.auth.user, // Current user info
-                user_id: page.props.auth.user.id,
-                created_at: new Date().toLocaleString(), // Current timestamp
-                is_active: true,
-                showOptions: false
-            };
+        stranded_incident_id: props.strandedIncident.id
+    };
 
-            // Add the new comment to the local state
-            comments.value.push(newComment);
-
-            // Reset the form
-            form.text = '';
-
-            // Scroll to the new comment
-            nextTick(() => {
-                scrollToNewComment(newComment.id);
+    router.post(route('stranded.incident.comment.create'), commentData, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            // Safely get updated data
+            router.reload({
+                only: ['strandedIncident'],
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Update comments with the latest server data
+                    if (props.strandedIncident && props.strandedIncident.comments) {
+                        comments.value = props.strandedIncident.comments;
+                    }
+                    // Clear the form
+                    form.text = '';
+                    // Scroll to comments section
+                    nextTick(() => {
+                        scrollToCommentsSection();
+                    });
+                }
             });
         },
         onError: (errors) => {
-            // Handle errors (e.g., server validation issues)
-            console.error(errors);
+            console.error('Comment submission error:', errors);
             if (errors.stranded_incident_id) {
                 form.errors.stranded_incident_id = errors.stranded_incident_id[0];
             }
             if (errors.text) {
-                form.errors.text = errors.text[0]; // Capture any text errors
+                form.errors.text = errors.text[0];
             }
         },
     });
 };
 
+
 const scrollToNewComment = (commentId) => {
-    const newCommentElement = document.getElementById(`comment-${commentId}`); // Ensure this ID matches your comment element
-    if (newCommentElement) {
-        newCommentElement.scrollIntoView({ behavior: 'smooth' });
-    }
+    nextTick(() => {
+        const newCommentElement = document.getElementById(`comment-${commentId}`);
+        if (newCommentElement) {
+            newCommentElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            // Add a highlight effect to the new comment
+            newCommentElement.classList.add('comment-highlight');
+            setTimeout(() => {
+                newCommentElement.classList.remove('comment-highlight');
+            }, 2000);
+        }
+    });
 };
 
+
+
 const activeComments = computed(() => {
-    return comments.value.filter(comment => comment.is_active);
+    if (!comments.value) return [];
+
+    return comments.value
+        .filter(comment => comment && comment.is_active)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 });
+
 
 const startEditComment = (comment) => {
     editingCommentId.value = comment.id;
@@ -392,30 +410,57 @@ const cancelEditComment = () => {
 };
 
 const submitEditComment = (commentId) => {
-    router.patch(route('stranded.incident.comment.update', commentId), { text: newCommentText.value }, {
-        onSuccess: () => {
-            // Find the updated comment and update its text
-            const updatedComment = comments.value.find(comment => comment.id === commentId);
-            if (updatedComment) {
-                updatedComment.text = newCommentText.value; // Update the comment text
+    if (!commentId) {
+        console.error('Invalid comment ID');
+        return;
+    }
+
+    router.patch(route('stranded.incident.comment.update', commentId),
+        { text: newCommentText.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Reload to get fresh data
+                router.reload({
+                    only: ['strandedIncident'],
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        if (props.strandedIncident && props.strandedIncident.comments) {
+                            comments.value = props.strandedIncident.comments;
+                        }
+                        cancelEditComment();
+                    }
+                });
+            },
+            onError: (errors) => {
+                console.error('Comment update error:', errors);
             }
-            cancelEditComment(); // Reset the editing state
-        },
-        onError: (errors) => {
-            console.error(errors); // Handle any errors if needed
         }
-    });
+    );
 };
 
 const archiveComment = (commentId) => {
+    if (!commentId) {
+        console.error('Invalid comment ID');
+        return;
+    }
+
     router.patch(route('stranded.incident.comment.archive', commentId), {}, {
+        preserveScroll: true,
         onSuccess: () => {
-            // Remove the archived comment from the local state
-            comments.value = comments.value.filter(comment => comment.id !== commentId);
-            scrollToCommentsSection(); // Scroll to the comments section
+            router.reload({
+                only: ['strandedIncident'],
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (props.strandedIncident && props.strandedIncident.comments) {
+                        comments.value = props.strandedIncident.comments;
+                    }
+                    scrollToCommentsSection();
+                }
+            });
         },
         onError: (errors) => {
-            console.error(errors); // Handle any errors if needed
+            console.error('Comment archive error:', errors);
         }
     });
 };
@@ -1446,5 +1491,18 @@ onUnmounted(() => {
     transform: translateZ(0);
     will-change: transform;
     filter: drop-shadow(0 25px 25px rgb(0 0 0 / 0.6));
+}
+
+.comment-highlight {
+    animation: highlightComment 2s ease-out;
+}
+
+@keyframes highlightComment {
+    0% {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    100% {
+        background-color: transparent;
+    }
 }
 </style>
