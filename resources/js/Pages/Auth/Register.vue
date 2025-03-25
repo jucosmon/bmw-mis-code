@@ -1,9 +1,7 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -83,11 +81,13 @@ const allowOnlyNumbers = (event) => {
                         <div class="form-group col-span-4">
                             <InputLabel for="first_name" value="First Name" class="form-label" />
                             <TextInput id="first_name" type="text" v-model="form.first_name" required class="input-field" />
+                            <InputError :message="form.errors.first_name" />
                         </div>
 
                         <div class="form-group col-span-3">
                             <InputLabel for="last_name" value="Last Name" class="form-label" />
                             <TextInput id="last_name" type="text" v-model="form.last_name" required maxlength="10" class="input-field" />
+                            <InputError :message="form.errors.last_name" />
                         </div>
                     </div>
 
@@ -95,11 +95,13 @@ const allowOnlyNumbers = (event) => {
                     <div class="form-group">
                         <InputLabel for="email" value="Email" class="form-label" />
                         <TextInput id="email" type="email" v-model="form.email" required class="input-field" />
+                        <InputError :message="form.errors.email" />
                     </div>
 
                     <div class="form-group">
                         <InputLabel for="contact_number" value="Contact Number" class="form-label" />
                         <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" class="input-field" />
+                        <InputError :message="form.errors.contact_number" />
                     </div>
 
                     <!-- Two Column Layout for Date and Sex -->
@@ -107,14 +109,15 @@ const allowOnlyNumbers = (event) => {
                         <div class="form-group">
                             <InputLabel for="birthdate" value="Birth Date" class="form-label" />
                             <TextInput id="birthdate" type="date" v-model="form.birthdate" required class="input-field" />
+                            <InputError :message="form.errors.birthdate" />
                         </div>
 
                         <div class="form-group">
                             <InputLabel for="sex" value="Sex" class="form-label" />
-                            <select 
-                                id="sex" 
-                                v-model="form.sex" 
-                                required 
+                            <select
+                                id="sex"
+                                v-model="form.sex"
+                                required
                                 class="input-field select-field"
                             >
                                 <option value="" disabled selected>Select Gender</option>
@@ -130,11 +133,13 @@ const allowOnlyNumbers = (event) => {
                     <div class="form-group">
                         <InputLabel for="password" value="Password" class="form-label" />
                         <TextInput id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" required class="input-field" />
+                        <InputError :message="form.errors.password" />
                     </div>
 
                     <div class="form-group">
                         <InputLabel for="password_confirmation" value="Confirm Password" class="form-label" />
                         <TextInput id="password_confirmation" :type="showPassword ? 'text' : 'password'" v-model="form.password_confirmation" required class="input-field" />
+                        <InputError :message="form.errors.password_confirmation" />
                     </div>
 
                     <div class="flex items-center mb-2">
@@ -149,7 +154,7 @@ const allowOnlyNumbers = (event) => {
                         </button>
 
                         <p class="text-center text-white text-sm mt-3">
-                            Already have an account? 
+                            Already have an account?
                             <Link :href="route('login')" class="signup-link">Sign in</Link>
                         </p>
                     </div>
@@ -296,11 +301,11 @@ select.input-field {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .gender-option {
         width: 100%;
     }
-    
+
     .gender-button {
         width: 100%;
         justify-content: flex-start;
