@@ -829,7 +829,11 @@ const sizeOptions = [
     transform: translateY(-1px);
     border-color: rgba(147, 197, 253, 0.5);
 }
-
+.form-select option {
+    background-color: #1a365d;
+    color: white;
+    padding: 0.5rem;
+}
 /* Button styles */
 .action-button {
     padding: 0.5rem;
