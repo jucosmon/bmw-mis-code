@@ -275,33 +275,100 @@ const initializeMap = () => {
   });
 };
 
-// Use current location
+// Add getFallbackLocation helper function
+const getFallbackLocation = async () => {
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        return {
+            latitude: data.latitude,
+            longitude: data.longitude
+        };
+    } catch (error) {
+        console.error('Fallback location fetch failed:', error);
+        throw new Error('Could not retrieve fallback location');
+    }
+};
+
+// Update setLocationFromMap function
 const setLocationFromMap = async () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                locationSource.value = 'manual'; // Changed from 'gps' to 'manual'
-
-                form.latitude = latitude;
-                form.longitude = longitude;
-                showMap.value = true;
-
-                await nextTick();
-                if (!map.value) {
-                    await initializeMap();
-                } else {
-                    map.value.setView([latitude, longitude], 13);
-                    marker.value.setLatLng([latitude, longitude]);
-                }
-                await reverseGeocode(latitude, longitude);
-            },
-            () => {
-                alert('Failed to fetch current location. Please allow location access.');
-            }
-        );
-    } else {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    // Add detailed options for geolocation
+    const options = {
+        enableHighAccuracy: true, // Request most accurate location
+        timeout: 10000, // 10 seconds timeout
+        maximumAge: 0 // Don't use cached location
+    };
+
+    // Wrap geolocation in a promise for better async handling
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+
+        const { latitude, longitude } = position.coords;
+
+        // Update location source and form data
+        locationSource.value = 'manual';
+        form.latitude = latitude;
+        form.longitude = longitude;
+
+        // Show map
+        showMap.value = true;
+
+        // Ensure DOM is updated before manipulating map
+        await nextTick();
+
+        // Initialize or update map
+        if (!map.value) {
+            await initializeMap();
+        } else {
+            map.value.setView([latitude, longitude], 13);
+            marker.value.setLatLng([latitude, longitude]);
+        }
+
+        // Reverse geocode to get address details
+        await reverseGeocode(latitude, longitude);
+
+        // Success notification
+        alert(`Location found: ${latitude}, ${longitude}`);
+
+    } catch (error) {
+        // Detailed error handling
+        let errorMessage = 'Failed to fetch current location.';
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = 'Location access was denied. Please enable location permissions in your browser settings.';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information is currently unavailable. Please try again later.';
+                break;
+            case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+                break;
+        }
+
+        alert(errorMessage);
+
+        // Fallback location method
+        try {
+            const fallbackLocation = await getFallbackLocation();
+            // Use fallback location
+            form.latitude = fallbackLocation.latitude;
+            form.longitude = fallbackLocation.longitude;
+            showMap.value = true;
+            await nextTick();
+            await initializeMap();
+            await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
+            alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
+        } catch (fallbackError) {
+            console.error('Fallback location failed', fallbackError);
+        }
     }
 };
 
