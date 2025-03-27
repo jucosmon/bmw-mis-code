@@ -7,6 +7,8 @@ import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -269,6 +271,13 @@ const initializeMap = async () => {
             showMap.value = false;
             return;
         }
+          // Fix for Leaflet default icon
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: markerIcon,
+            iconUrl: markerIcon,
+            shadowUrl: markerShadow,
+        });
 
         await nextTick();
         const mapElement = document.getElementById('map');

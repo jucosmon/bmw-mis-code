@@ -6,6 +6,8 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
 
@@ -129,6 +131,13 @@ const hasValidCoordinates = computed(() => {
 onMounted(() => {
     if (hasValidCoordinates.value) {
         nextTick(() => {
+            // Fix for Leaflet default icon
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: markerIcon,
+                iconUrl: markerIcon,
+                shadowUrl: markerShadow,
+            });
             map.value = L.map('map', {
                 dragging: false,
                 scrollWheelZoom: false,

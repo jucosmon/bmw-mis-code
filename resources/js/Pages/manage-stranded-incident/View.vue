@@ -5,7 +5,10 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
+
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 
 const page = usePage();
@@ -523,6 +526,14 @@ onMounted(() => {
 });
 
 const initializeMap = () => {
+    // Fix for Leaflet default icon
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: markerIcon,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+    });
+
     map.value = L.map('map', {
       dragging: false,
       scrollWheelZoom: false,

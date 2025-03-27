@@ -6,6 +6,8 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
 
@@ -212,9 +214,15 @@ const marker = ref(null);
 // Initialize Leaflet map
 onMounted(() => {
   nextTick(() => {
-    console.log('Sighting:', props.sighting); // Log the Sighting for debugging
+    console.log('Sighting:', props.sighting);
 
-    // Initialize the map with the latitude and longitude from props
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: markerIcon,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+    });
+
     map.value = L.map('map', {
       dragging: false, // Disable dragging
       scrollWheelZoom: false, // Disable zooming with the mouse wheel
@@ -223,12 +231,10 @@ onMounted(() => {
       boxZoom: false, // Disable box zooming
     }).setView([props.sighting.latitude, props.sighting.longitude], 13);
 
-    // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map.value);
 
-    // Add a marker at the specified location (non-draggable)
     marker.value = L.marker([props.sighting.latitude, props.sighting.longitude]).addTo(map.value);
   });
 });

@@ -5,6 +5,8 @@ import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
@@ -295,6 +297,13 @@ const initializeMap = () => {
         cleanupMap();
 
         try {
+            // Fix for Leaflet default icon
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: markerIcon,
+                iconUrl: markerIcon,
+                shadowUrl: markerShadow,
+            });
             map.value = L.map('map').setView([defaultLat, defaultLng], 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

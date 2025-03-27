@@ -5,13 +5,15 @@ import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, ref, watch } from 'vue';
 
 const page = usePage();
 const formErrors = ref(null);
 const previewImages = ref([]);
-const locationSource = ref('manual'); // 'manual' or 'gps'
+const locationSource = ref('manual');
 const isGeocodingInProgress = ref(false);
 const showMap = ref(false);
 const props = defineProps({
@@ -233,6 +235,13 @@ const initializeMap = () => {
   // Default to Philippines if no coordinates are set
   const defaultLat = 12.8797;
   const defaultLng = 121.7740;
+  // Fix for Leaflet default icon
+  delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: markerIcon,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+    });
 
   map.value = L.map('map').setView([form.latitude || defaultLat, form.longitude || defaultLng], 6);
 
