@@ -265,6 +265,7 @@ const fetchData = async () => {
       species: incident.species_involved || 'Unknown',
       location: `${incident.barangay?.name || 'Unknown'}, ${incident.municipality?.name || 'Unknown'}`,
       date: incident.date,
+      time: incident.time,
       status: incident.report_status,
       latitude: incident.latitude,
       longitude: incident.longitude,
@@ -277,6 +278,7 @@ const fetchData = async () => {
       species: sighting.sighted_species?.[0]?.species?.name || 'Unknown',
       location: `${sighting.barangay?.name || 'Unknown'}, ${sighting.municipality?.name || 'Unknown'}`,
       date: sighting.date,
+      time: sighting.time,
       status: sighting.report_status,
       latitude: sighting.latitude,
       longitude: sighting.longitude,
@@ -433,7 +435,7 @@ const updateMapMarkers = () => {
           Status: ${report.status}<br>
           Location: ${report.location}<br>
           Coordinates: ${lat}, ${lng}<br>
-          Date: ${formatDate(report.date)}<br>
+          Date: ${formatDate(report.date, report.time)}<br>
           <a href="${report.viewUrl}" class="text-blue-600 hover:text-blue-800">View details</a>
         </div>
       `;
@@ -538,14 +540,23 @@ const getStatusColor = (status) => {
   return colors[status] || 'text-gray-600 bg-gray-100';
 };
 
-const formatDate = (dateString) => {
+const formatDate = (dateString, timeString) => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
+  const time = timeString || '00:00';
+
+  // Convert 24-hour time to 12-hour format
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12; // Convert 0 to 12 for midnight
+
+  const formattedTime = `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+
+  return `${date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+    year: 'numeric'
+  })} ${formattedTime}`;
 };
 
 const getMarkerColor = (status) => {
@@ -696,7 +707,7 @@ const getStatusBadgeClass = (status) => {
                           </span>
                         </div>
                         <p class="text-white/70 text-sm mt-1">{{ alert.location }}</p>
-                        <p class="text-white/60 text-xs mt-1">{{ formatDate(alert.date) }}</p>
+                        <p class="text-white/60 text-xs mt-1">{{ formatDate(alert.date, alert.time) }}</p>
                       </div>
                     </div>
                   </div>
@@ -747,7 +758,7 @@ const getStatusBadgeClass = (status) => {
                         {{ report.location }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {{ formatDate(report.date) }}
+                        {{ formatDate(report.date, report.time) }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <span
