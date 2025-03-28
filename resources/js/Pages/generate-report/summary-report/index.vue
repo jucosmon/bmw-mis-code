@@ -102,35 +102,55 @@ const fetchData = async () => {
         console.log('Sightings Data:', sightingsRes.data);
         console.log('Strandings Data:', strandingsRes.data);
 
-        // Get false reports
+        // Get false reports - First check all records to see what statuses exist
+        const [allSightingsRes, allStrandingsRes] = await Promise.all([
+            supabase
+                .from('sightings')
+                .select('id, report_status, is_active')
+                .eq('is_active', true),
+            supabase
+                .from('stranded_incidents')
+                .select('id, report_status, is_active')
+                .eq('is_active', true)
+        ]);
+
+        // Log all records to see what statuses exist
+        console.log('All Sightings Statuses:', allSightingsRes.data?.map(s => s.report_status));
+        console.log('All Strandings Statuses:', allStrandingsRes.data?.map(s => s.report_status));
+
+        // Now try to get false reports with different possible status values
         const [falseSightingsRes, falseStrandingsRes] = await Promise.all([
             supabase
                 .from('sightings')
                 .select('*')
-                .eq('report_status', 'false_report')
-                .eq('is_active', true),
+                .in('report_status', ['false_report', 'false', 'False Report', 'FALSE_REPORT']),
             supabase
                 .from('stranded_incidents')
                 .select('*')
-                .eq('report_status', 'false_report')
-                .eq('is_active', true)
+                .in('report_status', ['false_report', 'false', 'False Report', 'FALSE_REPORT'])
         ]);
 
         if (falseSightingsRes.error) throw falseSightingsRes.error;
         if (falseStrandingsRes.error) throw falseStrandingsRes.error;
 
-        // Log false reports data
+        // Add detailed logging for false reports
+        console.log('False Sightings Response:', falseSightingsRes);
+        console.log('False Strandings Response:', falseStrandingsRes);
         console.log('False Sightings Data:', falseSightingsRes.data);
         console.log('False Strandings Data:', falseStrandingsRes.data);
-
-        const verifiedAndResolvedData = [
-            ...processSightings(sightingsRes.data || []),
-            ...processStrandings(strandingsRes.data || [])
-        ];
 
         const falseReportsData = [
             ...(falseSightingsRes.data || []),
             ...(falseStrandingsRes.data || [])
+        ];
+
+        // Log the combined false reports data
+        console.log('Combined False Reports Data:', falseReportsData);
+        console.log('False Reports Count:', falseReportsData.length);
+
+        const verifiedAndResolvedData = [
+            ...processSightings(sightingsRes.data || []),
+            ...processStrandings(strandingsRes.data || [])
         ];
 
         // Apply filters to verified/resolved data

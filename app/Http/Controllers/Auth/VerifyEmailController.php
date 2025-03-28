@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Models\User;
+use App\Http\Requests\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class VerifyEmailController extends Controller
 {
@@ -14,14 +16,27 @@ class VerifyEmailController extends Controller
      */
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
-        }
+        try {
+            $user = User::find($request->route('id'));
 
-        if ($request->user()->markEmailAsVerified()) {
-            event(new Verified($request->user()));
-        }
+            if (!$user) {
+                Log::error('Email verification failed: User not found', ['id' => $request->route('id')]);
+                return redirect()->route('login')->with('error', 'Invalid verification link.');
+            }
 
-        return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+            if ($user->hasVerifiedEmail()) {
+                return redirect()->route('login')->with('status', 'Email already verified.');
+            }
+
+            $request->fulfill();
+
+            // Log the user in after verification
+            Auth::login($user);
+
+            return redirect()->route('dashboard')->with('status', 'Email verified successfully!');
+        } catch (\Exception $e) {
+            Log::error('Email verification failed: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Verification failed. Please try again.');
+        }
     }
 }

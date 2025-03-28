@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\URL;
 
 class CustomVerifyEmail extends Notification
 {
@@ -36,15 +37,21 @@ class CustomVerifyEmail extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $notifiable->getKey(), 'hash' => sha1($notifiable->getEmailForVerification())]
+        );
+
         return (new MailMessage)
             ->subject('BMWMIS New Account Created for you, Please Complete Registration')
             ->line('Welcome to Bohol Marine Wildlife Management Information System')
             ->line('Here are your login credentials:')
             ->line('Email: ' . $notifiable->email)
             ->line('Password: ' . $this->password)
-            ->line('Please log in to your account and resend the email verification to complete registration.')
-            ->action('Login', url('/login'))
-            ->line('Once you successfully logged in, go to profile and change your password.')
+            ->line('Please click the button below to verify your email address and complete registration.')
+            ->action('Verify Email Address', $verificationUrl)
+            ->line('After verification, you can log in to your account and change your password.')
             ->line('Thank you for being part of our application!');
     }
 
