@@ -160,20 +160,20 @@ const isSameLocation = (lat1, lng1, lat2, lng2, tolerance = 0.0001) => {
     return false;
 };
 
-// Add getFallbackLocation helper function
-const getFallbackLocation = async () => {
-    try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-        return {
-            latitude: data.latitude,
-            longitude: data.longitude
-        };
-    } catch (error) {
-        console.error('Fallback location fetch failed:', error);
-        throw new Error('Could not retrieve fallback location');
-    }
-};
+// // Add getFallbackLocation helper function
+// const getFallbackLocation = async () => {
+//     try {
+//         const response = await fetch('https://ipapi.co/json/');
+//         const data = await response.json();
+//         return {
+//             latitude: data.latitude,
+//             longitude: data.longitude
+//         };
+//     } catch (error) {
+//         console.error('Fallback location fetch failed:', error);
+//         throw new Error('Could not retrieve fallback location');
+//     }
+// };
 
 // Update setLocationFromMap function
 const setLocationFromMap = async () => {
@@ -240,20 +240,20 @@ const setLocationFromMap = async () => {
 
         alert(errorMessage);
 
-        // Fallback location method
-        try {
-            const fallbackLocation = await getFallbackLocation();
-            // Use fallback location
-            form.latitude = fallbackLocation.latitude;
-            form.longitude = fallbackLocation.longitude;
-            showMap.value = true;
-            await nextTick();
-            await initializeMap();
-            await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
-            alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
-        } catch (fallbackError) {
-            console.error('Fallback location failed', fallbackError);
-        }
+        // // Fallback location method
+        // try {
+        //     const fallbackLocation = await getFallbackLocation();
+        //     // Use fallback location
+        //     form.latitude = fallbackLocation.latitude;
+        //     form.longitude = fallbackLocation.longitude;
+        //     showMap.value = true;
+        //     await nextTick();
+        //     await initializeMap();
+        //     await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
+        //     alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
+        // } catch (fallbackError) {
+        //     console.error('Fallback location failed', fallbackError);
+        // }
     }
 };
 

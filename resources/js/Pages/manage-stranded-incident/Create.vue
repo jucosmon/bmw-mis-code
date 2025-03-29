@@ -275,20 +275,20 @@ const initializeMap = () => {
   });
 };
 
-// Add getFallbackLocation helper function
-const getFallbackLocation = async () => {
-    try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-        return {
-            latitude: data.latitude,
-            longitude: data.longitude
-        };
-    } catch (error) {
-        console.error('Fallback location fetch failed:', error);
-        throw new Error('Could not retrieve fallback location');
-    }
-};
+// // Add getFallbackLocation helper function
+// const getFallbackLocation = async () => {
+//     try {
+//         const response = await fetch('https://ipapi.co/json/');
+//         const data = await response.json();
+//         return {
+//             latitude: data.latitude,
+//             longitude: data.longitude
+//         };
+//     } catch (error) {
+//         console.error('Fallback location fetch failed:', error);
+//         throw new Error('Could not retrieve fallback location');
+//     }
+// };
 
 // Update setLocationFromMap function
 const setLocationFromMap = async () => {
@@ -355,20 +355,20 @@ const setLocationFromMap = async () => {
 
         alert(errorMessage);
 
-        // Fallback location method
-        try {
-            const fallbackLocation = await getFallbackLocation();
-            // Use fallback location
-            form.latitude = fallbackLocation.latitude;
-            form.longitude = fallbackLocation.longitude;
-            showMap.value = true;
-            await nextTick();
-            await initializeMap();
-            await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
-            alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
-        } catch (fallbackError) {
-            console.error('Fallback location failed', fallbackError);
-        }
+        // // Fallback location method
+        // try {
+        //     const fallbackLocation = await getFallbackLocation();
+        //     // Use fallback location
+        //     form.latitude = fallbackLocation.latitude;
+        //     form.longitude = fallbackLocation.longitude;
+        //     showMap.value = true;
+        //     await nextTick();
+        //     await initializeMap();
+        //     await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
+        //     alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
+        // } catch (fallbackError) {
+        //     console.error('Fallback location failed', fallbackError);
+        // }
     }
 };
 
@@ -789,7 +789,15 @@ watch(showMap, async (newValue) => {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <InputLabel for="municipality_id" value="Municipality" />
-                    <select v-model="form.municipality_id" class="form-select" :disabled="locationSource === 'gps' && isGeocodingInProgress">
+                    <select v-model="form.municipality_id" class="form-select"
+                    :disabled="locationSource === 'gps' && isGeocodingInProgress"
+                    @blur="markFieldAsTouched('municipality_id')"
+                        :class="{
+                        'input-required': getFieldState('municipality_id').isTouched &&
+                                        getFieldState('municipality_id').isEmpty,
+                        'input-valid': form.municipality_id
+                        }"
+                        >
                       <option value="" disabled>Select a municipality</option>
                       <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
                         {{ municipality.name }}
@@ -800,7 +808,15 @@ watch(showMap, async (newValue) => {
 
                   <div>
                     <InputLabel for="barangay_id" value="Barangay" />
-                    <select v-model="form.barangay_id" class="form-select" :disabled="locationSource === 'gps' && isGeocodingInProgress">
+                    <select v-model="form.barangay_id" class="form-select"
+                    :disabled="locationSource === 'gps' && isGeocodingInProgress"
+                    @blur="markFieldAsTouched('barangay_id')"
+                        :class="{
+                        'input-required': getFieldState('barangay_id').isTouched &&
+                                        getFieldState('barangay_id').isEmpty,
+                        'input-valid': form.barangay_id
+                        }"
+                        >
                       <option value="" disabled>Select a barangay</option>
                       <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
                         {{ barangay.name }}
