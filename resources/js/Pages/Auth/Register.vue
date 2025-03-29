@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -142,9 +143,9 @@ const allowOnlyNumbers = (event) => {
                         <InputError :message="form.errors.password_confirmation" />
                     </div>
 
-                    <div class="flex items-center mb-2">
-                        <input type="checkbox" id="show-password" v-model="showPassword" class="checkbox-field">
-                        <label for="show-password" class="text-sm text-white ml-2">Show Password</label>
+                    <div class="flex my-4">
+                        <Checkbox name="showPassword" v-model:checked="showPassword" />
+                        <span class="ms-2 text-sm text-white">Show Password</span>
                     </div>
 
                     <!-- Submit Button -->

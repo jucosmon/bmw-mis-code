@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -32,6 +33,8 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const showPassword = ref(false);
 
 const isPublicUser  = computed(() => page.props.auth.user.user_role === 'public_user');
 const isBpemoAdmin = computed(() => page.props.auth.user.user_role === 'bpemo_admin');
@@ -581,7 +584,7 @@ const downloadReport = () => {
                                 Confirm by entering your password
                             </label>
                             <input
-                                type="password"
+                                :type="showPassword ? 'text' : 'password'"
                                 id="admin-password"
                                 v-model="form.password"
                                 class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -590,6 +593,11 @@ const downloadReport = () => {
                             <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
                                 {{ form.errors.password }}
                             </p>
+                        </div>
+
+                        <div class="flex my-4">
+                            <Checkbox name="showPassword" v-model:checked="showPassword" />
+                            <span class="ms-2 text-sm text-white">Show Password</span>
                         </div>
                         <div class="mt-6 flex justify-end space-x-4">
                             <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
@@ -608,7 +616,7 @@ const downloadReport = () => {
                                 Confirm by entering your password
                             </label>
                             <input
-                                type="password"
+                                :type="showPassword ? 'text' : 'password'"
                                 id="bpemo-password"
                                 v-model="form.unverify_password"
                                 class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -617,6 +625,10 @@ const downloadReport = () => {
                             <p v-if="form.errors.unverify_password" class="text-sm text-red-500 mt-1">
                                 {{ form.errors.unverify_password }}
                             </p>
+                        </div>
+                        <div class="flex my-4">
+                            <Checkbox name="showPassword" v-model:checked="showPassword" />
+                            <span class="ms-2 text-sm text-white">Show Password</span>
                         </div>
                         <div class="mt-6 flex justify-end space-x-4">
                             <SecondaryButton class="text-white" @click="closeUnverifyModal">Cancel</SecondaryButton>

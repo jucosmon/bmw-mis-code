@@ -4,6 +4,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineProps({
     canResetPassword: {
@@ -19,6 +20,8 @@ const form = useForm({
     password: '',
     remember: false,
 });
+
+const showPassword = ref(false);
 
 const submit = () => {
     form.post(route('login'), {
@@ -68,13 +71,18 @@ const submit = () => {
                         <InputLabel for="password" value="Password" class="text-white" />
                         <TextInput
                             id="password"
-                            type="password"
+                            :type="showPassword ? 'text' : 'password'"
                             v-model="form.password"
                             required
                             autocomplete="current-password"
                             class="input-field"
                         />
                         <InputError :message="form.errors.password" />
+                    </div>
+
+                    <div class="flex my-4">
+                        <Checkbox name="showPassword" v-model:checked="showPassword" />
+                        <span class="ms-2 text-sm text-white">Show Password</span>
                     </div>
 
                     <div class="mt-4 flex items-center justify-between">

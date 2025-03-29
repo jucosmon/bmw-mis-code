@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -20,6 +21,7 @@ const props = defineProps({
 
 const passwordInput = ref(null);
 const currentPasswordInput = ref(null);
+const showPassword = ref(false);
 
 const form = useForm({
     current_password: '',
@@ -68,7 +70,7 @@ const updatePassword = () => {
                         id="current_password"
                         ref="currentPasswordInput"
                         v-model="form.current_password"
-                        type="password"
+                        :type="showPassword ? 'text' : 'password'"
                         class="input-field"
                         autocomplete="current-password"
                     />
@@ -81,7 +83,7 @@ const updatePassword = () => {
                         id="password"
                         ref="passwordInput"
                         v-model="form.password"
-                        type="password"
+                        :type="showPassword ? 'text' : 'password'"
                         class="input-field"
                         autocomplete="new-password"
                     />
@@ -93,12 +95,16 @@ const updatePassword = () => {
                     <TextInput
                         id="password_confirmation"
                         v-model="form.password_confirmation"
-                        type="password"
+                        :type="showPassword ? 'text' : 'password'"
                         class="input-field"
                         autocomplete="new-password"
                     />
                     <InputError :message="form.errors.password_confirmation" class="mt-2" />
                 </div>
+                <div class="flex my-4">
+                        <Checkbox name="showPassword" v-model:checked="showPassword" />
+                        <span class="ms-2 text-sm text-white">Show Password</span>
+                    </div>
 
                 <div class="flex items-center justify-between gap-4">
                     <button

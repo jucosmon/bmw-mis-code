@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -8,7 +9,6 @@ import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
-
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 
 const page = usePage();
@@ -41,6 +41,7 @@ const props = defineProps({
         default: () => [],
     },
 });
+const showPassword = ref(false);
 const comments = ref(props.strandedIncident.comments || []);
 const editingCommentId = ref(null);
 const newCommentText = ref('');
@@ -1110,7 +1111,7 @@ onUnmounted(() => {
                                     Confirm by entering your password
                                 </label>
                                 <input
-                                    type="password"
+                                    :type="showPassword ? 'text' : 'password'"
                                     id="admin-password"
                                     v-model="form.password"
                                     class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -1119,6 +1120,10 @@ onUnmounted(() => {
                                 <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
                                     {{ form.errors.password }}
                                 </p>
+                            </div>
+                            <div class="flex my-4">
+                                <Checkbox name="showPassword" v-model:checked="showPassword" />
+                                <span class="ms-2 text-sm text-white">Show Password</span>
                             </div>
                             <div class="mt-6 flex justify-end space-x-4">
                                 <SecondaryButton class="text-white" @click="closeModal">Cancel</SecondaryButton>

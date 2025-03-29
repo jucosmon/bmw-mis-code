@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -16,6 +17,8 @@ const props = defineProps({
     barangays: Array,
     success: String,
 });
+
+const showPassword = ref(false);
 
 // Defined routes based on the current user's role
 const backRoute = computed(() => {
@@ -285,7 +288,7 @@ const disableUser = ()=> {
                                 Please confirm by entering your password
                             </label>
                             <input
-                                type="password"
+                                :type="showPassword ? 'text' : 'password'"
                                 id="admin-password"
                                 v-model="form.password"
                                 class="text-black mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -294,6 +297,10 @@ const disableUser = ()=> {
                             <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
                                 {{ form.errors.password }}
                             </p>
+                        </div>
+                        <div class="flex my-4">
+                            <Checkbox name="showPassword" v-model:checked="showPassword" />
+                            <span class="ms-2 text-sm text-white">Show Password</span>
                         </div>
 
                         <div class="mt-6 space-x-4 flex justify-end">

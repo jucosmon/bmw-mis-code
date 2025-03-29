@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -15,6 +16,8 @@ const form = useForm({
     is_active: true,
     password: '',
 });
+
+const showPassword = ref(false);
 // Sort items by count when the component is initialized
 const sortedItems = computed(() => {
     return [...props.guideline.items].sort((a, b) => a.count - b.count);
@@ -263,7 +266,7 @@ const updateButton = () => {
                                 Please confirm by entering your password
                             </label>
                             <input
-                                type="password"
+                                :type="showPassword ? 'text' : 'password'"
                                 id="admin-password"
                                 v-model="form.password"
                                 class="text-black mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -273,6 +276,11 @@ const updateButton = () => {
                                 {{ form.errors.password }}
                             </p>
                         </div>
+                        <div class="flex my-4">
+                            <Checkbox name="showPassword" v-model:checked="showPassword" />
+                            <span class="ms-2 text-sm text-white">Show Password</span>
+                        </div>
+
 
                         <div class="mt-6 space-x-4 flex justify-end">
                             <SecondaryButton @click="closeArchiveModal">Cancel</SecondaryButton>

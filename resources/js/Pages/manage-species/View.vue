@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -15,7 +16,7 @@ const props = defineProps({
     },
     success: String,
 });
-
+const showPassword = ref(false);
 const backRoute = computed(() => {
     return route('species.index');
 });
@@ -338,7 +339,7 @@ const closeFileModal = () => {
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <input
-                            type="password"
+                            :type="showPassword ? 'text' : 'password'"
                             id="admin-password"
                             v-model="form.password"
                             class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -349,7 +350,10 @@ const closeFileModal = () => {
                         {{ form.errors.password }}
                     </p>
                 </div>
-
+                <div class="flex my-4">
+                    <Checkbox name="showPassword" v-model:checked="showPassword" />
+                    <span class="ms-2 text-sm text-white">Show Password</span>
+                </div>
                 <div class="mt-6 flex justify-end space-x-3">
                     <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
                     <DangerButton @click="archiveSpecies">

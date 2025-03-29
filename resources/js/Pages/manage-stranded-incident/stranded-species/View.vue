@@ -1,4 +1,5 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -10,7 +11,6 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
-
 
 
 const page = usePage();
@@ -42,6 +42,7 @@ const form = useForm({
     stranded_incident_id: props.strandedIncident.id,
 });
 
+const showPassword = ref(false);
 // Routes
 const backRoute = computed(() => {
     return route('stranded.incident.view', { id: props.strandedIncident.id });
@@ -451,7 +452,7 @@ const getConditionDescription = (code) => {
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <input
-                            type="password"
+                            :type="showPassword ? 'text' : 'password'"
                             id="admin-password"
                             v-model="form.password"
                             class="bg-blue-950/50 border border-blue-800/40 text-white mt-1 block w-full px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -462,7 +463,10 @@ const getConditionDescription = (code) => {
                         {{ form.errors.password }}
                     </p>
                 </div>
-
+                <div class="flex my-4">
+                    <Checkbox name="showPassword" v-model:checked="showPassword" />
+                    <span class="ms-2 text-sm text-white">Show Password</span>
+                </div>
                 <div class="mt-6 flex justify-end space-x-3">
                     <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
                     <DangerButton @click="archiveIncident">

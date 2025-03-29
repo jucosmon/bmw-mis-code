@@ -1,8 +1,10 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     email: {
@@ -27,6 +29,10 @@ const submit = () => {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
+
+// State for the "Show Password" checkbox
+const showPassword = ref(false);
+
 </script>
 
 <template>
@@ -68,7 +74,7 @@ const submit = () => {
                         <InputLabel for="password" value="New Password" class="text-white" />
                         <TextInput
                             id="password"
-                            type="password"
+                            :type="showPassword ? 'text' : 'password'"
                             v-model="form.password"
                             required
                             class="input-field"
@@ -80,12 +86,16 @@ const submit = () => {
                         <InputLabel for="password_confirmation" value="Confirm Password" class="text-white" />
                         <TextInput
                             id="password_confirmation"
-                            type="password"
+                            :type="showPassword ? 'text' : 'password'"
                             v-model="form.password_confirmation"
                             required
                             class="input-field"
                         />
                         <InputError :message="form.errors.password_confirmation" />
+                    </div>
+                    <div class="flex my-4">
+                        <Checkbox name="showPassword" v-model:checked="showPassword" />
+                        <span class="ms-2 text-sm text-white">Show Password</span>
                     </div>
 
                     <div class="mt-6">
