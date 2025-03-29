@@ -433,6 +433,48 @@ const renderCharts = async () => {
                     );
                 }
 
+                // Configure datalabels based on chart type
+                let datalabelsConfig = {
+                    display: true,
+                    color: 'white',
+                    textStrokeColor: 'rgba(0, 0, 0, 0.5)',
+                    textStrokeWidth: 2,
+                    textShadowBlur: 5,
+                    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        top: 4,
+                        bottom: 4
+                    }
+                };
+
+                // Customize datalabels for bar charts (Category Trends and Condition Frequency)
+                if (chart.type === 'bar') {
+                    datalabelsConfig = {
+                        ...datalabelsConfig,
+                        align: 'center',
+                        anchor: 'center',
+                        formatter: (value) => {
+                            return value > 0 ? value : ''; // Only show label if value is greater than 0
+                        }
+                    };
+                } else if (chart.type === 'pie') {
+                    datalabelsConfig = {
+                        ...datalabelsConfig,
+                        align: 'center',
+                        anchor: 'center'
+                    };
+                } else {
+                    datalabelsConfig = {
+                        ...datalabelsConfig,
+                        align: 'top',
+                        anchor: 'end'
+                    };
+                }
+
                 // Create chart based on type
                 const chartInstance = new Chart(ctx, {
                     type: chart.type,
@@ -450,7 +492,9 @@ const renderCharts = async () => {
                             pointHoverBackgroundColor: chart.type === 'line' ? '#fff' : undefined,
                             pointHoverBorderColor: chart.type === 'line' ? 'rgba(77, 171, 247, 1)' : undefined,
                             pointRadius: chart.type === 'line' ? 4 : undefined,
-                            tension: chart.type === 'line' ? 0.4 : undefined
+                            tension: chart.type === 'line' ? 0.4 : undefined,
+                            // Add minimum bar height for better label visibility
+                            minBarLength: chart.type === 'bar' ? 20 : undefined
                         }]
                     },
                     options: {
@@ -471,25 +515,7 @@ const renderCharts = async () => {
                                     padding: 20
                                 }
                             },
-                            datalabels: {
-                                display: true,
-                                color: 'white',
-                                textStrokeColor: 'rgba(0, 0, 0, 0.5)',
-                                textStrokeWidth: 2,
-                                textShadowBlur: 5,
-                                textShadowColor: 'rgba(0, 0, 0, 0.5)',
-                                align: chart.type === 'pie' ? 'center' : 'top',
-                                anchor: chart.type === 'pie' ? 'center' : 'end',
-                                font: {
-                                    size: 12,
-                                    weight: 'bold'
-                                },
-                                formatter: (value) => value,
-                                padding: {
-                                    top: 4,
-                                    bottom: 4
-                                }
-                            },
+                            datalabels: datalabelsConfig,
                             tooltip: {
                                 backgroundColor: 'rgba(0, 51, 102, 0.8)',
                                 titleColor: '#fff',
@@ -1125,37 +1151,37 @@ const hasDataForChart = (chartName) => {
                 </div>
 
                 <!-- Stats Row - Redesigned to be more compact -->
-                <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="grid grid-cols-3 mb-4">
                     <div class="glass-container p-3">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-blue-100 rounded-md p-2">
+                            <div class="flex-shrink-0 bg-blue-100 rounded-md p-2 hidden md:block">
                                 <i class="fas fa-clipboard-list text-blue-600 text-lg"></i>
                             </div>
                             <div class="ml-3 w-0 flex-1">
                                 <div class="text-xs font-medium text-white text-opacity-70 truncate">Total Reports</div>
-                                <div class="text-xl font-semibold text-white">{{ summaryData.totalEvents }}</div>
+                                <div class="text-md md:text-xl font-semibold text-white">{{ summaryData.totalEvents }}</div>
                             </div>
                         </div>
                     </div>
                     <div class="glass-container p-3">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-green-100 rounded-md p-2">
+                            <div class="flex-shrink-0 bg-green-100 rounded-md p-2 hidden md:block">
                                 <i class="fas fa-fish text-green-600 text-lg"></i>
                             </div>
                             <div class="ml-3 w-0 flex-1">
                                 <div class="text-xs font-medium text-white text-opacity-70 truncate">Species Involved</div>
-                                <div class="text-xl font-semibold text-white">{{ summaryData.totalSpecies }}</div>
+                                <div class="text-md md:text-xl font-semibold text-white">{{ summaryData.totalSpecies }}</div>
                             </div>
                         </div>
                     </div>
                     <div class="glass-container p-3">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-red-100 rounded-md p-2">
+                            <div class="flex-shrink-0 bg-red-100 rounded-md p-2 hidden md:block">
                                 <i class="fas fa-exclamation-triangle text-red-600 text-lg"></i>
                             </div>
                             <div class="ml-3 w-0 flex-1">
                                 <div class="text-xs font-medium text-white text-opacity-70 truncate">False Reports</div>
-                                <div class="text-xl font-semibold text-white">{{ summaryData.falseReports }}</div>
+                                <div class="text-md md:text-xl font-semibold text-white">{{ summaryData.falseReports }}</div>
                             </div>
                         </div>
                     </div>
@@ -1320,6 +1346,10 @@ const hasDataForChart = (chartName) => {
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
     animation: modal-appear 0.3s ease-out;
+    margin: 1rem !important;
+    max-height: calc(100vh - 2rem) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
 }
 
 @keyframes modal-appear {
@@ -1824,104 +1854,6 @@ canvas.chart-canvas {
 @media (min-width: 768px) {
     .species-grid {
         grid-template-columns: 1fr 1fr;
-    }
-}
-
-/* Enhanced responsive design */
-@media (max-width: 640px) {
-    .glass-container {
-        margin: 0.5rem 0;
-        padding: 0.75rem !important;
-    }
-
-    .container {
-        padding-left: 0.75rem !important;
-        padding-right: 0.75rem !important;
-    }
-
-    .grid {
-        gap: 0.5rem !important;
-    }
-
-    .profile-title-gradient {
-        font-size: 1.25rem !important;
-    }
-
-    .action-button {
-        padding: 0.375rem 0.5rem !important;
-        font-size: 0.75rem !important;
-    }
-
-    .filter-select {
-        font-size: 0.75rem !important;
-        padding: 0.25rem 0.5rem !important;
-    }
-
-    .species-item {
-        padding: 0.375rem 0.5rem !important;
-    }
-
-    .species-name {
-        font-size: 0.75rem !important;
-    }
-
-    .species-count {
-        font-size: 0.675rem !important;
-        padding: 0.125rem 0.375rem !important;
-    }
-
-    .text-xl {
-        font-size: 1rem !important;
-    }
-
-    .text-sm {
-        font-size: 0.75rem !important;
-    }
-
-    .chart-container {
-        height: 200px !important;
-    }
-}
-
-/* Tablet responsiveness */
-@media (min-width: 641px) and (max-width: 1024px) {
-    .glass-container {
-        padding: 1rem !important;
-    }
-
-    .grid {
-        gap: 0.75rem !important;
-    }
-
-    .profile-title-gradient {
-        font-size: 1.5rem !important;
-    }
-
-    .chart-container {
-        height: 250px !important;
-    }
-}
-
-/* Adjust stat cards for better mobile display */
-@media (max-width: 768px) {
-    .stat-card {
-        padding: 0.75rem !important;
-    }
-
-    .stat-card .flex-shrink-0 {
-        padding: 0.375rem !important;
-    }
-
-    .stat-card i {
-        font-size: 0.875rem !important;
-    }
-
-    .stat-card .text-xl {
-        font-size: 1rem !important;
-    }
-
-    .stat-card .text-xs {
-        font-size: 0.625rem !important;
     }
 }
 </style>
