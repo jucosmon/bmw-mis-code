@@ -1,4 +1,5 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue';
@@ -610,7 +611,7 @@ watch(showMap, async (newValue) => {
                         <!-- Species Information Section -->
                         <div class="form-section">
                             <h3 class="section-title">
-                                <span class="material-icons mr-2">pets</span>
+                                <span class="material-icons mr-2">water_drop</span>
                                 Species Information
                             </h3>
                             <div class="grid grid-cols-1 gap-6">
@@ -846,8 +847,8 @@ watch(showMap, async (newValue) => {
                             <div class="preview-section">
                                 <h4 class="preview-title">Upload New Images</h4>
                                 <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                                    <span class="material-icons mr-2">cloud_upload</span>
-                                    Browse Files
+                                    <span class="material-icons sm:mr-3">cloud_upload</span>
+                                    <span class="hidden sm:block">Browse Files</span>
                                 </label>
                                 <input
                                     id="mediaFiles"
@@ -880,17 +881,23 @@ watch(showMap, async (newValue) => {
                         <!-- Submit and Cancel Buttons -->
                         <div class="mt-6 pt-4 border-t border-opacity-20 border-cyan-200">
                             <!-- Submit and Cancel Buttons for regular update -->
-                            <div v-if="!buttonStatus" class="flex items-center justify-between w-full">
-                                <Link :href="backRoute" class="cancel-button">Cancel</Link>
+                            <div v-if="!buttonStatus" class="flex items-center justify-end gap-4 w-full">
+                                <CustomButton
+                                    :onClick="backRoute"
+                                    variant="secondary"
+                                    icon="cancel"
+                                    >
+                                    Cancel
+                                </CustomButton>
 
-                                <button
+                                <CustomButton
                                     type="submit"
                                     :disabled="form.processing"
-                                    class="create-button"
+                                    icon="save"
                                     :class="{ 'opacity-50': form.processing }"
                                 >
-                                    Update Incident
-                                </button>
+                                    Update
+                                </CustomButton>
                             </div>
 
                             <!-- False and Verify buttons for pending cases -->
@@ -1274,8 +1281,6 @@ input[type="range"] {
     outline: none;
 }
 
-.create-button,
-.cancel-button,
 .danger-button,
 .verify-button {
     padding: 0.75rem 1.5rem;
@@ -1285,20 +1290,6 @@ input[type="range"] {
     min-width: 140px;
     text-align: center;
     transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
 }
 
 .danger-button {
@@ -1321,11 +1312,6 @@ input[type="range"] {
     justify-content: center;
 }
 
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
 
 .danger-button:hover {
     transform: translateY(-1px);
@@ -1337,8 +1323,6 @@ input[type="range"] {
     box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
-.create-button:active,
-.cancel-button:active,
 .danger-button:active,
 .verify-button:active {
     transform: translateY(0);

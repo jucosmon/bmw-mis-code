@@ -1,4 +1,5 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -952,36 +953,38 @@ watch(showMap, async (newValue) => {
             </div>
 
             <!-- Navigation Buttons -->
-            <div class="flex justify-between items-center mt-6">
-              <button
+            <div class="flex justify-end gap-4 items-center mt-6">
+              <CustomButton
                 type="button"
-                @click="previousStep"
+                variant="secondary"
+                :onClick="previousStep"
                 v-show="currentStep > 1"
-                class="cancel-button">
+                icon="arrow_back"
+                >
                 Previous
-              </button>
-              <div class="flex space-x-4">
-                <button
+              </CustomButton>
+              <div class="flex gap-4 space-x-4">
+                <CustomButton
                   v-if="currentStep < totalSteps"
                   type="button"
-                  @click="nextStep"
+                  icon="arrow_forward"
+                  :onClick="nextStep"
                   :disabled="!isStepValid"
-                  class="create-button"
                   :class="{ 'opacity-50 cursor-not-allowed': !isStepValid }">
                   Next
-                </button>
-                <button
+                </CustomButton>
+                <CustomButton
                   v-else
                   type="submit"
+                  icon="send"
                   :disabled="isSubmitting"
-                  class="create-button"
                   :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }">
                   <svg v-if="isSubmitting" class="animate-spin h-5 w-5 mr-2 inline-block" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
                   {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
-                </button>
+                </CustomButton>
               </div>
             </div>
           </form>
@@ -1140,42 +1143,6 @@ label {
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
     outline: none;
-}
-
-.create-button {
-    @apply px-6 py-2.5 text-sm font-medium;
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border-radius: 50px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.create-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #00b3e6, #00d9ff);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.cancel-button {
-    @apply px-6 py-2.5 text-sm font-medium inline-flex items-center justify-center;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.cancel-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Map styles */

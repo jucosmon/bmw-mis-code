@@ -205,22 +205,22 @@ const updateButton = () => {
                             v-if="props.guideline.is_active"
                             variant="danger"
                             :onClick="showArchiveModal"
+                            icon="archive"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">archive</span>
                             Archive
                         </CustomButton>
                         <CustomButton
                             v-else
                             :onClick="showArchiveModal"
+                            icon="unarchive"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">unarchive</span>
                             Unarchive
                         </CustomButton>
                         <CustomButton
                             v-if="props.guideline.is_active"
+                            icon="edit"
                             :onClick="updateButton"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">edit</span>
                             Update
                         </CustomButton>
                     </div>

@@ -1,5 +1,6 @@
 <script setup>
 import Checkbox from '@/Components/Checkbox.vue';
+import CustomButton from '@/Components/CustomButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -560,46 +561,38 @@ const getConditionDescription = (code) => {
                 </div>
 
                 <!-- Action Buttons Section -->
-                <div class="flex justify-end space-x-4 mb-8 action-buttons">
-                    <button
-                        class="bg-red-600/80 hover:bg-red-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-red-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="confirmArchiveSpeciesForm"
-                        v-if="props.strandedSpecies.is_active"
+                <div class="flex justify-end space-x-4 mb-8">
+                    <CustomButton
+                        :onClick="confirmDownload"
+                        icon="download"
+                        variant="secondary"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                        </svg>
-                        Archive
-                    </button>
-                    <button
-                        class="bg-green-600/80 hover:bg-green-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-green-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="confirmArchiveSpeciesForm"
-                        v-if="props.strandedSpecies.is_active === false"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                        Unarchive
-                    </button>
-
-                    <button
-                        class="bg-blue-600/80 hover:bg-blue-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-blue-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="updateSpeciesForm"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Update
-                    </button>
-                    <button
-                        class="bg-teal-600/80 hover:bg-teal-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-teal-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="confirmDownload"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
                         Download
-                    </button>
+                    </CustomButton>
+                    <CustomButton
+                        :onClick="confirmArchiveSpeciesForm"
+                        v-if="props.strandedSpecies.is_active"
+                        icon="archive"
+                        variant="danger"
+                    >
+                        Archive
+                    </CustomButton>
+                    <CustomButton
+                        :onClick="confirmArchiveSpeciesForm"
+                        v-if="props.strandedSpecies.is_active === false"
+                        icon="unarchive"
+                        variant="danger"
+                    >
+                        Unarchive
+                    </CustomButton>
+
+                    <CustomButton
+                        :onClick="updateSpeciesForm"
+                        icon="edit"
+                    >
+                        Update
+                    </CustomButton>
+
                 </div>
             </div>
         </div>
@@ -806,9 +799,6 @@ const getConditionDescription = (code) => {
 
 /* Print Styles */
 @media print {
-    .action-buttons, button {
-        display: none !important;
-    }
 
     .bg-gradient-overlay {
         background: none !important;

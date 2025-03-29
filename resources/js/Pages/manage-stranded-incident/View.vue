@@ -813,7 +813,7 @@ onUnmounted(() => {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="info-card">
                                     <div class="flex items-start">
-                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">pets</span>
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">water_drop</span>
                                         <div>
                                             <h3 class="info-card-title">Species Involved</h3>
                                             <p class="info-card-content">{{ formatValue(props.strandedIncident.species_involved) }}</p>
@@ -955,15 +955,15 @@ onUnmounted(() => {
                         <div class="section-header py-5">
                             <h2 class="section-title flex justify-between items-center w-full">
                                 <div class="flex items-center">
-                                    <span class="material-icons material-icons-round mr-3">pets</span>
-                                    Detailed Species Forms
+                                    <span class="material-icons material-icons-round mr-3">water_drop</span>
+                                    Species Forms
                                 </div>
                                 <button
                                     class="action-button-gradient primary text-sm"
                                     @click="createSpeciesForm"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1">add</span>
-                                    Add Form
+                                    <span class="hidden sm:block">Add Form</span>
                                 </button>
                             </h2>
                         </div>
@@ -1030,8 +1030,8 @@ onUnmounted(() => {
                                         class="action-button-gradient primary"
                                         @click="submitComment"
                                     >
-                                        <span class="material-icons material-icons-round text-sm mr-1">send</span>
-                                        Submit
+                                        <span class="material-icons material-icons-round text-sm sm:mr-1">send</span>
+                                        <span class="hidden sm:block">Submit</span>
                                     </button>
                                 </div>
                                 <p v-if="form.errors.text" class="text-sm text-red-300 mt-1">{{ form.errors.text }}</p>
@@ -1042,12 +1042,14 @@ onUnmounted(() => {
                                     <div class="flex justify-between items-start">
                                         <div class="flex-1">
                                             <div class="flex items-center mb-1">
-                                                <span class="material-icons material-icons-round text-sm mr-1">account_circle</span>
-                                                <p class="text-sm font-medium text-white">{{ comment.user.first_name }} {{ comment.user.last_name }}</p>
-                                                <span class="mx-2 text-white/40">•</span>
-                                                <span class="text-xs text-white/60">{{ comment.created_at }}</span>
+                                                <span class="material-icons material-icons-round text-md mr-3">account_circle</span>
+                                                <div>
+                                                    <p class="text-md font-large text-white">{{ comment.user.first_name }} {{ comment.user.last_name }}</p>
+                                                    <span class="text-xs text-white/60">{{ new Date(comment.created_at).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) }}</span>
+                                                </div>
+
                                             </div>
-                                            <p v-if="editingCommentId !== comment.id" class="text-white/90 ml-6">{{ comment.text }}</p>
+                                            <p v-if="editingCommentId !== comment.id" class="text-white/90 ml-8">{{ comment.text }}</p>
                                             <div v-else class="ml-6 mt-2">
                                                 <input
                                                     type="text"

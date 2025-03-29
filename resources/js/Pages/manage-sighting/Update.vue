@@ -1,11 +1,11 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue'; // Add this import
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -805,7 +805,7 @@ const handleDropdownClick = (index) => {
                                             class="location-button"
                                         >
                                             <span class="material-icons">my_location</span>
-                                            <span>Use Current Location</span>
+                                            <span class="hidden md:block">Use Current Location</span>
                                         </button>
                                         <button
                                             type="button"
@@ -814,7 +814,7 @@ const handleDropdownClick = (index) => {
                                             class="location-button bg-amber-600 hover:bg-amber-700"
                                         >
                                             <span class="material-icons">restart_alt</span>
-                                            <span>Reset Location</span>
+                                            <span class="hidden md:block">Reset Location</span>
                                         </button>
                                     </div>
                                 </div>
@@ -899,7 +899,7 @@ const handleDropdownClick = (index) => {
                         <!-- Sighted Species Section -->
                         <div class="form-section">
                             <h3 class="section-title">
-                                <span class="material-icons text-cyan-400 mr-2">pets</span>
+                                <span class="material-icons text-cyan-400 mr-2">water_drop</span>
                                 Species Information
                             </h3>
 
@@ -1057,38 +1057,41 @@ const handleDropdownClick = (index) => {
                         </div>
 
                         <!-- Submit and Cancel Buttons for regular update -->
-                        <div v-if="!buttonStatus" class="flex items-center justify-between mt-6">
-                            <Link :href="backRoute" class="cancel-button">Cancel</Link>
-                            <PrimaryButton
+                        <div v-if="!buttonStatus" class="flex items-center justify-end gap-4 mt-6">
+                            <CustomButton :onClick="backRoute" icon="cancel" variant="secondary">Cancel</CustomButton>
+                            <CustomButton
+                                icon="save"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="create-button"
                             >
-                                Update Sighting
-                            </PrimaryButton>
+                                Save
+                            </CustomButton>
                         </div>
 
                         <!-- False and Verify button for pending cases-->
-                        <div v-else class="flex items-center justify-end gap-5 mt-6">
-                            <button
+                        <div v-else class="flex items-center justify-end gap-4 mt-6">
+                            <CustomButton :onClick="backRoute" icon="arrow_back" variant="secondary">Cancel</CustomButton>
+
+                            <CustomButton
                                 type="button"
+                                variant="danger"
+                                icon="dangerous"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="modal-cancel-button false-button"
-                                @click="falseIncident"
+                                :onClick="falseIncident"
                                 formnovalidate
                             >
                                 Mark as False
-                            </button>
-                            <button
+                            </CustomButton>
+                            <CustomButton
                                 type="button"
+                                icon="check_circle"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="modal-confirm-button verify-button"
-                                @click="verifyIncident"
+                                :onClick="verifyIncident"
                             >
                                 Verify as True
-                            </button>
+                            </CustomButton>
                         </div>
                     </form>
                 </div>
@@ -1493,37 +1496,6 @@ select option {
 .add-button {
     color: #00ccff;
     background: rgba(0, 204, 255, 0.1);
-}
-
-.create-button,
-.cancel-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 50px;
-    min-width: 140px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-}
-
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
 }
 
 /* Modal styling */

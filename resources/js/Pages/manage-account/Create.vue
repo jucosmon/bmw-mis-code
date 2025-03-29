@@ -1,9 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
 const page = usePage();
@@ -216,16 +217,21 @@ const allowOnlyNumbers = (event) => {
                         </div>
 
                         <!-- Submit and Cancel Buttons -->
-                        <div class="flex items-center justify-between mt-6">
-                            <Link :href="backRoute" class="text-sm text-white hover:text-gray-200 underline">Cancel</Link>
-                            <button
+                        <div class="flex items-center sm:justify-between justify-end gap-4 mt-6">
+                            <CustomButton
+                                :onClick="backRoute"
+                                variant="secondary"
+                                icon="cancel"
+                                >Cancel
+                            </CustomButton>
+                            <CustomButton
                                 type="submit"
+                                icon="send"
                                 :disabled="form.processing"
-                                class="oceanic-button"
                                 :class="{ 'opacity-25': form.processing }"
                             >
-                                Create Account
-                            </button>
+                                Create
+                            </CustomButton>
                         </div>
                     </form>
                 </div>

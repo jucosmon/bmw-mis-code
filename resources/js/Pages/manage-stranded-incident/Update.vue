@@ -1,4 +1,5 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -576,7 +577,7 @@ watch(showMap, async (newValue) => {
                         <!-- Species Information Section -->
                         <div class="form-section">
                             <h3 class="section-title">
-                                <span class="material-icons mr-2">pets</span>
+                                <span class="material-icons mr-2">water_drop</span>
                                 Species Information
                             </h3>
                             <div class="grid grid-cols-1 gap-6">
@@ -808,8 +809,8 @@ watch(showMap, async (newValue) => {
                             <div class="preview-section">
                                 <h4 class="preview-title">Upload New Images</h4>
                                 <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                                    <span class="material-icons mr-2">cloud_upload</span>
-                                    Browse Files
+                                    <span class="material-icons sm:mr-2">cloud_upload</span>
+                                    <span class="hidden sm:block">Browse Files</span>
                                 </label>
                                 <input
                                     id="mediaFiles"
@@ -840,16 +841,22 @@ watch(showMap, async (newValue) => {
                         </div>
 
                         <!-- Submit and Cancel Buttons -->
-                        <div class="flex justify-between items-center mt-6">
-                            <Link :href="backRoute" class="cancel-button">Cancel</Link>
-                            <button
+                        <div class="flex justify-end gap-4 items-center mt-6">
+                            <CustomButton
+                                icon="cancel"
+                                :onClick="backRoute"
+                                variant="secondary"
+                                >
+                                    Cancel
+                            </CustomButton>
+                            <CustomButton
+                                icon="save"
                                 type="submit"
                                 :disabled="form.processing"
-                                class="create-button"
                                 :class="{ 'opacity-50': form.processing }"
                             >
-                                Update Stranded Incident
-                            </button>
+                                Update
+                            </CustomButton>
                         </div>
                     </form>
                 </div>
@@ -1153,42 +1160,6 @@ input[type="range"] {
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
     outline: none;
-}
-
-.create-button,
-.cancel-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 50px;
-    min-width: 140px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-}
-
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.create-button:active,
-.cancel-button:active {
-    transform: translateY(0);
 }
 
 /* Error Container */

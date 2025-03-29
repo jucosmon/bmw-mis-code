@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -359,7 +359,7 @@ onBeforeUnmount(() => {
             <!-- Species Selection Section -->
             <div class="form-section">
               <h3 class="section-title">
-                <span class="material-icons text-cyan-400 mr-2">pets</span>
+                <span class="material-icons text-cyan-400 mr-2">water_drop</span>
                 Species Identification
               </h3>
               <div class="sm:col-span-2">
@@ -465,7 +465,7 @@ onBeforeUnmount(() => {
                   class="location-button"
                 >
                   <span class="material-icons">my_location</span>
-                  <span>Current Location</span>
+                  <span class="hidden sm:block">Current Location</span>
                 </button>
                 <button
                   type="button"
@@ -473,7 +473,7 @@ onBeforeUnmount(() => {
                   class="location-button bg-amber-600 hover:bg-amber-700"
                 >
                   <span class="material-icons">restart_alt</span>
-                  <span>Reset Location</span>
+                  <span class="hidden sm:block">Reset Location</span>
                 </button>
               </div>
 
@@ -543,11 +543,21 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div class="flex justify-between items-center mt-6">
-              <Link :href="backRoute" class="cancel-button">Cancel</Link>
-              <PrimaryButton type="submit" class="create-button" :disabled="form.processing">
+            <div class="flex justify-end gap-4 items-center mt-6">
+              <CustomButton
+                :onClick="backRoute"
+                icon="cancel"
+                variant="secondary"
+                >
+                Cancel
+            </CustomButton>
+              <CustomButton
+                type="submit"
+                class="create-button"
+                :disabled="form.processing"
+                icon="save">
                 Update
-              </PrimaryButton>
+              </CustomButton>
             </div>
           </form>
         </div>
@@ -809,48 +819,6 @@ select option {
 .remove-location-button:hover {
   transform: translateY(-1px) scale(1.05);
   box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
-}
-
-.create-button {
-  background: linear-gradient(135deg, #00a3cc, #00ccff);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  border: none;
-  box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-  font-size: 0.875rem;
-  font-weight: 500;
-  min-width: 140px;
-  text-align: center;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.create-button:hover {
-  background: linear-gradient(135deg, #00b3cc, #00d9ff);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.cancel-button {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(4px);
-  font-size: 0.875rem;
-  font-weight: 500;
-  min-width: 140px;
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.cancel-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
 }
 
 /* Error Container */

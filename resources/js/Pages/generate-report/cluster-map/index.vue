@@ -1,4 +1,5 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
 import { Head } from '@inertiajs/vue3';
@@ -511,20 +512,14 @@ const downloadPDF = async () => {
                                     <label for="accurateGPS" class="text-sm font-medium text-white cursor-pointer">Show only GPS-verified locations</label>
                                 </div>
 
-                                <div class="flex gap-3">
-                                    <button @click="resetFilters" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors duration-300 flex items-center space-x-2 border border-white/20">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
+                                <div class="flex gap-3 justify-end">
+                                    <CustomButton :onClick="resetFilters" icon="refresh" variant="secondary" >
                                         <span>Reset Filters</span>
-                                    </button>
+                                    </CustomButton>
 
-                                    <button @click="showDownloadConfirmation" class="px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 text-white rounded-lg transition-colors duration-300 flex items-center space-x-2 border border-blue-400/30">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                        </svg>
-                                        <span>Download Map</span>
-                                    </button>
+                                    <CustomButton icon="download" :onClick="showDownloadConfirmation">
+                                        <span>Download</span>
+                                    </CustomButton>
                                 </div>
                             </div>
                         </div>
@@ -622,7 +617,7 @@ const downloadPDF = async () => {
     </Sidebar>
 
     <!-- Download Confirmation Modal -->
-    <div v-if="showDownloadModal" class="fixed inset-0 bg-blue-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div v-if="showDownloadModal" class="fixed inset-0 bg-blue-900/50 backdrop-blur-sm flex items-center justify-center z-50 mx-2">
         <div class="glass-panel p-6 rounded-xl max-w-md w-full border border-white/20">
             <h3 class="text-lg font-semibold mb-2 text-white">Download Map</h3>
             <p class="mb-6 text-white">Are you sure you want to download the current map as a PDF?</p>
@@ -699,7 +694,7 @@ const downloadPDF = async () => {
 }
 
 .glass-panel {
-    background: rgba(0, 51, 102, 0.25);
+    background: rgba(0, 51, 102, 0.75);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);

@@ -1,8 +1,8 @@
 <script setup>
 import Checkbox from '@/Components/Checkbox.vue';
+import CustomButton from '@/Components/CustomButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
@@ -161,17 +161,26 @@ const closeFileModal = () => {
                         </span>
 
                         <div v-if="page.props.auth.user.user_role==='bpemo_admin'" class="flex gap-3">
-                            <DangerButton v-if="props.species.is_active"
-                                @click="confirmArchiveSpecies">
+                            <CustomButton v-if="props.species.is_active"
+                                :onclick="confirmArchiveSpecies"
+                                variant="danger"
+                                icon="archive"
+                                >
                                 Archive
-                            </DangerButton>
-                            <DangerButton v-else
-                                @click="confirmArchiveSpecies">
+                            </CustomButton>
+                            <CustomButton v-else
+                                :onclick="confirmArchiveSpecies"
+                                variant="danger"
+                                icon="unarchive"
+                                >
                                 Unarchive
-                            </DangerButton>
-                            <PrimaryButton @click="updateSpecies">
+                            </CustomButton>
+                            <CustomButton
+                                icon="edit"
+                                :onclick="updateSpecies"
+                            >
                                 Update
-                            </PrimaryButton>
+                            </CustomButton>
                         </div>
                     </div>
                 </div>
@@ -291,7 +300,7 @@ const closeFileModal = () => {
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-medium text-gray-100">Media Preview</h2>
-                    <button @click="closeFileModal" class="text-gray-500 hover:text-gray-700">
+                    <button @click="closeFileModal" class="text-gray-100 hover:text-gray-300">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -307,9 +316,6 @@ const closeFileModal = () => {
                             Your browser does not support the video tag.
                         </video>
                     </template>
-                </div>
-                <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeFileModal">Close</SecondaryButton>
                 </div>
             </div>
         </Modal>

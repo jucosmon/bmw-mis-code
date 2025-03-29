@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -260,20 +260,21 @@ const allowOnlyNumbers = (event) => {
                         </div>
 
                         <!-- Submit and Cancel Buttons -->
-                        <div class="flex items-center justify-between mt-8">
-                            <Link
-                                :href="route('profile.view')"
-                                class="cancel-gradient-text font-medium text-base"
+                        <div class="flex items-center justify-end gap-4 sm:justify-between mt-8">
+                            <CustomButton
+                                :onClick="route('profile.view')"
+                                variant="secondary"
+                                icon="cancel"
                             >
                                 Cancel
-                            </Link>
-                            <PrimaryButton
+                            </CustomButton>
+                            <CustomButton
+                                icon="save"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="oceanic-button"
                             >
                                 Save
-                            </PrimaryButton>
+                            </CustomButton>
                         </div>
                     </form>
                 </div>

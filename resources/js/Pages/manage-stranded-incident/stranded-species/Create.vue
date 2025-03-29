@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -339,7 +339,7 @@ onBeforeUnmount(() => {
             <!-- Species Selection Section -->
             <div class="form-section">
               <h3 class="section-title">
-                <span class="material-icons text-cyan-400 mr-2">pets</span>
+                <span class="material-icons text-cyan-400 mr-2">water_drop</span>
                 Species Identification
               </h3>
               <div class="sm:col-span-2">
@@ -445,7 +445,7 @@ onBeforeUnmount(() => {
                   class="location-button"
                 >
                   <span class="material-icons">my_location</span>
-                  <span>Current Location</span>
+                  <span class="hidden sm:block">Current Location</span>
                 </button>
                 <button
                   type="button"
@@ -453,7 +453,7 @@ onBeforeUnmount(() => {
                   class="location-button bg-amber-600 hover:bg-amber-700"
                 >
                   <span class="material-icons">restart_alt</span>
-                  <span>Reset Location</span>
+                  <span class="hidden sm:block">Reset Location</span>
                 </button>
               </div>
 
@@ -523,11 +523,21 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div class="flex justify-between items-center mt-6">
-              <Link :href="backRoute" class="cancel-button">Cancel</Link>
-              <PrimaryButton type="submit" class="create-button" :disabled="form.processing">
-                Submit
-              </PrimaryButton>
+            <div class="flex justify-end gap-4 items-center mt-6">
+              <CustomButton
+                :onClick="backRoute"
+                icon="cancel"
+                variant="secondary"
+                >
+                Cancel
+            </CustomButton>
+              <CustomButton
+                type="submit"
+                icon="send"
+                :disabled="form.processing"
+                >
+                Create
+              </CustomButton>
             </div>
           </form>
         </div>

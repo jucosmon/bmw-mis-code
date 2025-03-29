@@ -441,14 +441,16 @@ const getFileName = (file) => {
             </div>
 
             <!-- Form buttons -->
-            <div class="flex justify-between items-center mt-6">
+            <div class="flex justify-end gap-4 items-center mt-6">
               <CustomButton
                     :onClick="backRoute"
+                    icon="cancel"
                     variant="secondary">
                 Cancel
               </CustomButton>
               <CustomButton type="submit"
                     :disabled="form.processing"
+                    icon="save"
                     :class="{ 'opacity-25': form.processing }">
                 Save
               </CustomButton>

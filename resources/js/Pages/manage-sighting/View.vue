@@ -665,7 +665,7 @@ const downloadReport = () => {
 
                             <div v-if="props.sightedSpecies && props.sightedSpecies.length > 0" class="mt-6">
                                 <h3 class="text-lg font-semibold text-white mb-3 flex items-center border-b border-white/10 pb-2">
-                                    <span class="material-icons material-icons-round mr-2">pets</span>
+                                    <span class="material-icons material-icons-round mr-2">water_drop</span>
                                     Sighted Species
                                 </h3>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

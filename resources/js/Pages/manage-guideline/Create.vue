@@ -302,18 +302,20 @@ const getFileName = (file) => {
           </div>
 
           <!-- Form buttons -->
-          <div class="flex justify-between items-center mt-6 m-3">
+          <div class="flex justify-end gap-4 items-center mt-6 m-3">
             <CustomButton variant="secondary"
                 type="button"
+                icon="cancel"
                 :onClick="backRoute">
               Cancel
             </CustomButton>
             <CustomButton
                 variant="primary"
+                icon="send"
                 type="submit"
                 :disabled="form.processing"
                 :class="{ 'opacity-25': form.processing }">
-              Create Guideline
+              Create
             </CustomButton>
           </div>
         </form>
