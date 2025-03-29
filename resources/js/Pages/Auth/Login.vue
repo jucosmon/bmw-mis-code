@@ -40,10 +40,9 @@ const submit = () => {
             <div class="absolute inset-0 bg-gradient-overlay"></div>
         </div>
 
-        <!-- Logo -->
-        <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-            <Link href="/" class="logo-container" style="height: 80px;"> <!-- Increased height -->
-                <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image" style="height: 100%; width: auto;"> <!-- Adjusted size -->
+        <div class="p-2 pl-2 z-10 flex mx-auto relative">
+            <Link href="/" class="flex items-center">
+            <img src="/images/white_on_trans.png" style="height: 75px;" alt="Marine Wildlife Logo">
             </Link>
         </div>
 
@@ -196,20 +195,6 @@ const submit = () => {
     transition: all 0.3s ease;
 }
 
-.logo-container {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    margin-left: 1rem;
-}
-
-.logo-image {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
-}
 
 .title-gradient-small {
     font-weight: 600;
@@ -300,11 +285,6 @@ const submit = () => {
         font-size: 0.9rem;
     }
 
-    .logo-container {
-        height: 40px;
-        padding: 0.5rem;
-    }
-
     .title-gradient-medium {
         font-size: 1rem;
     }
@@ -334,20 +314,11 @@ const submit = () => {
     .nav-button {
         padding: 0.6rem 1rem;
     }
-
-    .logo-container {
-        height: 35px;
-        padding: 0.25rem;
-    }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
     .login-container {
         margin: 4rem auto;
-    }
-
-    .logo-container {
-        display: none;
     }
 }
 

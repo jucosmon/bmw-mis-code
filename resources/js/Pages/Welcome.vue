@@ -18,13 +18,11 @@ defineProps({
         </div>
 
         <div class="relative min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-            <!-- Header - Logo Only -->
-            <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-                <div class="logo-container" style="height: 80px;"> <!-- Increased height -->
-                    <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image" style="height: 100%; width: auto;"> <!-- Adjusted size -->
+            <div class="p-2 pl-2 z-10 flex justify-start absolute top-0 left-0">
+                <div class="flex items-center h-[80px]">
+                    <img src="/images/white_on_trans.png" class="h-[80px]" alt="Marine Wildlife Logo">
                 </div>
             </div>
-
             <!-- Main Content Area -->
             <div class="text-center max-w-5xl mx-auto mt-16">
                 <h1 class="title-gradient">BOHOL MARINE WILDLIFE</h1>
@@ -176,25 +174,6 @@ defineProps({
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.logo-container {
-    height: 70px; /* Slightly increased height */
-    display: flex;
-    align-items: center;
-    margin-left: 1rem;
-}
-
-.logo-image {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
-}
-
-.logo-image:hover {
-    transform: scale(1.05);
-}
-
 .auth-buttons {
     margin-top: 1rem;
     margin-bottom: 2rem;
@@ -247,9 +226,6 @@ defineProps({
         max-width: 250px;
         padding: 0.5rem 1.5rem;
         margin: 0.25rem 0;
-    }
-    .logo-container {
-        height: 60px;
     }
 }
 
