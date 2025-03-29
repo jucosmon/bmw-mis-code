@@ -33,22 +33,23 @@ const submit = () => {
 <template>
     <Head title="Log in" />
 
-    <div class="relative min-h-screen">
+    <div class="relative min-h-screen overflow-hidden">
         <!-- Background -->
-        <div class="absolute inset-0">
+        <div class="fixed inset-0">
             <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
             <div class="absolute inset-0 bg-gradient-overlay"></div>
         </div>
 
-        <div class="p-2 pl-2 z-10 flex mx-auto relative">
+        <!-- Logo container -->
+        <div class="absolute top-0 left-0 p-4 z-20">
             <Link href="/" class="flex items-center">
-            <img src="/images/white_on_trans.png" style="height: 75px;" alt="Marine Wildlife Logo">
+                <img src="/images/white_on_trans.png" style="height: 70px;" alt="Marine Wildlife Logo">
             </Link>
         </div>
 
         <!-- Login Form Container -->
-        <div class="relative min-h-screen flex flex-col items-center justify-center px-4">
-            <div class="login-container">
+        <div class="relative z-10 min-h-screen flex items-center justify-center py-12 px-4">
+            <div class="login-container mx-auto">
                 <h2 class="title-gradient mb-6">Sign In</h2>
 
                 <form @submit.prevent="submit">
@@ -136,6 +137,7 @@ const submit = () => {
     max-width: 420px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 0 1rem;
 }
 
 .title-gradient {
@@ -194,7 +196,6 @@ const submit = () => {
     margin-left: 0.25rem;
     transition: all 0.3s ease;
 }
-
 
 .title-gradient-small {
     font-weight: 600;
@@ -264,9 +265,9 @@ const submit = () => {
 
 @media (max-width: 480px) {
     .login-container {
-        padding: 1.5rem;
-        margin: 0.5rem;
-        margin-top: 2rem;
+        padding: 2rem;
+        margin: 0 0.75rem;
+        max-width: calc(100% - 1.5rem);
     }
 
     .title-gradient {
@@ -296,9 +297,8 @@ const submit = () => {
 
 @media (max-height: 667px) {
     .login-container {
-        padding: 1.25rem;
-        margin: 1rem auto;
-        max-height: 90vh;
+        padding: 2rem;
+        margin: 1rem;
         overflow-y: auto;
     }
 

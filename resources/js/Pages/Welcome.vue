@@ -20,7 +20,7 @@ defineProps({
         <div class="relative min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
             <div class="p-2 pl-2 z-10 flex justify-start absolute top-0 left-0">
                 <div class="flex items-center h-[80px]">
-                    <img src="/images/white_on_trans.png" class="h-[80px]" alt="Marine Wildlife Logo">
+                    <img src="/images/white_on_trans.png" class="h-[70px]" alt="Marine Wildlife Logo">
                 </div>
             </div>
             <!-- Main Content Area -->

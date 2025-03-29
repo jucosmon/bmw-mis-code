@@ -29,14 +29,15 @@ const submit = () => {
             <div class="absolute inset-0 bg-gradient-overlay"></div>
         </div>
 
-        <div class="p-2 pl-2 z-10 flex mx-auto relative">
+        <!-- Logo container -->
+        <div class="relative z-20 p-2">
             <Link href="/" class="flex items-center">
-            <img src="/images/white_on_trans.png" style="height: 75px;" alt="Marine Wildlife Logo">
+                <img src="/images/white_on_trans.png" style="height: 70px;" alt="Marine Wildlife Logo">
             </Link>
         </div>
-s
+
         <!-- Forgot Password Form Container -->
-        <div class="relative min-h-screen flex flex-col items-center justify-center px-4">
+        <div class="relative z-20 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]">
             <div class="login-container">
                 <h2 class="title-gradient mb-6">Reset Password</h2>
 
@@ -102,6 +103,8 @@ s
     max-width: 420px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    z-index: 30;
 }
 
 .title-gradient {
@@ -218,7 +221,7 @@ s
     .login-container {
         padding: 1.5rem;
         margin: 0.5rem;
-        margin-top: 2rem;
+        margin-top: 0; /* Removed extra top margin */
     }
 
     .title-gradient {
@@ -248,7 +251,7 @@ s
 
 @media (max-height: 600px) {
     .login-container {
-        margin: 3rem auto;
+        margin: 1rem auto; /* Reduced margin */
     }
 }
 
