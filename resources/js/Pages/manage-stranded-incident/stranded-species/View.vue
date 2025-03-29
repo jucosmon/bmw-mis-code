@@ -4,7 +4,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
@@ -403,6 +403,10 @@ const getConditionDescription = (code) => {
 
             <!-- Main Content -->
             <div class="relative z-10 container mx-auto px-6 py-16 max-w-5xl">
+                <Link class=" ml-5 md:ml-0 mb-3 flex items-center w-fit" :href="backRoute">
+                    <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 text-sm text-white">arrow_back</span>
+                    <span class="text-lg font-semibold text-white">Back</span>
+                </Link>
                 <div class="exportable-content">
                     <!-- Main Title Header -->
                     <div class="text-center mb-10">

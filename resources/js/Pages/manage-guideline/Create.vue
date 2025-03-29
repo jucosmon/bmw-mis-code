@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import 'leaflet/dist/leaflet.css';
 import { computed, ref } from 'vue';
 
@@ -296,16 +296,18 @@ const getFileName = (file) => {
 
           <!-- Form buttons -->
           <div class="flex justify-between items-center mt-6 m-3">
-            <Link :href="backRoute"
-                  class="cancel-button">
+            <CustomButton variant="secondary"
+                type="button"
+                :onClick="backRoute">
               Cancel
-            </Link>
-            <PrimaryButton type="submit"
-                          :disabled="form.processing"
-                          class="create-button"
-                          :class="{ 'opacity-25': form.processing }">
+            </CustomButton>
+            <CustomButton
+                variant="primary"
+                type="submit"
+                :disabled="form.processing"
+                :class="{ 'opacity-25': form.processing }">
               Create Guideline
-            </PrimaryButton>
+            </CustomButton>
           </div>
         </form>
       </div>
@@ -702,42 +704,6 @@ select:focus {
 .add-button {
     color: #00ccff;
     background: rgba(0, 204, 255, 0.08);
-}
-
-.create-button {
-    @apply px-6 py-2.5 text-sm font-medium;
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border-radius: 50px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.create-button:hover {
-    background: linear-gradient(135deg, #00b3e6, #00d9ff);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.cancel-button {
-    @apply px-6 py-2.5 text-sm font-medium inline-flex items-center justify-center;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.cancel-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 select,

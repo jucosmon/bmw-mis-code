@@ -5,7 +5,7 @@ import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -120,7 +120,7 @@ const closeFileModal = () => {
             </div>
 
             <!-- Main Content -->
-            <div class="relative z-10 max-w-4xl mx-auto p-16">
+            <div class="relative z-10 max-w-6xl mx-auto py-16 px-5">
                 <!-- Success Message Container -->
                 <div v-if="props?.success"
                      class="bg-blue-100/80 border-l-4 border-blue-500 text-blue-700 px-4 py-3 mb-6 rounded shadow-md backdrop-blur-sm flex items-center">
@@ -130,7 +130,10 @@ const closeFileModal = () => {
                     <strong class="font-bold mr-1">Success!</strong>
                     <span>{{ props?.success }}</span>
                 </div>
-
+                <Link class=" ml-5 md:ml-0 mb-3 flex items-center w-fit" :href="backRoute">
+                    <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 text-sm text-white">arrow_back</span>
+                    <span class="text-lg font-semibold text-white">Back</span>
+                </Link>
                 <!-- Title and Category Container -->
                 <div class="bg-blue-900/40 backdrop-blur-md p-6 rounded-lg shadow-lg mb-6 border border-blue-800/30">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">

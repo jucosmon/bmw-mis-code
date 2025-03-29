@@ -169,7 +169,7 @@ const isStepValid = computed(() => {
              form.condition &&
              form.certainty_level;
     case 2:
-      return (form.municipality_id && form.barangay_id && form.detailed_location) ||
+      return (form.detailed_location) ||
              (locationSource.value === 'gps' && form.latitude && form.longitude);
     case 3:
       return true; // Make step 3 always valid since environmental fields are optional

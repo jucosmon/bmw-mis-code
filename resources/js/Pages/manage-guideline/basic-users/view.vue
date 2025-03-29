@@ -57,9 +57,13 @@ const backRoute = () => {
                         <p class="notification-text">{{ props?.success }}</p>
                     </div>
                 </div>
-
+                <button class="mt-10 ml-5 md:mt-0 md:ml-0 md:mb-3"  @click="backRoute">
+                    <span class="material-icons material-icons-round ml-0 mr-2 group-hover:rotate-12 text-sm">arrow_back </span>
+                    <span class="text-lg font-semibold text-white border-opacity-20">Back</span>
+                </button>
                 <!-- Guideline Card -->
                 <div class="profile-card">
+
                     <div class="guideline-header">
                         <div class="flex flex-col">
                             <h1 class="guideline-title-gradient">{{ props.guideline.title }}</h1>
@@ -125,17 +129,6 @@ const backRoute = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-4">
-                        <button
-                            class="action-button-gradient primary"
-                            @click="backRoute"
-                        >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">arrow_back</span>
-                            Back to Guidelines
-                        </button>
                     </div>
                 </div>
 

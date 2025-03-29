@@ -4,7 +4,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
@@ -516,6 +516,10 @@ const downloadReport = () => {
                         <p class="notification-text">{{ props?.success }}</p>
                     </div>
                 </div>
+                <Link class="mt-10 ml-5 md:mt-0 md:ml-0 mb-3 flex items-center w-fit" :href="backRoute">
+                    <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 text-sm text-white">arrow_back</span>
+                    <span class="text-lg font-semibold text-white">Back</span>
+                </Link>
 
                 <!-- Sighting Header Card -->
                 <div class="profile-card mb-6">

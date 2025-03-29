@@ -4,7 +4,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -625,10 +625,12 @@ onUnmounted(() => {
                         <p class="notification-text">{{ props?.success }}</p>
                     </div>
                 </div>
-
+                <Link class="mt-10 ml-5 md:mt-0 md:ml-0 mb-3 flex items-center w-fit" :href="backRoute">
+                    <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 text-sm text-white">arrow_back</span>
+                    <span class="text-lg font-semibold text-white">Back</span>
+                </Link>
                 <!-- Stranded Incident Header Card -->
                 <div class="profile-card mb-6">
-
                     <div class="profile-header">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex flex-col">

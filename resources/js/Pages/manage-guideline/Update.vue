@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage(); // Ensure page is initialized
@@ -442,16 +442,16 @@ const getFileName = (file) => {
 
             <!-- Form buttons -->
             <div class="flex justify-between items-center mt-6">
-              <Link :href="backRoute"
-                    class="cancel-button">
+              <CustomButton
+                    :onClick="backRoute"
+                    variant="secondary">
                 Cancel
-              </Link>
-              <PrimaryButton type="submit"
-                            :disabled="form.processing"
-                            class="create-button"
-                            :class="{ 'opacity-25': form.processing }">
-                Update
-              </PrimaryButton>
+              </CustomButton>
+              <CustomButton type="submit"
+                    :disabled="form.processing"
+                    :class="{ 'opacity-25': form.processing }">
+                Save
+              </CustomButton>
             </div>
           </form>
         </div>
@@ -679,42 +679,6 @@ select {
 .add-button {
     color: #00ccff;
     background: rgba(0, 204, 255, 0.1);
-}
-
-.create-button,
-.cancel-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 50px;
-    min-width: 140px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-}
-
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.create-button:active,
-.cancel-button:active {
-    transform: translateY(0);
 }
 
 /* Spacing and Layout */
