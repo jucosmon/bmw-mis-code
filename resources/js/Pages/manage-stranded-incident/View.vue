@@ -662,7 +662,7 @@ onUnmounted(() => {
                                     v-if="props.strandedIncident.is_active && archiveButtonStatus"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">cancel</span>
-                                    Cancel Report
+                                    Cancel
                                 </button>
                                 <button
                                     class="action-button-gradient success text-sm mb-2"
@@ -679,7 +679,7 @@ onUnmounted(() => {
                                     @click="updateIncident"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">edit</span>
-                                    Update Report
+                                    Update
                                 </button>
                                 <button
                                     v-if="updateButtonStatusResponder"
@@ -725,7 +725,7 @@ onUnmounted(() => {
                                     @click="showUnresolveModal"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restart_alt</span>
-                                    Unresolve Incident
+                                    Unresolve
                                 </button>
                             </div>
                         </div>

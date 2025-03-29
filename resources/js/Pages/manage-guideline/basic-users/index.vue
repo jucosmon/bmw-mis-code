@@ -117,8 +117,8 @@ const viewGuideline = (id) => {
                         </div>
 
                         <!-- Guidelines List -->
-                        <div class="space-y-3">
-                            <div v-for="guideline in filteredGuidelines" :key="guideline.id" class="incident-card">
+                        <div class="space-y-3 mx-4">
+                            <div v-for="guideline in filteredGuidelines" :key="guideline.id" class="incident-card ">
                                 <div class="p-3 sm:p-4">
                                     <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center justify-between">
                                         <!-- Title and Category -->

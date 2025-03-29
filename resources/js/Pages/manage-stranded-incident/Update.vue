@@ -1032,7 +1032,7 @@ input[type="range"] {
     top: 4px;
     right: 4px;
     padding: 4px;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.75);
     border-radius: 50%;
     color: rgba(255, 255, 255, 0.9);
     transition: all 0.2s ease;
@@ -1040,16 +1040,16 @@ input[type="range"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-}
-
-.preview-item:hover .remove-button {
     opacity: 1;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
 }
 
 .remove-button:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 0, 0, 0.75);
     transform: scale(1.1);
+    color: white;
 }
 
 /* Map Styles */
