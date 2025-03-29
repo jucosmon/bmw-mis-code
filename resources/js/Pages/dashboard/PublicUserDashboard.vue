@@ -325,20 +325,20 @@ const paginatedActivities = computed(() => {
                                 <Link v-for="species in featuredSpecies"
                                     :key="species.id"
                                     :href="route('species.view', species.id)"
-                                    class="block rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                    class="block rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                     <div class="flex justify-between items-start">
                                         <div>
-                                            <h4 class="font-medium text-cyan-900">{{ species.name }}</h4>
-                                            <p class="text-sm text-cyan-600 italic">{{ species.scientificName }}</p>
-                                            <p class="mt-1 text-sm text-cyan-700">
+                                            <h4 class="font-semibold text-slate-800">{{ species.name }}</h4>
+                                            <p class="text-sm font-medium text-slate-600 italic">{{ species.scientificName }}</p>
+                                            <p class="mt-1 text-sm font-medium text-slate-700">
                                                 Reports: {{ species.reportCount }}
                                             </p>
                                         </div>
-                                        <span class="inline-block rounded-full px-2 py-1 text-xs"
+                                        <span class="inline-block rounded-full px-2 py-1 text-xs font-medium"
                                             :class="{
-                                                'bg-red-100 text-red-800': species.status === 'Endangered',
-                                                'bg-yellow-100 text-yellow-800': species.status === 'Vulnerable',
-                                                'bg-green-100 text-green-800': species.status === 'Least Concern'
+                                                'bg-red-200 text-red-900': species.status === 'Endangered',
+                                                'bg-yellow-200 text-yellow-900': species.status === 'Vulnerable',
+                                                'bg-green-200 text-green-900': species.status === 'Least Concern'
                                             }">
                                             {{ species.status }}
                                         </span>
@@ -354,24 +354,24 @@ const paginatedActivities = computed(() => {
                                 <h3 class="mb-4 text-lg font-semibold text-white">Quick Access</h3>
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <Link :href="route('guideline.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">📋</span>
-                                        <span class="font-medium text-cyan-900">Guidelines</span>
+                                        <span class="font-semibold text-slate-800">Guidelines</span>
                                     </Link>
                                     <Link :href="route('species.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">🔍</span>
-                                        <span class="font-medium text-cyan-900">Species</span>
+                                        <span class="font-semibold text-slate-800">Species</span>
                                     </Link>
                                     <Link :href="route('stranded.incident.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">🚨</span>
-                                        <span class="font-medium text-cyan-900">Stranded Reports</span>
+                                        <span class="font-semibold text-slate-800">Stranded Reports</span>
                                     </Link>
                                     <Link :href="route('sighting.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">👁️</span>
-                                        <span class="font-medium text-cyan-900">Sighting Reports</span>
+                                        <span class="font-semibold text-slate-800">Sighting Reports</span>
                                     </Link>
                                 </div>
                             </div>
@@ -415,7 +415,7 @@ const paginatedActivities = computed(() => {
                                     <template v-else>
                                         <Link v-for="activity in paginatedActivities" :key="activity.id"
                                             :href="activity.viewUrl"
-                                            class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.01] border border-cyan-100">
+                                            class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.01] border border-cyan-200">
                                             <div class="mr-4 flex-shrink-0">
                                                 <span class="text-2xl">
                                                     {{ activity.type === 'stranded' ? '🚨' : '👁️' }}
@@ -423,23 +423,22 @@ const paginatedActivities = computed(() => {
                                             </div>
                                             <div class="flex-grow">
                                                 <div class="flex items-center gap-2 mb-1 justify-between">
-                                                    <h4 class="font-medium text-indigo-800">
+                                                    <h4 class="font-semibold text-slate-800">
                                                         {{ activity.species }}
                                                     </h4>
                                                     <span :class="[
-                                                        'inline-block rounded-full px-2 py-1 text-xs',
-                                                        activity.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                        activity.status === 'verified' ? 'bg-green-100 text-green-800' :
-                                                        activity.status === 'resolved' ? 'bg-blue-100 text-blue-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                                        'inline-block rounded-full px-2 py-1 text-xs font-medium',
+                                                        activity.status === 'pending' ? 'bg-yellow-200 text-yellow-900' :
+                                                        activity.status === 'verified' ? 'bg-green-200 text-green-900' :
+                                                        activity.status === 'resolved' ? 'bg-blue-200 text-blue-900' :
+                                                        'bg-slate-200 text-slate-900'
                                                     ]">
                                                         {{ activity.status }}
                                                     </span>
                                                 </div>
-                                                <p class="text-sm text-gray-600">{{ activity.location }}</p>
-                                                <p class="text-xs text-gray-500">{{ activity.date }}</p>
+                                                <p class="text-sm font-medium text-slate-700">{{ activity.location }}</p>
+                                                <p class="text-xs font-medium text-slate-600">{{ activity.date }}</p>
                                             </div>
-
                                         </Link>
                                         <div v-if="filteredActivities.length === 0"
                                             class="text-center text-gray-200 py-4">
@@ -736,5 +735,51 @@ const paginatedActivities = computed(() => {
 .modal-sighting-button p {
     color: rgba(255, 255, 255, 0.85);
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Add new styles */
+.bg-white\/95 {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+/* Update icon styles */
+.text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    filter: none; /* Ensures emojis are displayed clearly */
+}
+
+/* Improved text contrast */
+.text-slate-800 {
+    color: #1e293b;
+}
+
+.text-slate-700 {
+    color: #334155;
+}
+
+.text-slate-600 {
+    color: #475569;
+}
+
+/* Enhanced status badges */
+.bg-red-200 {
+    background-color: #fecaca;
+}
+
+.bg-yellow-200 {
+    background-color: #fef08a;
+}
+
+.bg-green-200 {
+    background-color: #bbf7d0;
+}
+
+/* Update border styles */
+.border-cyan-200 {
+    border-color: rgba(103, 232, 249, 0.3);
 }
 </style>
