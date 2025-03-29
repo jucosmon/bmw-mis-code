@@ -435,7 +435,8 @@ const paginatedActivities = computed(() => {
                                         Loading...
                                     </div>
                                     <template v-else>
-                                        <div v-for="activity in paginatedActivities" :key="activity.id"
+                                        <Link v-for="activity in paginatedActivities" :key="activity.id"
+                                            :href="activity.viewUrl"
                                             class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.01] border border-cyan-100">
                                             <div class="mr-4 flex-shrink-0">
                                                 <span class="text-2xl">
@@ -444,7 +445,7 @@ const paginatedActivities = computed(() => {
                                             </div>
                                             <div class="flex-grow">
                                                 <div class="flex items-center gap-2 mb-1">
-                                                    <h4 class="font-medium">{{ activity.species }}</h4>
+                                                    <h4 class="font-medium text-indigo-800">{{ activity.species }}</h4>
                                                     <span :class="[
                                                         'text-xs px-2 py-0.5 rounded-full',
                                                         activity.type === 'stranded'
@@ -468,7 +469,7 @@ const paginatedActivities = computed(() => {
                                                     {{ activity.status }}
                                                 </span>
                                             </div>
-                                        </div>
+                                        </Link>
                                         <div v-if="filteredActivities.length === 0"
                                             class="text-center text-gray-200 py-4">
                                             No recent activities

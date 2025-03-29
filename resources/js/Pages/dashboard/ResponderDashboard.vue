@@ -29,11 +29,10 @@ const roleConfig = computed(() => {
   return config;
 });
 
-// Helper function to determine location filters based on user role
 function getLocationFilter() {
   if (['bpemo_admin', 'bpemo_staff'].includes(user.value.user_role)) {
     console.log('Admin/Staff role detected - no location filter');
-    return {}; // No location filter for BPEMO roles - they see everything
+    return {};
   } else if (user.value.user_role === 'barangay_official' && user.value.barangay_id) {
     console.log('Barangay official detected - filtering by barangay:', user.value.barangay_id);
     return { barangay_id: user.value.barangay_id }; // Filter by user's barangay
@@ -42,11 +41,9 @@ function getLocationFilter() {
     return { municipality_id: user.value.municipality_id }; // Filter by user's municipality
   }
   console.log('No specific role filter applied');
-  return {}; // Default case
+  return {};
 }
 
-
-// Role-based titles and descriptions
 const dashboardTitle = computed(() => {
   switch(user.value.user_role) {
     case 'bpemo_admin': return 'BPEMO Admin Dashboard';
@@ -60,7 +57,6 @@ const dashboardTitle = computed(() => {
 const map = ref(null);
 const markers = ref([]);
 
-// Stats data
 const stats = ref({
   totalUsers: 0,
   totalStrandings: {
@@ -708,6 +704,10 @@ const getStatusBadgeClass = (status) => {
                         </div>
                         <p class="text-white/70 text-sm mt-1">{{ alert.location }}</p>
                         <p class="text-white/60 text-xs mt-1">{{ formatDate(alert.date, alert.time) }}</p>
+                        <Link :href="alert.viewUrl"
+                              class="text-blue-400 hover:text-blue-300 text-sm mt-2">
+                          View Details
+                        </Link>
                       </div>
                     </div>
                   </div>
