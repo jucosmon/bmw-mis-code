@@ -54,7 +54,7 @@ class SpeciesController extends Controller
             'shape' => 'required|in:turtle-like,shark-like,dolphin-like,dugong-like,whale-like,ray-like',
             'is_dangerous' => 'nullable|boolean',
             'mediaFiles' => 'nullable|array',
-            'mediaFiles.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+            'mediaFiles.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:25024',
             'colors' => 'nullable|array',
             'colors.*' => 'string|exists:colors,name',
         ]);

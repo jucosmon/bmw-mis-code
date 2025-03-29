@@ -121,7 +121,7 @@ class StrandedIncidentController extends Controller
             'municipality_id' => 'nullable|exists:municipalities,id',
             'barangay_id' => 'nullable|exists:barangays,id',
             'mediaFiles' => 'nullable|array',
-            'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:10240',
+            'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:25024',
         ]);
 
         // Create the strandedIncident
@@ -397,7 +397,7 @@ class StrandedIncidentController extends Controller
             'municipality_id' => 'nullable|exists:municipalities,id',
             'barangay_id' => 'nullable|exists:barangays,id',
             'mediaFiles' => 'nullable|array',
-            'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:10240',
+            'mediaFiles.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv|max:25024',
             'deletedImages' => 'nullable|array',
             'report_status' => 'nullable|in:pending,verified,completed,resolved,false'
         ]);

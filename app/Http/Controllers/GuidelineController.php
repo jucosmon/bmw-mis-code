@@ -110,7 +110,7 @@ class GuidelineController extends Controller
             'items.*.count' => 'required|integer|min:1',
             'items.*.text' => 'required|string',
             'mediaFiles' => 'nullable|array',
-            'mediaFiles.*' => 'file|mimes:jpeg,png,jpg,svg,mp4,mov,avi,wmv,mkv,doc,docx,pdf,ppt,pptx,xls,xlsx|max:10240', // Expanded file types
+            'mediaFiles.*' => 'file|mimes:jpeg,png,jpg,svg,mp4,mov,avi,wmv,mkv,doc,docx,pdf,ppt,pptx,xls,xlsx|max:25024',
         ]);
 
         $guideline = Guideline::create([
