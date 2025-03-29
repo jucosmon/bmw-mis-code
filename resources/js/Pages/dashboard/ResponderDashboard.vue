@@ -571,7 +571,7 @@ const displayStats = computed(() => {
   // Base stats that all roles can see
   const baseStats = [
     {
-      label: 'Unresolved Strandings',
+      label: 'Active Strandings',
       value: stats.value.totalStrandings.total,
       icon: 'fas fa-life-ring',
       iconClass: 'bg-red-500/20 text-red-400 p-3 rounded-lg'
@@ -648,8 +648,8 @@ const getStatusBadgeClass = (status) => {
           ]">
             <div v-for="(stat, index) in displayStats" :key="index"
                  class="stat-card transform transition-all duration-300 hover:scale-105">
-              <div class="md:p-6 flex items-center space-x-4">
-                <div class="flex-shrink-0">
+              <div class="sm:p-6 flex items-center space-x-4">
+                <div class="flex-shrink-0 hidden sm:block">
                   <div :class="stat.iconClass">
                     <i :class="stat.icon"></i>
                   </div>

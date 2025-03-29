@@ -1169,7 +1169,7 @@ const hasDataForChart = (chartName) => {
                                 <i class="fas fa-fish text-green-600 text-lg"></i>
                             </div>
                             <div class="ml-3 w-0 flex-1">
-                                <div class="text-xs font-medium text-white text-opacity-70 truncate">Species Involved</div>
+                                <div class="text-xs  font-medium text-white text-opacity-70 truncate">Species Involved</div>
                                 <div class="text-md md:text-xl font-semibold text-white">{{ summaryData.totalSpecies }}</div>
                             </div>
                         </div>
