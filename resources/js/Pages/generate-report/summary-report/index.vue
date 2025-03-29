@@ -1826,5 +1826,103 @@ canvas.chart-canvas {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* Enhanced responsive design */
+@media (max-width: 640px) {
+    .glass-container {
+        margin: 0.5rem 0;
+        padding: 0.75rem !important;
+    }
+
+    .container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .grid {
+        gap: 0.5rem !important;
+    }
+
+    .profile-title-gradient {
+        font-size: 1.25rem !important;
+    }
+
+    .action-button {
+        padding: 0.375rem 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .filter-select {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+
+    .species-item {
+        padding: 0.375rem 0.5rem !important;
+    }
+
+    .species-name {
+        font-size: 0.75rem !important;
+    }
+
+    .species-count {
+        font-size: 0.675rem !important;
+        padding: 0.125rem 0.375rem !important;
+    }
+
+    .text-xl {
+        font-size: 1rem !important;
+    }
+
+    .text-sm {
+        font-size: 0.75rem !important;
+    }
+
+    .chart-container {
+        height: 200px !important;
+    }
+}
+
+/* Tablet responsiveness */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .glass-container {
+        padding: 1rem !important;
+    }
+
+    .grid {
+        gap: 0.75rem !important;
+    }
+
+    .profile-title-gradient {
+        font-size: 1.5rem !important;
+    }
+
+    .chart-container {
+        height: 250px !important;
+    }
+}
+
+/* Adjust stat cards for better mobile display */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 0.75rem !important;
+    }
+
+    .stat-card .flex-shrink-0 {
+        padding: 0.375rem !important;
+    }
+
+    .stat-card i {
+        font-size: 0.875rem !important;
+    }
+
+    .stat-card .text-xl {
+        font-size: 1rem !important;
+    }
+
+    .stat-card .text-xs {
+        font-size: 0.625rem !important;
+    }
+}
 </style>
 

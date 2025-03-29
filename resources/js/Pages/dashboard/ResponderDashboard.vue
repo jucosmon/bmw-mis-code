@@ -648,7 +648,7 @@ const getStatusBadgeClass = (status) => {
           ]">
             <div v-for="(stat, index) in displayStats" :key="index"
                  class="stat-card transform transition-all duration-300 hover:scale-105">
-              <div class="p-6 h-full flex items-center space-x-4">
+              <div class="md:p-6 flex items-center space-x-4">
                 <div class="flex-shrink-0">
                   <div :class="stat.iconClass">
                     <i :class="stat.icon"></i>
@@ -780,7 +780,7 @@ const getStatusBadgeClass = (status) => {
                   </tbody>
                 </table>
               </div>
-              <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+              <div class="md:px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
                 <span class="text-sm text-gray-500">
                   Showing {{ ((currentPage - 1) * perPage) + 1 }} to
                   {{ Math.min(currentPage * perPage, totalReports) }}
@@ -795,7 +795,7 @@ const getStatusBadgeClass = (status) => {
                         ? 'border-gray-200 text-gray-400 bg-gray-50'
                         : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
                   >
-                    Previous
+                    <span class="material-icons material-icons-round text-sm">arrow_back</span>
                   </button>
                   <button
                     @click="nextPage"
@@ -805,8 +805,8 @@ const getStatusBadgeClass = (status) => {
                         ? 'border-gray-200 text-gray-400 bg-gray-50'
                         : 'border-transparent text-white bg-blue-600 hover:bg-blue-700']"
                   >
-                    Next
-                  </button>
+                  <span class="material-icons material-icons-round text-sm">arrow_forward</span>
+                </button>
                 </div>
               </div>
             </div>
