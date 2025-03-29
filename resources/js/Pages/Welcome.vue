@@ -20,8 +20,8 @@ defineProps({
         <div class="relative min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
             <!-- Header - Logo Only -->
             <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-                <div class="logo-container">
-                    <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image">
+                <div class="logo-container" style="height: 80px;"> <!-- Increased height -->
+                    <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image" style="height: 100%; width: auto;"> <!-- Adjusted size -->
                 </div>
             </div>
 

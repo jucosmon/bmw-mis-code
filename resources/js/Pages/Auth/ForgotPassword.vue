@@ -29,13 +29,13 @@ const submit = () => {
             <div class="absolute inset-0 bg-gradient-overlay"></div>
         </div>
 
-        <!-- Logo -->
+         <!-- Logo -->
         <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-            <Link href="/" class="logo-container">
-                <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image">
+            <Link href="/" class="logo-container" style="height: 80px;"> <!-- Increased height -->
+                <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image" style="height: 100%; width: auto;"> <!-- Adjusted size -->
             </Link>
         </div>
-
+s
         <!-- Forgot Password Form Container -->
         <div class="relative min-h-screen flex flex-col items-center justify-center px-4">
             <div class="login-container">
