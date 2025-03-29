@@ -733,15 +733,39 @@ const handleToastClick = (toast) => {
         <!-- Notifications Button - Floating -->
         <button @click="toggleNotificationsDropdown($event)" class="oceanic-float-button relative">
           <span class="material-icons">notifications</span>
-          <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 top-full mt-2 md:w-80 oceanic-glass-panel rounded-lg shadow-lg z-20">
+          <div v-if="state.notificationsDropdownOpen" class="dropdown-container notifications-dropdown absolute right-0 top-full mt-2 w-60 sm:w-80 oceanic-glass-panel rounded-lg shadow-lg z-20">
               <div class="py-2">
-                  <div class="flex justify-between px-4">
-                      <select v-model="filterType" @change="updateFilterType(filterType)" class="oceanic-select w-full text-center text-sm" @click.stop>
-                          <option value="all">All Notifications</option>
-                          <option value="stranding">Stranding</option>
-                          <option value="sighting">Sightings</option>
-                      </select>
-                  </div>
+                <div class="flex justify-between px-4">
+                    <div class="flex w-full gap-1">
+                        <button @click="updateFilterType('all')"
+                            class=" flex-1 py-1 text-sm transition-colors duration-200"
+                            :class="{
+                                'bg-blue-600 text-white': filterType === 'all',
+                                'bg-transparent text-blue-300 hover:bg-blue-600/30': filterType !== 'all'
+                            }"
+                            @click.stop>
+                         All
+                        </button>
+                        <button @click="updateFilterType('stranding')"
+                                class="flex-1 py-1 text-sm transition-colors duration-200"
+                                :class="{
+                                    'bg-blue-600 text-white': filterType === 'stranding',
+                                    'bg-transparent text-blue-300 hover:bg-blue-600/30': filterType !== 'stranding'
+                                }"
+                                @click.stop>
+                            Stranding
+                        </button>
+                        <button @click="updateFilterType('sighting')"
+                                class=" flex-1 py-1 text-sm transition-colors duration-200"
+                                :class="{
+                                    'bg-blue-600 text-white': filterType === 'sighting',
+                                    'bg-transparent text-blue-300 hover:bg-blue-600/30': filterType !== 'sighting'
+                                }"
+                                @click.stop>
+                            Sightings
+                        </button>
+                    </div>
+                </div>
                   <div class="max-h-60 overflow-y-auto">
                       <template v-if="displayedNotifications.length > 0">
                           <div v-for="notification in displayedNotifications" :key="notification.id"
@@ -799,8 +823,8 @@ const handleToastClick = (toast) => {
         </Modal>
 
         <!-- Update toast container positioning - move to bottom -->
-        <div class="fixed bottom-4 right-4 z-40 space-y-2 max-w-md w-full pointer-events-none">
-          <transition-group name="toast">
+        <div class="fixed bottom-4 left-4 right-4 md:right-4 md:left-auto z-40 flex flex-col items-center md:items-end pointer-events-none">
+            <transition-group name="toast">
             <div v-for="toast in toasts" :key="toast.id"
               v-show="toast.show"
               class="toast-notification pointer-events-auto mx-auto mb-2"
@@ -862,7 +886,7 @@ const handleToastClick = (toast) => {
 }
 
 .oceanic-glass-panel {
-  background: rgba(0, 51, 102, 0.85);
+  background: rgba(0, 51, 102, 0.90);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
