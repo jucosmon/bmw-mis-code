@@ -270,6 +270,7 @@ const allowOnlyNumbers = (event) => {
                             </CustomButton>
                             <CustomButton
                                 icon="save"
+                                type="submit"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
                             >

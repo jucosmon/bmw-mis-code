@@ -376,7 +376,12 @@ const submit = () => {
                             <!-- Submit and Cancel Buttons -->
                             <div class="flex items-center justify-end gap-4 mt-6">
                                 <CustomButton :onClick="backRoute" icon="cancel" variant="secondary">Cancel</CustomButton>
-                                <CustomButton icon="save" :disabled="form.processing" :class="{ 'opacity-25': form.processing }">
+                                <CustomButton
+                                    icon="save"
+                                    type="submit"
+                                    :disabled="form.processing"
+                                    :class="{ 'opacity-25': form.processing }"
+                                    >
                                     Save
                                 </CustomButton>
                             </div>

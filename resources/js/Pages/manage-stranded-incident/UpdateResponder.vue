@@ -902,34 +902,38 @@ watch(showMap, async (newValue) => {
 
                             <!-- False and Verify buttons for pending cases -->
                             <div v-else class="flex items-center justify-end gap-4 w-full">
-                                <Link :href="backRoute" class="cancel-button">Cancel</Link>
+                                <CustomButton
+                                    :onClick="backRoute"
+                                    icon="arrow_back"
+                                    variant="secondary">Cancel</CustomButton>
 
                                 <div class="flex flex-wrap sm:flex-nowrap gap-3">
-                                    <button
+                                    <CustomButton
                                         :disabled="form.processing"
                                         :class="{ 'opacity-50': form.processing }"
-                                        class="danger-button"
-                                        @click="falseIncident"
+                                        :onClick="falseIncident"
                                         type="button"
+                                        variant="danger"
+                                        icon="dangerous"
                                         formnovalidate
                                     >
                                         <span class="flex items-center justify-center">
                                             <span class="material-icons mr-1">cancel</span>
                                             <span class="hidden sm:inline">Mark as False</span>
                                         </span>
-                                    </button>
-                                    <button
+                                    </CustomButton>
+                                    <CustomButton
                                         :disabled="form.processing"
                                         :class="{ 'opacity-50': form.processing }"
-                                        class="verify-button"
                                         type="button"
-                                        @click="verifyIncident"
+                                        icon="check_circle"
+                                        :onClick="verifyIncident"
                                     >
                                         <span class="flex items-center justify-center">
                                             <span class="material-icons mr-1">check_circle</span>
                                             <span class="hidden sm:inline">Verify as True</span>
                                         </span>
-                                    </button>
+                                    </CustomButton>
                                 </div>
                             </div>
                         </div>

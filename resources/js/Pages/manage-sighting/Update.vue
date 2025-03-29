@@ -1061,6 +1061,7 @@ const handleDropdownClick = (index) => {
                             <CustomButton :onClick="backRoute" icon="cancel" variant="secondary">Cancel</CustomButton>
                             <CustomButton
                                 icon="save"
+                                type="submit"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
                             >
