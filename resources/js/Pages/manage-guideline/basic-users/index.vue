@@ -72,7 +72,7 @@ const viewGuideline = (id) => {
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Header section -->
                     <div class="mb-6">
-                        <h3 class="profile-title-gradient mb-4">
+                        <h3 class="profile-title-gradient text-center mb-4">
                             {{ title }}
                         </h3>
                         <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
@@ -122,15 +122,19 @@ const viewGuideline = (id) => {
                                 <div class="p-3 sm:p-4">
                                     <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center justify-between">
                                         <!-- Title and Category -->
-                                        <div>
-                                            <h4 class="text-sm sm:text-base font-semibold text-white truncate">{{ guideline.title }}</h4>
-                                            <span class="text-xs sm:text-sm font-medium text-white/60 mt-1">{{ guidelinesCategory(guideline.category) }}</span>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="text-sm sm:text-base font-semibold text-white truncate max-w-[300px]">
+                                                {{ guideline.title }}
+                                            </h4>
+                                            <span class="text-xs sm:text-sm font-medium text-white/60 mt-1 block">
+                                                {{ guidelinesCategory(guideline.category) }}
+                                            </span>
                                         </div>
 
-                                        <!-- View Button (hidden on mobile, visible on sm+) -->
+                                        <!-- View Button (hidden on mobile) -->
                                         <button
                                             @click="viewGuideline(guideline.id)"
-                                            class="view-button hidden sm:flex sm:items-center sm:gap-1"
+                                            class="view-button hidden sm:flex sm:items-center sm:gap-1 flex-shrink-0"
                                         >
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -184,7 +188,7 @@ const viewGuideline = (id) => {
 }
 
 .profile-title-gradient {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 1px;
@@ -271,13 +275,19 @@ const viewGuideline = (id) => {
 
     .profile-title-gradient {
         font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .incident-card {
+        margin: 0.5rem 0;
     }
 }
 
 @media (max-width: 480px) {
     .incident-card {
-        margin-left: 0;
-        margin-right: 0;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-radius: 0;
     }
 }
 </style>
