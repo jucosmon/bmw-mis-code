@@ -29,7 +29,7 @@ defineProps({
             <div class="text-center max-w-5xl mx-auto mt-16">
                 <h1 class="title-gradient">BOHOL MARINE WILDLIFE</h1>
                 <h3 class="subtitle-gradient">MANAGEMENT INFORMATION SYSTEM</h3>
-                
+
                 <!-- Auth Buttons Moved Here -->
                 <div v-if="canLogin" class="auth-buttons">
                     <template v-if="$page.props.auth.user">
@@ -114,15 +114,17 @@ defineProps({
     min-width: 160px;
     position: relative;
     overflow: hidden;
+    text-align: center;
 }
 
 .button-content {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
     position: relative;
     z-index: 1;
+    width: 100%;
+    text-align: center;
 }
 
 .login-btn {

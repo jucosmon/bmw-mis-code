@@ -1,0 +1,1 @@
+import{f as a,o as s,a as o,b as e,u as n,m as r,F as l}from"./app-WP06yIyv.js";const m={__name:"Unauthorized",setup(u){return(c,t)=>(s(),a(l,null,[o(n(r),{title:"Unauthorized"}),t[0]||(t[0]=e("div",{class:"mt-5 text-center"},[e("h1",{class:"text-3xl font-bold"},"Unauthorized"),e("p",null,"You do not have permission to access this page.")],-1))],64))}};export{m as default};
