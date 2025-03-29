@@ -5,6 +5,7 @@ import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -168,38 +169,213 @@ const closeDownloadModal = () => {
 };
 
 const downloadReport = () => {
-    const element = document.querySelector(".exportable-content");
+    // Create a clean PDF document container
+    const pdfContainer = document.createElement('div');
+    pdfContainer.className = 'pdf-export';
+    pdfContainer.style.width = '210mm';
+    pdfContainer.style.padding = '10mm';
+    pdfContainer.style.backgroundColor = 'white';
+    pdfContainer.style.color = '#333';
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
 
-    // Add PDF-specific class before generating
-    element.classList.add('pdf-mode');
+    // ===== HEADER =====
+    const header = document.createElement('div');
+    header.style.textAlign = 'center';
+    header.style.marginBottom = '5mm';
 
-    const options = {
-        filename: `Stranded_Incident_Report_${props.strandedIncident.id}.pdf`,
-        margin: [10, 15, 10, 15], // Adjusted margins for better balance
-        jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-            compress: true
-        },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            letterRendering: true
-        },
-        image: {
-            type: 'jpeg',
-            quality: 1
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    const title = document.createElement('h1');
+    title.textContent = 'Stranded Species Report';
+    title.style.fontSize = '20px';
+    title.style.color = '#003366';
+    title.style.marginBottom = '2mm';
+    title.style.fontWeight = 'bold';
+
+    const subtitle = document.createElement('p');
+    subtitle.textContent = `Generated on ${new Date().toLocaleDateString()}`;
+    subtitle.style.fontSize = '12px';
+    subtitle.style.color = '#666';
+
+    header.appendChild(title);
+    header.appendChild(subtitle);
+    pdfContainer.appendChild(header);
+
+    // Function to add section with minimal spacing
+    const addSection = (title, content) => {
+        const section = document.createElement('div');
+        section.style.marginBottom = '6mm';
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.textContent = title;
+        sectionTitle.style.fontSize = '14px';
+        sectionTitle.style.fontWeight = 'bold';
+        sectionTitle.style.color = '#003366';
+        sectionTitle.style.marginBottom = '2mm';
+        sectionTitle.style.paddingBottom = '1mm';
+        sectionTitle.style.borderBottom = '1px solid #e5e7eb';
+
+        section.appendChild(sectionTitle);
+
+        if (typeof content === 'string') {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = content;
+            paragraph.style.lineHeight = '1.4';
+            paragraph.style.fontSize = '12px';
+            section.appendChild(paragraph);
+        } else {
+            section.appendChild(content);
+        }
+
+        return section;
     };
 
-    html2pdf().from(element).set(options).save().then(() => {
-        element.classList.remove('pdf-mode');
-        closeDownloadModal();
-    });
+    // Incident details with minimal spacing
+    const incidentDetails = document.createElement('p');
+    incidentDetails.style.fontSize = '12px';
+    incidentDetails.style.lineHeight = '1.4';
+    incidentDetails.innerHTML =
+        `<strong>Date:</strong> ${props.strandedIncident.date || 'Not specified'}<br>` +
+        `<strong>Time:</strong> ${props.strandedIncident.time || 'Not specified'}<br>` +
+        `<strong>Location:</strong> ${barangayName.value}, ${municipalityName.value}<br>` +
+        `<strong>Status:</strong> ${props.strandedSpecies.is_active ? 'Active' : 'Inactive'}`;
+
+    pdfContainer.appendChild(addSection('Incident Details', incidentDetails));
+
+    // Species details with minimal spacing
+    const speciesDetails = document.createElement('p');
+    speciesDetails.style.fontSize = '12px';
+    speciesDetails.style.lineHeight = '1.4';
+    speciesDetails.innerHTML =
+        `<strong>Species:</strong> ${props.strandedSpecies.species_name || 'Not specified'}<br>` +
+        `<strong>Sex:</strong> ${props.strandedSpecies.sex || 'Not specified'}<br>` +
+        `<strong>Length:</strong> ${props.strandedSpecies.length || 'Not specified'}<br>` +
+        `<strong>Weight:</strong> ${props.strandedSpecies.weight || 'Not specified'}<br>` +
+        `<strong>Girth:</strong> ${props.strandedSpecies.girth || 'Not specified'}<br>` +
+        `<strong>Condition:</strong> ${getConditionDescription(props.strandedSpecies.condition_code) || 'Not specified'}<br>` +
+        `<strong>Released:</strong> ${props.strandedSpecies.is_released ? 'Yes' : 'No'}<br>` +
+        `<strong>Disposition:</strong> ${props.strandedSpecies.disposition || 'Not specified'}`;
+
+    // Add more information if available with minimal spacing
+    if (props.strandedSpecies.more_information) {
+        speciesDetails.innerHTML += `<br><br><strong>Additional Information:</strong> ${props.strandedSpecies.more_information}`;
+    }
+
+    pdfContainer.appendChild(addSection('Species Information', speciesDetails));
+
+    // Environmental conditions with minimal spacing
+    const envDetails = document.createElement('p');
+    envDetails.style.fontSize = '12px';
+    envDetails.style.lineHeight = '1.4';
+    envDetails.innerHTML =
+        `<strong>Sea State:</strong> ${props.strandedIncident.sea_state || 'Not specified'}<br>` +
+        `<strong>Weather:</strong> ${props.strandedIncident.weather || 'Not specified'}<br>` +
+        `<strong>Beach Type:</strong> ${props.strandedIncident.beach_type || 'Not specified'}`;
+
+    pdfContainer.appendChild(addSection('Environmental Conditions', envDetails));
+
+    // Location and map with minimal spacing
+    const locationSection = document.createElement('div');
+    locationSection.style.marginBottom = '6mm';
+
+    const locationTitle = document.createElement('div');
+    locationTitle.textContent = 'Location Information';
+    locationTitle.style.fontSize = '14px';
+    locationTitle.style.fontWeight = 'bold';
+    locationTitle.style.color = '#003366';
+    locationTitle.style.marginBottom = '2mm';
+    locationTitle.style.paddingBottom = '1mm';
+    locationTitle.style.borderBottom = '1px solid #e5e7eb';
+    locationSection.appendChild(locationTitle);
+
+    // Location text
+    const locationText = document.createElement('p');
+    locationText.style.fontSize = '12px';
+    locationText.style.lineHeight = '1.4';
+    locationText.style.marginBottom = '2mm';
+
+    if (hasValidCoordinates.value) {
+        locationText.innerHTML =
+            `<strong>Coordinates:</strong> ${props.strandedSpecies.latitude} lat. | ${props.strandedSpecies.longitude} long.`;
+    } else {
+        locationText.innerHTML = '<strong>Coordinates:</strong> No GPS coordinates available';
+    }
+
+    locationSection.appendChild(locationText);
+
+    // Add map only if coordinates are valid
+    if (hasValidCoordinates.value) {
+        // Function to capture map and add to PDF
+        const captureMap = async () => {
+            try {
+                const mapElement = document.getElementById('map');
+                if (mapElement) {
+                    // Ensure the map has fully loaded before capturing
+                    // Increased delay for map tiles to load properly
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // Force a map repaint to ensure visibility
+                    if (map.value) {
+                        map.value.invalidateSize();
+                    }
+
+                    // Use a higher scale for better quality
+                    const canvas = await html2canvas(mapElement, {
+                        useCORS: true,
+                        scale: 2,
+                        logging: true, // Enable logging to debug issues
+                        backgroundColor: '#ffffff',
+                        allowTaint: true,
+                        foreignObjectRendering: false
+                    });
+
+                    const mapImage = document.createElement('img');
+                    mapImage.src = canvas.toDataURL('image/png');
+                    mapImage.style.width = '100%';
+                    mapImage.style.maxHeight = '120mm';
+                    mapImage.style.border = '1px solid #e5e7eb';
+
+                    locationSection.appendChild(mapImage);
+                }
+            } catch (error) {
+                console.error('Error capturing map:', error);
+                const errorText = document.createElement('p');
+                errorText.textContent = 'Unable to display map. Error: ' + error.message;
+                errorText.style.color = '#dc2626';
+                errorText.style.fontSize = '12px';
+                locationSection.appendChild(errorText);
+            }
+        };
+
+        // Call the map capture function
+        captureMap();
+    }
+
+    pdfContainer.appendChild(locationSection);
+
+    // Add the container to document temporarily
+    document.body.appendChild(pdfContainer);
+
+    // Wait longer to ensure map renders completely before generating PDF
+    setTimeout(() => {
+        // PDF generation options
+        const options = {
+            filename: `Stranded_Species_Report_${props.strandedSpecies.id}.pdf`,
+            margin: [5, 5, 5, 5],
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Generate PDF
+        html2pdf().from(pdfContainer).set(options).save().then(() => {
+            // Clean up
+            document.body.removeChild(pdfContainer);
+            closeDownloadModal();
+        });
+    }, 1500);
 };
 
 const getConditionDescription = (code) => {

@@ -5,6 +5,7 @@ import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -268,52 +269,229 @@ const closeDownloadModal = () => {
 };
 
 const downloadReport = () => {
-    const element = document.querySelector(".exportable-content");
+    // Create a clean PDF document container
+    const pdfContainer = document.createElement('div');
+    pdfContainer.className = 'pdf-export';
+    pdfContainer.style.width = '210mm';
+    pdfContainer.style.padding = '10mm';
+    pdfContainer.style.backgroundColor = 'white';
+    pdfContainer.style.color = '#333';
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
 
-    // Add PDF-specific class before generating
-    element.classList.add('pdf-mode');
+    // ===== HEADER =====
+    const header = document.createElement('div');
+    header.style.textAlign = 'center';
+    header.style.marginBottom = '5mm';
 
-    // Add report title and timestamp at the top
-    const reportHeader = document.createElement('div');
-    reportHeader.className = 'pdf-header';
-    reportHeader.innerHTML = `
-        <h1 style="text-align: center; font-size: 24px; color: #00366b; margin-bottom: 8px;">Marine Wildlife Sighting Report</h1>
-        <p style="text-align: center; font-size: 14px; color: #666; margin-bottom: 20px;">Generated on ${new Date().toLocaleString()}</p>
-        <div style="border-bottom: 2px solid #00366b; margin-bottom: 20px;"></div>
-    `;
+    const title = document.createElement('h1');
+    title.textContent = 'Marine Wildlife Sighting Report';
+    title.style.fontSize = '20px';
+    title.style.color = '#003366';
+    title.style.marginBottom = '2mm';
+    title.style.fontWeight = 'bold';
 
-    // Insert the header at the beginning of the content
-    element.insertBefore(reportHeader, element.firstChild);
+    const subtitle = document.createElement('p');
+    subtitle.textContent = `Generated on ${new Date().toLocaleDateString()}`;
+    subtitle.style.fontSize = '12px';
+    subtitle.style.color = '#666';
 
-    const options = {
-        filename: `Sighting_Report_${props.sighting.id}.pdf`,
-        margin: [15, 15, 15, 15], // Top, right, bottom, left margins
-        jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-            compress: true
-        },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            letterRendering: true
-        },
-        image: {
-            type: 'jpeg',
-            quality: 1
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    header.appendChild(title);
+    header.appendChild(subtitle);
+    pdfContainer.appendChild(header);
+
+    // Function to add section with minimal spacing
+    const addSection = (title, content) => {
+        const section = document.createElement('div');
+        section.style.marginBottom = '6mm';
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.textContent = title;
+        sectionTitle.style.fontSize = '14px';
+        sectionTitle.style.fontWeight = 'bold';
+        sectionTitle.style.color = '#003366';
+        sectionTitle.style.marginBottom = '2mm';
+        sectionTitle.style.paddingBottom = '1mm';
+        sectionTitle.style.borderBottom = '1px solid #e5e7eb';
+
+        section.appendChild(sectionTitle);
+
+        if (typeof content === 'string') {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = content;
+            paragraph.style.lineHeight = '1.4';
+            paragraph.style.fontSize = '12px';
+            section.appendChild(paragraph);
+        } else {
+            section.appendChild(content);
+        }
+
+        return section;
     };
 
-    html2pdf().from(element).set(options).save().then(() => {
-        // Clean up after PDF generation
-        element.removeChild(reportHeader);
-        element.classList.remove('pdf-mode');
-        closeDownloadModal();
-    });
+    // Reporter information with minimal spacing
+    const reporterName = props.sighting.user ?
+        `${props.sighting.user.first_name} ${props.sighting.user.last_name}` :
+        'Unknown Reporter';
+
+    const reporterDetails = document.createElement('p');
+    reporterDetails.style.fontSize = '12px';
+    reporterDetails.style.lineHeight = '1.4';
+    reporterDetails.innerHTML =
+        `<strong>Name:</strong> ${reporterName}<br>` +
+        `<strong>Contact:</strong> ${props.sighting.user?.contact_number || 'Not specified'}<br>` +
+        `<strong>Email:</strong> ${props.sighting.user?.email || 'Not specified'}<br>` +
+        `<strong>Role:</strong> ${props.sighting.user?.user_role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Not specified'}`;
+
+    pdfContainer.appendChild(addSection('Reporter Information', reporterDetails));
+
+    // Sighting details with minimal spacing
+    const sightingDetails = document.createElement('p');
+    sightingDetails.style.fontSize = '12px';
+    sightingDetails.style.lineHeight = '1.4';
+    sightingDetails.innerHTML =
+        `<strong>Date:</strong> ${props.sighting.date || 'Not specified'}<br>` +
+        `<strong>Time:</strong> ${props.sighting.time || 'Not specified'}<br>` +
+        `<strong>Certainty Level:</strong> ${props.sighting.certainty_level || 'Not specified'}<br>` +
+        `<strong>Location:</strong> ${barangayName.value}, ${municipalityName.value}<br>` +
+        `<strong>Detailed Location:</strong> ${props.sighting.detailed_location || 'Not specified'}<br>` +
+        `<strong>Report Status:</strong> ${props.sighting.report_status || 'Not specified'}<br>` +
+        `<strong>Additional Information:</strong> ${props.sighting.more_information || 'None'}`;
+
+
+    pdfContainer.appendChild(addSection('Sighting Details', sightingDetails));
+
+    // Sighted species with minimal spacing
+    if (props.sightedSpecies && props.sightedSpecies.length > 0) {
+        const speciesList = document.createElement('div');
+        speciesList.style.fontSize = '12px';
+        speciesList.style.lineHeight = '1.4';
+
+        const speciesIntro = document.createElement('p');
+        speciesIntro.textContent = `The following ${props.sightedSpecies.length} species were observed in this sighting:`;
+        speciesIntro.style.marginBottom = '3mm';
+        speciesList.appendChild(speciesIntro);
+
+        props.sightedSpecies.forEach((species, index) => {
+            const speciesItem = document.createElement('div');
+            speciesItem.style.marginBottom = '4mm';
+
+            const speciesContent = document.createElement('p');
+            speciesContent.innerHTML =
+                `<strong>${index + 1}. ${species.species_name || 'Unknown Species'}</strong><br>` +
+                `Size: ${sizeText(species.size) || 'Not specified'}<br>` +
+                `Behavior: ${species.behavior_observed || 'Not specified'}<br>` +
+                `Description: ${species.species_description || 'Not specified'}`;
+
+            speciesItem.appendChild(speciesContent);
+            speciesList.appendChild(speciesItem);
+        });
+
+        pdfContainer.appendChild(addSection('Sighted Species', speciesList));
+    }
+
+    // Location and map with minimal spacing
+    const locationSection = document.createElement('div');
+    locationSection.style.marginBottom = '6mm';
+
+    const locationTitle = document.createElement('div');
+    locationTitle.textContent = 'Location Information';
+    locationTitle.style.fontSize = '14px';
+    locationTitle.style.fontWeight = 'bold';
+    locationTitle.style.color = '#003366';
+    locationTitle.style.marginBottom = '2mm';
+    locationTitle.style.paddingBottom = '1mm';
+    locationTitle.style.borderBottom = '1px solid #e5e7eb';
+    locationSection.appendChild(locationTitle);
+
+    // Location text
+    const locationText = document.createElement('p');
+    locationText.style.fontSize = '12px';
+    locationText.style.lineHeight = '1.4';
+    locationText.style.marginBottom = '2mm';
+
+    if (props.sighting.latitude && props.sighting.longitude) {
+        locationText.innerHTML =
+            `<strong>Coordinates:</strong> ${props.sighting.latitude} lat. | ${props.sighting.longitude} long.`;
+    } else {
+        locationText.innerHTML = '<strong>Coordinates:</strong> No GPS coordinates available';
+    }
+
+    locationSection.appendChild(locationText);
+
+    // Add map only if coordinates are valid
+    if (props.sighting.latitude && props.sighting.longitude) {
+        const captureMap = async () => {
+            try {
+                const mapElement = document.getElementById('map');
+                if (mapElement) {
+                    // Ensure the map has fully loaded before capturing
+                    // Increased delay for map tiles to load properly
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // Force a map repaint to ensure visibility
+                    if (map.value) {
+                        map.value.invalidateSize();
+                    }
+
+                    // Use a higher scale for better quality
+                    const canvas = await html2canvas(mapElement, {
+                        useCORS: true,
+                        scale: 2,
+                        logging: true, // Enable logging to debug issues
+                        backgroundColor: '#ffffff',
+                        allowTaint: true,
+                        foreignObjectRendering: false
+                    });
+
+                    const mapImage = document.createElement('img');
+                    mapImage.src = canvas.toDataURL('image/png');
+                    mapImage.style.width = '100%';
+                    mapImage.style.maxHeight = '120mm';
+                    mapImage.style.border = '1px solid #e5e7eb';
+
+                    locationSection.appendChild(mapImage);
+                }
+            } catch (error) {
+                console.error('Error capturing map:', error);
+                const errorText = document.createElement('p');
+                errorText.textContent = 'Unable to display map. Error: ' + error.message;
+                errorText.style.color = '#dc2626';
+                errorText.style.fontSize = '12px';
+                locationSection.appendChild(errorText);
+            }
+        };
+
+        // Call the map capture function
+        captureMap();
+    }
+
+    pdfContainer.appendChild(locationSection);
+
+    // Add the container to document temporarily
+    document.body.appendChild(pdfContainer);
+
+    // Wait longer to ensure map renders completely before generating PDF
+    setTimeout(() => {
+        // PDF generation options
+        const options = {
+            filename: `Sighting_Report_${props.sighting.id}.pdf`,
+            margin: [5, 5, 5, 5],
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Generate PDF
+        html2pdf().from(pdfContainer).set(options).save().then(() => {
+            // Clean up
+            document.body.removeChild(pdfContainer);
+            closeDownloadModal();
+        });
+    }, 1500);
 };
 </script>
 

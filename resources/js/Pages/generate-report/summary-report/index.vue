@@ -4,8 +4,7 @@ import { supabase } from '@/supabase';
 import { Head, usePage } from '@inertiajs/vue3';
 import { ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale, LineController, LineElement, PieController, PointElement, Tooltip } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import html2pdf from 'html2pdf.js';
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import * as XLSX from 'xlsx';
 
@@ -696,287 +695,227 @@ const downloadPDF = async () => {
         isDownloading.value = true;
         showDownloadModal.value = false;
 
-        // Create a clean, organized PDF structure
+        // Create a clean PDF document container
         const pdfContainer = document.createElement('div');
         pdfContainer.className = 'pdf-export';
         pdfContainer.style.width = '210mm';
-        pdfContainer.style.padding = '15mm';
+        pdfContainer.style.padding = '10mm';
         pdfContainer.style.backgroundColor = 'white';
         pdfContainer.style.color = '#333';
         pdfContainer.style.fontFamily = 'Arial, sans-serif';
 
-        // ===== HEADER SECTION =====
+        // ===== HEADER =====
         const header = document.createElement('div');
         header.style.textAlign = 'center';
-        header.style.marginBottom = '8mm';
+        header.style.marginBottom = '5mm';
 
         const title = document.createElement('h1');
-        title.textContent = 'Marine Wildlife Report';
-        title.style.fontSize = '24px';
+        title.textContent = 'Marine Wildlife Summary Report';
+        title.style.fontSize = '20px';
         title.style.color = '#003366';
-        title.style.marginBottom = '3mm';
+        title.style.marginBottom = '2mm';
         title.style.fontWeight = 'bold';
 
         const subtitle = document.createElement('p');
         subtitle.textContent = `Generated on ${new Date().toLocaleDateString()}`;
-        subtitle.style.fontSize = '14px';
+        subtitle.style.fontSize = '12px';
         subtitle.style.color = '#666';
 
         header.appendChild(title);
         header.appendChild(subtitle);
         pdfContainer.appendChild(header);
 
-        // ===== FILTER INFORMATION =====
-        const filterSection = document.createElement('div');
-        filterSection.style.marginBottom = '5mm';
-        filterSection.style.padding = '6px';
-        filterSection.style.border = '1px solid #d1d5db';
-        filterSection.style.borderRadius = '4px';
-        filterSection.style.backgroundColor = '#f8f9fa';
-        filterSection.style.fontSize = '12px';
+        // Helper function to add sections
+        const addSection = (title, content) => {
+            const section = document.createElement('div');
+            section.style.marginBottom = '6mm';
 
-        const filterTitle = document.createElement('div');
-        filterTitle.textContent = 'Filters Applied:';
-        filterTitle.style.fontWeight = 'bold';
-        filterTitle.style.marginBottom = '3px';
-        filterSection.appendChild(filterTitle);
+            const sectionTitle = document.createElement('div');
+            sectionTitle.textContent = title;
+            sectionTitle.style.fontSize = '14px';
+            sectionTitle.style.fontWeight = 'bold';
+            sectionTitle.style.color = '#003366';
+            sectionTitle.style.marginBottom = '2mm';
+            sectionTitle.style.paddingBottom = '1mm';
+            sectionTitle.style.borderBottom = '1px solid #e5e7eb';
 
-        const filtersList = document.createElement('div');
-        filtersList.style.display = 'flex';
-        filtersList.style.flexWrap = 'wrap';
-        filtersList.style.gap = '10px';
+            section.appendChild(sectionTitle);
 
-        // Create individual filter items
-        const createFilterItem = (label, value) => {
-            if (!value) return null;
+            if (typeof content === 'string') {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = content;
+                paragraph.style.lineHeight = '1.4';
+                paragraph.style.fontSize = '12px';
+                section.appendChild(paragraph);
+            } else {
+                section.appendChild(content);
+            }
 
-            const item = document.createElement('span');
-            item.textContent = `${label}: ${value}`;
-            item.style.display = 'inline-block';
-            item.style.padding = '2px 8px';
-            item.style.border = '1px solid #e2e8f0';
-            item.style.borderRadius = '4px';
-            item.style.backgroundColor = '#f8fafc';
-            return item;
+            return section;
         };
 
-        const yearFilter = createFilterItem('Year', filters.value.year || 'All');
-        const municipalityFilter = createFilterItem('Municipality',
-            filters.value.municipality ?
-            municipalities.value.find(m => m.id === parseInt(filters.value.municipality))?.name || 'Unknown' :
-            'All');
-        const categoryFilter = createFilterItem('Category', filters.value.category || 'All');
-        const eventTypeFilter = createFilterItem('Event Type', filters.value.eventType || 'All');
+        // ===== FILTER INFORMATION =====
+        const filterText = document.createElement('p');
+        filterText.style.fontSize = '12px';
+        filterText.style.lineHeight = '1.4';
 
-        if (yearFilter) filtersList.appendChild(yearFilter);
-        if (municipalityFilter) filtersList.appendChild(municipalityFilter);
-        if (categoryFilter) filtersList.appendChild(categoryFilter);
-        if (eventTypeFilter) filtersList.appendChild(eventTypeFilter);
+        // Build simple filter string
+        filterText.innerHTML = '<strong>Filters applied:</strong> ';
 
-        filterSection.appendChild(filtersList);
-        pdfContainer.appendChild(filterSection);
+        let filterParts = [];
+
+        if (filters.value.year) {
+            filterParts.push(` ${filters.value.year}`);
+        } else {
+            filterParts.push(" All Years");
+        }
+
+        if (filters.value.municipality) {
+            const municipalityName = municipalities.value.find(m => m.id === parseInt(filters.value.municipality))?.name || 'Unknown';
+            filterParts.push(`${municipalityName}`);
+        } else {
+            filterParts.push("All Municipalities");
+        }
+
+        if (filters.value.category) {
+            filterParts.push(`${filters.value.category}`);
+        } else {
+            filterParts.push("All Categories");
+        }
+
+        if (filters.value.eventType) {
+            filterParts.push(`${filters.value.eventType}`);
+        } else {
+            filterParts.push("All Types");
+        }
+
+        filterText.innerHTML += filterParts.join(', ');
+
+        pdfContainer.appendChild(addSection('Report Filters', filterText));
 
         // ===== SUMMARY STATISTICS =====
-        const statsSection = document.createElement('div');
-        statsSection.style.display = 'flex';
-        statsSection.style.justifyContent = 'space-between';
-        statsSection.style.marginBottom = '8mm';
-        statsSection.style.gap = '10px';
+        const statsText = document.createElement('p');
+        statsText.style.fontSize = '12px';
+        statsText.style.lineHeight = '1.4';
+        statsText.innerHTML =
+            `<strong>Total Reports:</strong> ${summaryData.value.totalEvents}<br>` +
+            `<strong>Species Involved:</strong> ${summaryData.value.totalSpecies}<br>` +
+            `<strong>False Reports:</strong> ${summaryData.value.falseReports}`;
 
-        const createStatCard = (title, value) => {
-            const card = document.createElement('div');
-            card.style.flex = '1';
-            card.style.textAlign = 'center';
-            card.style.padding = '10px';
-            card.style.border = '1px solid #d1d5db';
-            card.style.borderRadius = '4px';
-            card.style.backgroundColor = '#f8f9fa';
+        pdfContainer.appendChild(addSection('Summary Statistics', statsText));
 
-            const valueElem = document.createElement('div');
-            valueElem.textContent = value;
-            valueElem.style.fontSize = '24px';
-            valueElem.style.fontWeight = 'bold';
-            valueElem.style.color = '#003366';
-
-            const titleElem = document.createElement('div');
-            titleElem.textContent = title;
-            titleElem.style.fontSize = '12px';
-            titleElem.style.color = '#4a5568';
-
-            card.appendChild(valueElem);
-            card.appendChild(titleElem);
-            return card;
-        };
-
-        statsSection.appendChild(createStatCard('Total Reports', summaryData.value.totalEvents));
-        statsSection.appendChild(createStatCard('Species Involved', summaryData.value.totalSpecies));
-        statsSection.appendChild(createStatCard('False Reports', summaryData.value.falseReports));
-
-        pdfContainer.appendChild(statsSection);
-
-        // ===== TOP 5 SPECIES =====
+        // ===== TOP SPECIES =====
         if (summaryData.value.topCommonSpecies && summaryData.value.topCommonSpecies.length > 0) {
-            const speciesSection = document.createElement('div');
-            speciesSection.style.marginBottom = '6mm';
+            const topSpeciesText = document.createElement('p');
+            topSpeciesText.style.fontSize = '12px';
+            topSpeciesText.style.lineHeight = '1.4';
+            topSpeciesText.innerHTML = 'Most commonly reported species:<br>';
 
-            const speciesTitle = document.createElement('h2');
-            speciesTitle.textContent = 'Top 5 Common Species';
-            speciesTitle.style.fontSize = '16px';
-            speciesTitle.style.marginBottom = '5px';
-            speciesTitle.style.color = '#003366';
-            speciesTitle.style.fontWeight = 'bold';
-            speciesSection.appendChild(speciesTitle);
-
-            const speciesGrid = document.createElement('div');
-            speciesGrid.style.display = 'grid';
-            speciesGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-            speciesGrid.style.gap = '8px';
-
-            summaryData.value.topCommonSpecies.forEach(species => {
-                const item = document.createElement('div');
-                item.style.display = 'flex';
-                item.style.justifyContent = 'space-between';
-                item.style.padding = '6px 8px';
-                item.style.border = '1px solid #d1d5db';
-                item.style.borderRadius = '4px';
-                item.style.backgroundColor = '#f8fafc';
-
-                const name = document.createElement('div');
-                name.textContent = species.name;
-                name.style.fontWeight = '500';
-                name.style.fontSize = '12px';
-                name.style.overflow = 'hidden';
-                name.style.textOverflow = 'ellipsis';
-                name.style.whiteSpace = 'nowrap';
-
-                const count = document.createElement('div');
-                count.textContent = species.count;
-                count.style.padding = '1px 6px';
-                count.style.borderRadius = '9999px';
-                count.style.fontWeight = 'bold';
-                count.style.fontSize = '12px';
-                count.style.backgroundColor = '#dbeafe';
-                count.style.color = '#1e40af';
-
-                item.appendChild(name);
-                item.appendChild(count);
-                speciesGrid.appendChild(item);
+            summaryData.value.topCommonSpecies.forEach((species, index) => {
+                topSpeciesText.innerHTML += `${index + 1}. <strong>${species.name}</strong>: ${species.count} reports<br>`;
             });
 
-            speciesSection.appendChild(speciesGrid);
-            pdfContainer.appendChild(speciesSection);
+            pdfContainer.appendChild(addSection('Top Common Species', topSpeciesText));
         }
 
-        // ===== CHARTS SECTION =====
-        const chartsSection = document.createElement('div');
-        chartsSection.style.display = 'grid';
-        chartsSection.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        chartsSection.style.gap = '8mm';
+        // ===== YEARLY TRENDS AS TEXT =====
+        if (summaryData.value.yearlyTrends && summaryData.value.yearlyTrends.length > 0) {
+            const yearlyTrendsText = document.createElement('p');
+            yearlyTrendsText.style.fontSize = '12px';
+            yearlyTrendsText.style.lineHeight = '1.4';
+            yearlyTrendsText.innerHTML = '<strong>Report count by year:</strong><br>';
 
-        // Force a longer render delay to ensure charts are fully initialized
-        await new Promise(resolve => setTimeout(resolve, 1000));
+            summaryData.value.yearlyTrends.forEach(item => {
+                yearlyTrendsText.innerHTML += `${item.year}: ${item.count} reports<br>`;
+            });
 
-        // Add chart snapshots with appropriate size
-        for (const [name, chart] of Object.entries(chartConfig)) {
-            const chartData = chart.getData();
-            if (chartData.data.length > 0) {
-                const chartCanvas = document.getElementById(chart.id);
-                if (chartCanvas) {
-                    const chartWrapper = document.createElement('div');
-                    chartWrapper.style.marginBottom = '5mm';
-
-                    const chartTitle = document.createElement('h3');
-                    chartTitle.textContent = name;
-                    chartTitle.style.fontSize = '14px';
-                    chartTitle.style.marginBottom = '4px';
-                    chartTitle.style.color = '#003366';
-                    chartTitle.style.fontWeight = 'bold';
-                    chartTitle.style.textAlign = 'center';
-
-                    // Get a clean chart image (higher quality)
-                    const highResImage = chartCanvas.toDataURL('image/png', 1.0);
-
-                    const chartImg = document.createElement('img');
-                    chartImg.src = highResImage;
-                    chartImg.style.width = '100%';
-                    chartImg.style.maxHeight = '85mm';
-                    chartImg.style.border = '1px solid #e2e8f0';
-                    chartImg.style.borderRadius = '4px';
-                    chartImg.style.backgroundColor = 'white';
-
-                    chartWrapper.appendChild(chartTitle);
-                    chartWrapper.appendChild(chartImg);
-                    chartsSection.appendChild(chartWrapper);
-                }
-            }
+            pdfContainer.appendChild(addSection('Yearly Trends', yearlyTrendsText));
         }
 
-        pdfContainer.appendChild(chartsSection);
+        // ===== CATEGORY DISTRIBUTION AS TEXT =====
+        if (summaryData.value.categoryDistribution && summaryData.value.categoryDistribution.length > 0) {
+            const categoryText = document.createElement('p');
+            categoryText.style.fontSize = '12px';
+            categoryText.style.lineHeight = '1.4';
+            categoryText.innerHTML = '<strong>Report distribution by category:</strong><br>';
+
+            summaryData.value.categoryDistribution.forEach(item => {
+                const formattedCategory = item.category
+                    .replace(/_/g, ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                categoryText.innerHTML += `${formattedCategory}: ${item.count} reports<br>`;
+            });
+
+            pdfContainer.appendChild(addSection('Category Distribution', categoryText));
+        }
+
+        // ===== MUNICIPALITY DISTRIBUTION AS TEXT =====
+        if (summaryData.value.municipalityDistribution && summaryData.value.municipalityDistribution.length > 0) {
+            const municipalityText = document.createElement('p');
+            municipalityText.style.fontSize = '12px';
+            municipalityText.style.lineHeight = '1.4';
+            municipalityText.innerHTML = '<strong>Report distribution by municipality:</strong><br>';
+
+            summaryData.value.municipalityDistribution.forEach(item => {
+                // Check for all possible property names that might contain the municipality name
+                const municipalityName = item.name || item.municipality_name || item.municipality || 'Unknown Municipality';
+                municipalityText.innerHTML += `${municipalityName}: ${item.count} reports<br>`;
+            });
+
+            pdfContainer.appendChild(addSection('Municipality Distribution', municipalityText));
+        }
+
+        // ===== CONDITION FREQUENCY AS TEXT =====
+        if (summaryData.value.conditionFrequency && summaryData.value.conditionFrequency.length > 0) {
+            const conditionText = document.createElement('p');
+            conditionText.style.fontSize = '12px';
+            conditionText.style.lineHeight = '1.4';
+            conditionText.innerHTML = '<strong>Report distribution by condition:</strong><br>';
+
+            summaryData.value.conditionFrequency.forEach(item => {
+                // Check for all possible property names that might contain the condition description
+                const conditionName = item.condition || item.condition_name || item.description || 'Unknown Condition';
+                conditionText.innerHTML += `${conditionName}: ${item.count} reports<br>`;
+            });
+
+            pdfContainer.appendChild(addSection('Condition Frequency', conditionText));
+        }
 
         // ===== FOOTER =====
         const footer = document.createElement('div');
-        footer.style.borderTop = '1px solid #d1d5db';
-        footer.style.marginTop = '8mm';
-        footer.style.paddingTop = '4mm';
+        footer.style.borderTop = '1px solid #e5e7eb';
+        footer.style.paddingTop = '3mm';
+        footer.style.marginTop = '5mm';
         footer.style.textAlign = 'center';
         footer.style.fontSize = '10px';
-        footer.style.color = '#718096';
-        footer.textContent = 'Marine Wildlife Monitoring Information System';
+        footer.style.color = '#6b7280';
+        footer.textContent = 'Marine Marine Wildlife Management Information System (BMW-MIS)';
 
         pdfContainer.appendChild(footer);
 
-        // Temporarily add to document to render
+        // Add the container to document temporarily
         document.body.appendChild(pdfContainer);
 
-        // Use html2canvas with better settings for higher quality
-        const canvas = await html2canvas(pdfContainer, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: 'white',
-            logging: false,
-            onclone: (clonedDoc) => {
-                // Make sure all images are loaded
-                const imgs = clonedDoc.getElementsByTagName('img');
-                for (let i = 0; i < imgs.length; i++) {
-                    imgs[i].style.maxWidth = '100%';
-                }
-            }
-        });
+        // PDF generation options
+        const options = {
+            filename: `Marine_Wildlife_Analytics_Report_${new Date().toISOString().slice(0, 10)}.pdf`,
+            margin: [5, 5, 5, 5],
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
-        // Remove the temporary container
+        // Generate PDF
+        await html2pdf().from(pdfContainer).set(options).save();
+
+        // Clean up
         document.body.removeChild(pdfContainer);
-
-        // Add canvas to PDF
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        const imgWidth = 210; // A4 width in mm
-        const pageHeight = 297; // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        const pdf = new jsPDF('p', 'mm', 'a4');
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        // First page
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        // Additional pages if needed
-        while (heightLeft >= 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-        }
-
-        // Save the PDF
-        pdf.save(`Marine_Wildlife_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
-
-        showNotification('PDF downloaded successfully', 'success', 3000);
+        notify('PDF downloaded successfully', 'success', 3000);
     } catch (error) {
         console.error('PDF download error:', error);
-        showNotification('Error generating PDF. Please try again.', 'error', 5000);
+        notify('Error generating PDF. Please try again.', 'error', 5000);
     } finally {
         isDownloading.value = false;
     }
