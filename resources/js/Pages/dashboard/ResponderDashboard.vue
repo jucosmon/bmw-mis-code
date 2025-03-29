@@ -271,7 +271,10 @@ const fetchData = async () => {
     const processedSightings = activeSightings?.map(sighting => ({
       id: sighting.id,
       type: 'sighting',
-      species: sighting.sighted_species?.[0]?.species?.name || 'Unknown',
+      species: sighting.sighted_species
+        .map(ss => ss.species?.name)
+        .filter(Boolean)
+        .join(', ') || 'Unknown Species',
       location: `${sighting.barangay?.name || 'Unknown'}, ${sighting.municipality?.name || 'Unknown'}`,
       date: sighting.date,
       time: sighting.time,

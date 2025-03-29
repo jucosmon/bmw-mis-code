@@ -164,7 +164,7 @@ const fetchTopSpecies = async () => {
 const fetchUserActivities = async () => {
     try {
         const userId = user.value.id;
-        console.log('Fetching activities for user:', userId); // Debug log
+        console.log('Fetching activities for user:', userId);
 
         const [sightingsRes, strandingsRes] = await Promise.all([
             supabase
@@ -179,8 +179,7 @@ const fetchUserActivities = async () => {
                         species (
                             name
                         )
-                    ),
-                    user_id
+                    )
                 `)
                 .eq('user_id', userId)
                 .eq('is_active', true),
@@ -192,45 +191,24 @@ const fetchUserActivities = async () => {
                     report_status,
                     municipality:municipality_id(name),
                     barangay:barangay_id(name),
-                    stranded_species (
-                        species (
-                            name
-                        )
-                    ),
+                    species_involved,
                     user_id
                 `)
                 .eq('user_id', userId)
                 .eq('is_active', true)
         ]);
 
-        console.log('Sightings response:', sightingsRes); // Debug log
-        console.log('Strandings response:', strandingsRes); // Debug log
-
         if (sightingsRes.error) throw sightingsRes.error;
         if (strandingsRes.error) throw strandingsRes.error;
 
-        const { data: activeSightings } = await supabase
-            .from('sightings')
-            .select(`
-                id,
-                date,
-                report_status,
-                municipality:municipality_id(name),
-                barangay:barangay_id(name),
-                sighted_species (
-                    species (
-                        name
-                    )
-                )
-            `)
-            .eq('user_id', userId)
-            .eq('is_active', true);
-
         const activities = [
-            ...(activeSightings?.map(sighting => ({
+            ...(sightingsRes.data?.map(sighting => ({
                 id: `sighting-${sighting.id}`,
                 type: 'sighting',
-                species: sighting.sighted_species?.[0]?.species?.name || 'Unknown Species',
+                species: sighting.sighted_species
+                    .map(ss => ss.species?.name)
+                    .filter(Boolean)
+                    .join(', ') || 'Unknown Species',
                 location: `${sighting.barangay?.name || 'Unknown Location'}, ${sighting.municipality?.name || 'Unknown Location'}`,
                 date: sighting.date,
                 status: sighting.report_status,
@@ -241,13 +219,13 @@ const fetchUserActivities = async () => {
                 type: 'stranded',
                 date: stranding.date,
                 status: stranding.report_status,
-                species: stranding.stranded_species[0]?.species?.name || 'Unknown Species',
+                species: stranding.species_involved || 'Unknown Species',
                 location: `${stranding.barangay?.name || 'Unknown Location'}, ${stranding.municipality?.name || 'Unknown Location'}`,
                 viewUrl: route('stranded.incident.view', stranding.id)
             })) || [])
         ];
 
-        console.log('Processed activities:', activities); // Debug log
+        console.log('Processed activities:', activities);
 
         recentActivities.value = activities.sort((a, b) =>
             new Date(b.date) - new Date(a.date)
@@ -445,7 +423,9 @@ const paginatedActivities = computed(() => {
                                             </div>
                                             <div class="flex-grow">
                                                 <div class="flex items-center gap-2 mb-1">
-                                                    <h4 class="font-medium text-indigo-800">{{ activity.species }}</h4>
+                                                    <h4 class="font-medium text-indigo-800">
+                                                        {{ activity.species }}
+                                                    </h4>
                                                     <span :class="[
                                                         'text-xs px-2 py-0.5 rounded-full',
                                                         activity.type === 'stranded'
