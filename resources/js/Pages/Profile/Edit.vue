@@ -157,14 +157,15 @@ const allowOnlyNumbers = (event) => {
                             </div>
 
                             <div class="space-y-2">
-                                <InputLabel for="email" value="Email" class="text-gray-700" />
+                                <InputLabel for="email" value="Email"/>
                                 <TextInput
                                     id="email"
                                     type="email"
                                     v-model="form.email"
                                     required
                                     autocomplete="email"
-                                    class="w-full transition duration-150 ease-in-out"
+                                    class="w-full disabled:opacity-75 disabled:bg-gray-700/50 disabled:border-gray-600 disabled:cursor-not-allowed"
+                                    disabled
                                 />
                                 <InputError class="mt-1" :message="form.errors.email" />
                             </div>
@@ -305,10 +306,16 @@ const allowOnlyNumbers = (event) => {
 /* Form element styles */
 :deep(.form-input),
 :deep(.form-select),
-:deep(input),
+:deep(input:not([disabled])),
 :deep(select) {
     @apply bg-white/10 border-white/20 text-white placeholder-white/60;
     @apply focus:border-[#003366] focus:ring-[#003366];
+}
+
+/* Add specific styles for disabled inputs */
+:deep(input:disabled) {
+    @apply bg-gray-700/50 border-gray-600 text-gray-400;
+    @apply cursor-not-allowed;
 }
 
 :deep(label) {
@@ -320,7 +327,6 @@ const allowOnlyNumbers = (event) => {
     @apply focus:ring-2 focus:ring-offset-2 focus:ring-[#003366];
 }
 
-/* Update text colors for better visibility */
 :deep(input),
 :deep(select),
 :deep(option) {

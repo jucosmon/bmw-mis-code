@@ -136,7 +136,14 @@ const getFileName = (file) => {
 
   <Sidebar>
 
-    <div class="min-h-screen bg-cover bg-center bg-gradient-overlay" style="background-image: url('/images/landing.jpg')">
+    <div class="min-h-screen bg-cover bg-center bg-gradient-overlay">
+          <!-- Background image with overlay -->
+      <div class="absolute inset-0 z-0">
+        <img src="/images/landing.jpg" class="w-full h-full object-cover" alt="Background" />
+        <div class="absolute inset-0 bg-gradient-to-br from-[rgba(0,40,80,0.85)] to-[rgba(0,96,128,0.8)]"></div>
+        <!-- Grid pattern overlay -->
+        <div class="absolute inset-0 grid-pattern"></div>
+      </div>
       <div class="container mx-auto px-4 py-16">
         <h2 class="title-gradient mb-6">Create New Guideline</h2>
 
