@@ -29,6 +29,7 @@ const props = defineProps({
         required: true,
     }
 });
+const maxDate = new Date().toISOString().split('T')[0];
 
 const filteredBarangays = computed(() => {
     console.log('Municipality ID:', form.municipality_id);
@@ -528,7 +529,7 @@ const sizeOptions = [
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <InputLabel for="date" value="Date of the Incident" />
-                  <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                  <TextInput required id="date" type="date" :max="maxDate" v-model="form.date" autocomplete="date" class="w-full" />
                   <InputError class="mt-2" :message="form.errors.date" />
                 </div>
                 <div>

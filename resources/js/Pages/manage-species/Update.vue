@@ -23,7 +23,7 @@ const props = defineProps({
 if (!page || !page.props) {
     console.error('Page object is null or undefined');
 }
-
+const maxDate = new Date().toISOString().split('T')[0];
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const existingColors = ref(props.species.speciesColors.map(sc => sc.color.name));

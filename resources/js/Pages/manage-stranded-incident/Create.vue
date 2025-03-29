@@ -15,6 +15,7 @@ const formErrors = ref(null);
 const previewImages = ref([]);
 const locationSource = ref('manual');
 const isGeocodingInProgress = ref(false);
+const maxDate = new Date().toISOString().split('T')[0];
 const showMap = ref(false);
 const props = defineProps({
     municipalities: {
@@ -625,6 +626,7 @@ watch(showMap, async (newValue) => {
                       required
                       id="date"
                       type="date"
+                      :max="maxDate"
                       v-model="form.date"
                       @blur="markFieldAsTouched('date')"
                       :class="{

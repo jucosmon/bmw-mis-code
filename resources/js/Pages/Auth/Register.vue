@@ -19,6 +19,8 @@ const form = useForm({
 
 });
 
+const maxDate = new Date().toISOString().split('T')[0];
+
 // State for the "Show Password" checkbox
 const showPassword = ref(false);
 
@@ -109,7 +111,7 @@ const allowOnlyNumbers = (event) => {
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-group">
                             <InputLabel for="birthdate" value="Birth Date" class="form-label" />
-                            <TextInput id="birthdate" type="date" v-model="form.birthdate" required class="input-field" />
+                            <TextInput id="birthdate" type="date" :max="maxDate" v-model="form.birthdate" required class="input-field" />
                             <InputError :message="form.errors.birthdate" />
                         </div>
 

@@ -34,6 +34,7 @@ const props = defineProps({
 });
 
 // Define variables outside of onMounted
+const maxDate = new Date().toISOString().split('T')[0];
 const currentUser = ref(null);
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
@@ -770,7 +771,7 @@ const handleDropdownClick = (index) => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="date" value="Date of the Incident" />
-                                    <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                                    <TextInput required id="date" type="date" :max="maxDate" v-model="form.date" autocomplete="date" class="w-full" />
                                     <InputError class="mt-2" :message="form.errors.date" />
                                 </div>
                                 <div>

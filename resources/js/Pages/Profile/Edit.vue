@@ -20,6 +20,7 @@ const props = defineProps({
 
 const page = usePage();
 const barangaysList = ref(props.barangays);
+const maxDate = new Date().toISOString().split('T')[0];
 
 // Filter barangays based on selected municipality
 const fetchBarangays = (municipalityId) => {
@@ -185,6 +186,7 @@ const allowOnlyNumbers = (event) => {
                                 <TextInput
                                     id="birthdate"
                                     type="date"
+                                    :max="maxDate"
                                     v-model="form.birthdate"
                                     required
                                     class="w-full transition duration-150 ease-in-out"

@@ -34,6 +34,7 @@ if (!page || !page.props) {
     console.error('Page object is null or undefined');
 }
 
+const maxDate = new Date().toISOString().split('T')[0];
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const existingImages = ref(props.strandedIncident.mediaFiles ? props.strandedIncident.mediaFiles : []);
@@ -561,7 +562,7 @@ watch(showMap, async (newValue) => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="date" value="Date of the Incident" />
-                                    <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                                    <TextInput required id="date" type="date" :max="maxDate" v-model="form.date" autocomplete="date" class="w-full" />
                                     <InputError class="mt-2" :message="form.errors.date" />
                                 </div>
                                 <div>

@@ -15,6 +15,7 @@ const previewImages = ref([]);
 const props = defineProps({
     colors: Array,
 });
+const maxDate = new Date().toISOString().split('T')[0];
 
 const speciesCatagory = (category) => {
     switch (category) {

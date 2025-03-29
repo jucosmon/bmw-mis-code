@@ -21,6 +21,8 @@ const props = defineProps({
     },
 });
 
+const maxDate = new Date().toISOString().split('T')[0];
+
 onMounted(() => {
     if (page.props.auth?.user?.user_role === 'lgu_responder') {
         const userMunicipalityId = page.props.auth.user.municipality_id;
@@ -163,7 +165,7 @@ const allowOnlyNumbers = (event) => {
 
                             <div>
                                 <InputLabel for="birthdate" value="Birth Date" />
-                                <TextInput id="birthdate" type="date" v-model="form.birthdate" required class="input-field" />
+                                <TextInput id="birthdate" type="date" :max="maxDate" v-model="form.birthdate" required class="input-field" />
                                 <InputError class="mt-2" :message="form.errors.birthdate" />
                             </div>
 
