@@ -18,9 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(ColorSeeder::class);
         $this->call(SpeciesSeeder::class);
-        $this->call(StrandedIncidentSeeder::class);
-        $this->call(SightingSeeder::class);
         $this->call(GuidelineSeeder::class);
+        // $this->call(StrandedIncidentSeeder::class);
+        // $this->call(SightingSeeder::class);
 
     }
 }
