@@ -245,7 +245,7 @@ const initializeMap = () => {
         shadowUrl: markerShadow,
     });
 
-  map.value = L.map('map').setView([form.latitude || defaultLat, form.longitude || defaultLng], 6);
+  map.value = L.map('map').setView([form.latitude || defaultLat, form.longitude || defaultLng], 15);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
@@ -330,7 +330,7 @@ const setLocationFromMap = async () => {
         if (!map.value) {
             await initializeMap();
         } else {
-            map.value.setView([latitude, longitude], 13);
+            map.value.setView([latitude, longitude], 16);
             marker.value.setLatLng([latitude, longitude]);
         }
 
