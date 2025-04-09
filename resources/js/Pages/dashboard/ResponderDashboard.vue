@@ -714,6 +714,9 @@ const getStatusBadgeClass = (status) => {
                       </div>
                     </div>
                   </div>
+                  <div v-if="recentAlerts.length===0" class="text-center mt-5">
+                    <h4 class="text-gray-200 font-medium">No recent alerts</h4>
+                  </div>
                 </div>
               </div>
             </div>
@@ -780,6 +783,11 @@ const getStatusBadgeClass = (status) => {
                   </tbody>
                 </table>
               </div>
+
+              <div v-if="displayedReports.length===0" class="text-center my-5 justify-center">
+                <h4 class="text-gray-300 font-medium">No active reports</h4>
+             </div>
+
               <div class="md:px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
                 <span class="text-sm text-gray-500">
                   Showing {{ ((currentPage - 1) * perPage) + 1 }} to
