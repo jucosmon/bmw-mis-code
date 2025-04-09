@@ -312,7 +312,7 @@ const paginatedActivities = computed(() => {
                         <!-- Featured Species - Updated with oceanic blue -->
                         <div class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-white">Most Reported Species</h3>
+                                <h3 class="text-lg font-semibold text-white">Popular Species in Bohol</h3>
                                 <Link :href="route('species.index')"
                                     class="text-sm text-cyan-300 hover:text-cyan-200 hover:underline">
                                     View All →
@@ -320,6 +320,9 @@ const paginatedActivities = computed(() => {
                             </div>
                             <div v-if="isLoading" class="text-center py-4">
                                 Loading...
+                            </div>
+                            <div v-if="featuredSpecies.length===0" class="text-center my-10 justify-center">
+                                <h4 class="text-gray-200 font-medium">No popular species yet</h4>
                             </div>
                             <div v-else class="space-y-3">
                                 <Link v-for="species in featuredSpecies"
