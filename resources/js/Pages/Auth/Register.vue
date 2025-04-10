@@ -4,7 +4,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const formErrors = ref([]);
 const form = useForm({
@@ -16,20 +16,64 @@ const form = useForm({
     contact_number:'',
     birthdate: '',
     sex:'',
-
+    terms_accepted: false,
 });
 
 const maxDate = new Date().toISOString().split('T')[0];
 
-// State for the "Show Password" checkbox
+// State for the "Show Password" checkbox and terms modal
 const showPassword = ref(false);
+const showTermsModal = ref(false);
+
+// Password validation indicators
+const passwordLength = computed(() => form.password.length >= 8);
+const passwordHasUppercase = computed(() => /[A-Z]/.test(form.password));
+const passwordHasLowercase = computed(() => /[a-z]/.test(form.password));
+const passwordHasNumber = computed(() => /[0-9]/.test(form.password));
+const passwordHasSpecial = computed(() => /[^A-Za-z0-9]/.test(form.password));
+
+// Overall password strength
+const passwordStrength = computed(() => {
+    const criteria = [
+        passwordLength.value,
+        passwordHasUppercase.value,
+        passwordHasLowercase.value,
+        passwordHasNumber.value,
+        passwordHasSpecial.value
+    ];
+
+    const metCriteria = criteria.filter(c => c).length;
+
+    if (metCriteria === 0) return { text: "Very Weak", color: "red" };
+    if (metCriteria === 1) return { text: "Weak", color: "red" };
+    if (metCriteria === 2) return { text: "Fair", color: "orange" };
+    if (metCriteria === 3) return { text: "Good", color: "yellow" };
+    if (metCriteria === 4) return { text: "Strong", color: "lightgreen" };
+    return { text: "Very Strong", color: "green" };
+});
 
 const submit = () => {
     // Check if contact number is at least 11 characters
     if (form.contact_number && form.contact_number.length < 11) {
-        // Optionally, set an error message or handle it as needed
         alert("Contact number must be at least 11 digits long.");
         return; // Prevent form submission
+    }
+
+    // Check if terms are accepted
+    if (!form.terms_accepted) {
+        alert("You must accept the Terms and Conditions to register.");
+        return; // Prevent form submission
+    }
+
+    // Check password complexity
+    if (!passwordLength.value) {
+        alert("Password must be at least 8 characters long.");
+        return;
+    }
+
+    if (!passwordHasUppercase.value || !passwordHasLowercase.value || !passwordHasNumber.value) {
+        alert("Password must contain at least one uppercase letter, one lowercase letter, and one number.");
+        return;
     }
 
     form.post(route('register'), {
@@ -41,7 +85,6 @@ const submit = () => {
         },
         onFinish: () => form.reset('password', 'password_confirmation'), // Reset the entire form
     });
-
 };
 
 const allowOnlyNumbers = (event) => {
@@ -53,6 +96,10 @@ const allowOnlyNumbers = (event) => {
     if (!isNumber && !isControlKey) {
         event.preventDefault(); // Prevent the default action if the key is not a number or control key
     }
+};
+
+const toggleTermsModal = () => {
+    showTermsModal.value = !showTermsModal.value;
 };
 </script>
 
@@ -137,6 +184,21 @@ const allowOnlyNumbers = (event) => {
                         <InputLabel for="password" value="Password" class="form-label" />
                         <TextInput id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" required class="input-field" />
                         <InputError :message="form.errors.password" />
+
+                        <!-- Password strength indicators -->
+                        <div class="password-requirements mt-2">
+                            <div class="password-strength" v-if="form.password">
+                                <span class="text-sm">Strength: </span>
+                                <span class="text-sm" :style="{color: passwordStrength.color}">{{ passwordStrength.text }}</span>
+                            </div>
+                            <ul class="text-xs space-y-1 mt-1">
+                                <li :class="passwordLength ? 'text-green-400' : 'text-white'">✓ At least 8 characters</li>
+                                <li :class="passwordHasUppercase ? 'text-green-400' : 'text-white'">✓ At least one uppercase letter</li>
+                                <li :class="passwordHasLowercase ? 'text-green-400' : 'text-white'">✓ At least one lowercase letter</li>
+                                <li :class="passwordHasNumber ? 'text-green-400' : 'text-white'">✓ At least one number</li>
+                                <li :class="passwordHasSpecial ? 'text-green-400' : 'text-white'">✓ Special character (recommended)</li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -150,6 +212,16 @@ const allowOnlyNumbers = (event) => {
                         <span class="ms-2 text-sm text-white">Show Password</span>
                     </div>
 
+                    <!-- Terms and Conditions -->
+                    <div class="flex items-center mt-4">
+                        <Checkbox name="terms" v-model:checked="form.terms_accepted" />
+                        <span class="ms-2 text-sm text-white">
+                            I agree to the
+                            <button type="button" @click="toggleTermsModal" class="text-blue-400 hover:underline">Terms and Conditions</button>
+                        </span>
+                    </div>
+                    <InputError :message="form.errors.terms_accepted" />
+
                     <!-- Submit Button -->
                     <div class="mt-4">
                         <button type="submit" class="nav-button login-btn" :disabled="form.processing">
@@ -162,6 +234,45 @@ const allowOnlyNumbers = (event) => {
                         </p>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms and Conditions Modal -->
+    <div v-if="showTermsModal" class="terms-modal-container">
+        <div class="terms-modal">
+            <div class="terms-header">
+                <h3 class="terms-title">Terms and Conditions</h3>
+                <button @click="toggleTermsModal" class="close-button">&times;</button>
+            </div>
+            <div class="terms-content">
+                <h4>1. Introduction</h4>
+                <p>Welcome to Marine Wildlife. By registering for an account, you agree to comply with and be bound by the following terms and conditions.</p>
+
+                <h4>2. Use of Service</h4>
+                <p>You agree to use our service only for lawful purposes and in accordance with these Terms. You are responsible for maintaining the confidentiality of your account information.</p>
+
+                <h4>3. User Content</h4>
+                <p>Any content you submit through our platform may be used by Marine Wildlife for promotion, research, or educational purposes. We respect your privacy and will handle your data according to our Privacy Policy.</p>
+
+                <h4>4. Restrictions</h4>
+                <p>You may not use our services to post harmful, offensive, or illegal material, or to engage in activities that disrupt our services or harm marine wildlife.</p>
+
+                <h4>5. Data Protection</h4>
+                <p>We collect and process personal data as described in our Privacy Policy. By using our service, you consent to such processing and warrant that all data provided by you is accurate.</p>
+
+                <h4>6. Termination</h4>
+                <p>We reserve the right to terminate or suspend your account at our sole discretion, without notice, for conduct that we believe violates these Terms or is harmful to other users, us, or third parties, or for any other reason.</p>
+
+                <h4>7. Changes to Terms</h4>
+                <p>We may revise these Terms at any time by updating this page. You are expected to check this page from time to time to take notice of any changes we made.</p>
+
+                <h4>8. Contact</h4>
+                <p>If you have any questions about these Terms, please contact us at support@marinewildlife.org</p>
+            </div>
+            <div class="terms-footer">
+                <button @click="toggleTermsModal" class="blue-button">Close</button>
+                <button @click="form.terms_accepted = true; toggleTermsModal();" class="green-button">Accept</button>
             </div>
         </div>
     </div>
@@ -264,7 +375,6 @@ select.input-field {
     transition: all 0.3s ease;
 }
 
-
 .select-field {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2399ccff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
@@ -280,32 +390,123 @@ select.input-field {
     padding: 0.5rem;
 }
 
-/* Remove the gender-specific styles */
-.gender-options,
-.gender-option,
-.gender-button {
-    display: none;
+/* Password strength indicator styles */
+.password-requirements {
+    color: white;
+    opacity: 0.8;
 }
 
-@media (max-width: 480px) {
-    .gender-options {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .gender-option {
-        width: 100%;
-    }
-
-    .gender-button {
-        width: 100%;
-        justify-content: flex-start;
-    }
+/* Terms and conditions modal styles */
+.terms-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    padding: 1rem;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+.terms-modal {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.95), rgba(0, 64, 128, 0.95));
+    border-radius: 16px;
+    max-width: 700px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terms-title {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.close-button:hover {
+    opacity: 1;
+}
+
+.terms-content {
+    padding: 1.5rem;
+    color: white;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.terms-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #00ccff;
+}
+
+.terms-content p {
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.terms-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 1rem;
+}
+
+.blue-button, .green-button {
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 500;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.blue-button {
+    background: rgba(0, 153, 255, 0.2);
+    color: #00ccff;
+    border: 1px solid rgba(0, 204, 255, 0.3);
+}
+
+.blue-button:hover {
+    background: rgba(0, 153, 255, 0.3);
+}
+
+.green-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    border: none;
+}
+
+.green-button:hover {
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
 }
 
 @media (max-width: 768px) {
@@ -338,13 +539,17 @@ select.input-field {
     .space-y-3 > * + * {
         margin-top: 0.5rem;
     }
+
+    .terms-modal {
+        max-height: 90vh;
+    }
 }
 
 @media (max-width: 480px) {
     .login-container {
         padding: 1.5rem;
         margin: 0.5rem;
-        margin-top: 0; /* Removed extra top margin */
+        margin-top: 0;
     }
 
     .title-gradient {
@@ -373,7 +578,7 @@ select.input-field {
 
 @media (max-height: 700px) {
     .login-container {
-        margin: 1rem auto; /* Reduced margin */
+        margin: 1rem auto;
         padding: 1.25rem;
     }
 
