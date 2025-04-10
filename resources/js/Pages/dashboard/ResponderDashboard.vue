@@ -206,16 +206,17 @@ const fetchData = async () => {
   let activeStrandingsQuery = supabase
     .from('stranded_incidents')
     .select(`
-      *,
-      barangay:barangay_id(name),
-      municipality:municipality_id(name),
-      stranded_species (
         *,
-        species (*)
-      )
+        barangay:barangay_id(name),
+        municipality:municipality_id(name),
+        stranded_species (
+            *,
+            species (*)
+        ),
+        report_status
     `)
     .eq('is_active', true)
-    .not('report_status', 'eq', 'resolved');
+    .in('report_status', ['pending', 'verified', 'completed']);
 
   // Apply location filters to active strandings
   if (locationFilter.barangay_id) {
@@ -233,10 +234,11 @@ const fetchData = async () => {
       sighted_species (
         *,
         species (*)
-      )
+      ),
+      report_status
     `)
     .eq('is_active', true)
-    .eq('report_status', 'pending');
+    .in('report_status', ['pending', 'verified']);
 
   // Apply location filters to active sightings
   if (locationFilter.barangay_id) {
@@ -245,43 +247,59 @@ const fetchData = async () => {
     activeSightingsQuery = activeSightingsQuery.eq('municipality_id', locationFilter.municipality_id);
   }
 
-  const { data: activeStrandings } = await activeStrandingsQuery;
-  const { data: activeSightings } = await activeSightingsQuery;
+  const { data: activeStrandings, error: strandingsError } = await activeStrandingsQuery;
+  if (strandingsError) {
+    console.error('Error fetching strandings:', strandingsError);
+  }
+
+  const { data: activeSightings, error: sightingsError } = await activeSightingsQuery;
+  if (sightingsError) {
+    console.error('Error fetching sightings:', sightingsError);
+  }
 
   console.log('Fetched active strandings:', activeStrandings?.length);
   console.log('Fetched active sightings:', activeSightings?.length);
 
   if (activeStrandings || activeSightings) {
-    const processedStrandings = activeStrandings?.map(incident => ({
-      id: incident.id,
-      type: 'stranded',
-      species: incident.species_involved || 'Unknown',
-      location: `${incident.barangay?.name || 'Unknown'}, ${incident.municipality?.name || 'Unknown'}`,
-      date: incident.date,
-      time: incident.time,
-      status: incident.report_status,
-      latitude: incident.latitude,
-      longitude: incident.longitude,
-      viewUrl: `/stranded-incident/view/${incident.id}`
-    })) || [];
+    const processedStrandings = activeStrandings?.map(incident => {
+      console.log('Processing stranding incident:', incident.id, 'Status:', incident.report_status);
+      return {
+        id: incident.id,
+        type: 'stranded',
+        species: incident.species_involved || 'Unknown',
+        location: `${incident.barangay?.name || 'Unknown'}, ${incident.municipality?.name || 'Unknown'}`,
+        date: incident.date,
+        time: incident.time,
+        status: incident.report_status || 'pending',
+        latitude: incident.latitude,
+        longitude: incident.longitude,
+        viewUrl: `/stranded-incident/view/${incident.id}`
+      };
+    }) || [];
 
-    const processedSightings = activeSightings?.map(sighting => ({
-      id: sighting.id,
-      type: 'sighting',
-      species: sighting.sighted_species
-        .map(ss => ss.species?.name)
-        .filter(Boolean)
-        .join(', ') || 'Unknown Species',
-      location: `${sighting.barangay?.name || 'Unknown'}, ${sighting.municipality?.name || 'Unknown'}`,
-      date: sighting.date,
-      time: sighting.time,
-      status: sighting.report_status,
-      latitude: sighting.latitude,
-      longitude: sighting.longitude,
-      viewUrl: `/sighting/view/${sighting.id}`
-    })) || [];
+    const processedSightings = activeSightings?.map(sighting => {
+      console.log('Processing sighting:', sighting.id, 'Status:', sighting.report_status);
+      return {
+        id: sighting.id,
+        type: 'sighting',
+        species: sighting.sighted_species
+          .map(ss => ss.species?.name)
+          .filter(Boolean)
+          .join(', ') || 'Unknown Species',
+        location: `${sighting.barangay?.name || 'Unknown'}, ${sighting.municipality?.name || 'Unknown'}`,
+        date: sighting.date,
+        time: sighting.time,
+        status: sighting.report_status || 'pending',
+        latitude: sighting.latitude,
+        longitude: sighting.longitude,
+        viewUrl: `/sighting/view/${sighting.id}`
+      };
+    }) || [];
 
     activeReports.value = [...processedStrandings, ...processedSightings];
+    console.log('Total active reports:', activeReports.value.length);
+    console.log('Reports with statuses:', activeReports.value.map(r => ({ id: r.id, type: r.type, status: r.status })));
+
     totalReports.value = activeReports.value.length;
     updateMapMarkers();
   }
