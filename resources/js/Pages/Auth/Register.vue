@@ -247,7 +247,7 @@ const toggleTermsModal = () => {
             </div>
             <div class="terms-content">
                 <h4>1. Introduction</h4>
-                <p>Welcome to Marine Wildlife. By registering for an account, you agree to comply with and be bound by the following terms and conditions.</p>
+                <p>Welcome to BMWMIS. By registering for an account, you agree to comply with and be bound by the following terms and conditions.</p>
 
                 <h4>2. Use of Service</h4>
                 <p>You agree to use our service only for lawful purposes and in accordance with these Terms. You are responsible for maintaining the confidentiality of your account information.</p>
@@ -268,7 +268,7 @@ const toggleTermsModal = () => {
                 <p>We may revise these Terms at any time by updating this page. You are expected to check this page from time to time to take notice of any changes we made.</p>
 
                 <h4>8. Contact</h4>
-                <p>If you have any questions about these Terms, please contact us at support@marinewildlife.org</p>
+                <p>If you have any questions about these Terms, please contact us at bmwmis.application@gmail.com</p>
             </div>
             <div class="terms-footer">
                 <button @click="toggleTermsModal" class="blue-button">Close</button>
