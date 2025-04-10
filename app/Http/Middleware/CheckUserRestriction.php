@@ -23,7 +23,7 @@ class CheckUserRestriction
 
         if ($currentUser && $currentUser->is_restricted) {
             if ($currentUser->restriction_end && Carbon::now()->gt($currentUser->restriction_end)) {
-                $user = User::findOrFail('id', $currentUser->id);
+                $user = User::findOrFail($currentUser->id);
                 $user->is_restricted = false;
                 $user->restriction_start = null;
                 $user->restriction_end = null;
@@ -39,5 +39,4 @@ class CheckUserRestriction
 
         return $next($request);
     }
-
 }

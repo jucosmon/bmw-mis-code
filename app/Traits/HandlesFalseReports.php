@@ -23,7 +23,9 @@ trait HandlesFalseReports
         if ($user->false_report_count >= 3 && !$user->is_restricted) {
             $user->is_restricted = true;
             $user->restriction_start = Carbon::now();
-            $user->restriction_end = Carbon::now()->addDays(15);
+            // $user->restriction_end = Carbon::now()->addDays(15);
+            $user->restriction_end = Carbon::now()->addMinutes(2);
+
         }
 
         $user->save();

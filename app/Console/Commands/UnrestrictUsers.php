@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class UnrestrictUsers extends Command
 {
@@ -27,6 +28,8 @@ class UnrestrictUsers extends Command
      */
     public function handle()
     {
+        Log::info("Unrestricting users at " . now());
+
         $users = User::where('is_restricted', true)
             ->where('restriction_end', '<', Carbon::now())
             ->get();
