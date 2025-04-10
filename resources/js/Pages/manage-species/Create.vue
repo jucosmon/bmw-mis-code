@@ -261,6 +261,7 @@ const submit = () => {
                                 <CustomButton
                                     :disabled="form.processing"
                                     :class="{ 'opacity-25': form.processing }"
+                                    type="submit"
                                     icon="send">
                                     Create
                                 </CustomButton>
