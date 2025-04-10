@@ -129,7 +129,7 @@ const fetchData = async () => {
 
   if (strandings) {
     // Count total unresolved (pending + verified)
-    const unresolvedStrandings = strandings.filter(s => s.report_status !== 'resolved');
+    const unresolvedStrandings = strandings.filter(s => s.report_status !== 'resolved' && s.report_status !== 'false');
     stats.value.totalStrandings.total = unresolvedStrandings.length;
 
     // Breakdown by status
