@@ -50,6 +50,17 @@ defineProps({
                         </Link>
                     </template>
                 </div>
+                <template v-if="!$page.props.auth.user">
+                    <div class="mt-8 mb-4">
+                        <Link :href="route('dashboard')" class="nav-button dashboard-btn pulse-animation mt-3">
+                            <span class="button-content text-lg">
+                                <i class="fas fa-exclamation-circle mr-3"></i>
+                                <span>Report Wildlife Incident</span>
+                            </span>
+                        </Link>
+                        <p class="text-white text-sm mt-2 opacity-80">Quick incident reporting - no login required</p>
+                    </div>
+                </template>
             </div>
 
             <!-- Footer Quote -->

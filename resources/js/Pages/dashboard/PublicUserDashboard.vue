@@ -7,7 +7,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
 const page = usePage();
-const user = computed(() => page.props.auth.user);
+const user = computed(() => page.props.auth?.user || null);
 const showReportModal = ref(false);
 
 const userStats = ref({
@@ -41,6 +41,8 @@ const totalPages = computed(() => Math.ceil(totalActivities.value / perPage.valu
 
 // Add fetchUserStats function
 const fetchUserStats = async () => {
+    if (!user.value) return;
+
     try {
         const userId = user.value.id;
 
@@ -162,6 +164,8 @@ const fetchTopSpecies = async () => {
 
 // Update fetchUserActivities function
 const fetchUserActivities = async () => {
+    if (!user.value) return;
+
     try {
         const userId = user.value.id;
         console.log('Fetching activities for user:', userId);
@@ -256,9 +260,8 @@ onMounted(async () => {
     try {
         isLoading.value = true;
         await Promise.all([
-            fetchUserStats(),
             fetchTopSpecies(),
-            fetchUserActivities()
+            ...(user.value ? [fetchUserStats(), fetchUserActivities()] : [])
         ]);
     } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -280,21 +283,29 @@ const paginatedActivities = computed(() => {
     const end = start + perPage.value;
     return filtered.slice(start, end);
 });
+
+const numberOfSpecies = computed(() => {
+    if (user.value) {
+        return 10;
+    }
+    return 5;
+});
 </script>
 
 <template>
     <Head title="Dashboard" />
 
     <Sidebar>
-
         <div class="min-h-screen bg-cover bg-center relative oceanic-overlay" style="background-image: url('/images/landing.jpg')">
             <div class="relative">
-                <!-- Hero Section -->
+                <!-- Hero Section - Show different welcome message based on auth state -->
                 <div class="relative flex items-center justify-center min-h-[300px] py-10 pt-12">
                     <div class="absolute inset-0 bg-gradient-to-b from-blue-900/80 to-cyan-800/90"></div>
                     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div class="text-center text-white">
-                            <h1 class="text-2xl font-bold sm:text-3xl text-shadow">Welcome, {{ user.first_name }}!</h1>
+                            <h1 class="text-2xl font-bold sm:text-3xl text-shadow">
+                                {{ user ? `Welcome, ${user.first_name}!` : 'Welcome to Marine Wildlife Monitoring' }}
+                            </h1>
                             <p class="mt-2 text-lg text-shadow">Help us protect marine wildlife</p>
                             <div class="mt-6">
                                 <PrimaryButton @click="showReportModal = true"
@@ -306,10 +317,10 @@ const paginatedActivities = computed(() => {
                     </div>
                 </div>
 
-                <!-- Added spacing class mt-8 (2rem/32px) between hero and main content -->
+                <!-- Main Content -->
                 <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8 mt-8">
                     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-                        <!-- Featured Species - Updated with oceanic blue -->
+                        <!-- Featured Species - Always shown -->
                         <div class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-white">Popular Species in Bohol</h3>
@@ -325,7 +336,7 @@ const paginatedActivities = computed(() => {
                                 <h4 class="text-gray-200 font-medium">No popular species yet</h4>
                             </div>
                             <div v-else class="space-y-3">
-                                <Link v-for="species in featuredSpecies"
+                                <Link v-for="species in featuredSpecies.slice(0, numberOfSpecies)"
                                     :key="species.id"
                                     :href="route('species.view', species.id)"
                                     class="block rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
@@ -333,9 +344,9 @@ const paginatedActivities = computed(() => {
                                         <div>
                                             <h4 class="font-semibold text-slate-800">{{ species.name }}</h4>
                                             <p class="text-sm font-medium text-slate-600 italic">{{ species.scientificName }}</p>
-                                            <p class="mt-1 text-sm font-medium text-slate-700">
+                                            <!-- <p class="mt-1 text-sm font-medium text-slate-700">
                                                 Reports: {{ species.reportCount }}
-                                            </p>
+                                            </p> -->
                                         </div>
                                         <span class="inline-block rounded-full px-2 py-1 text-xs font-medium"
                                             :class="{
@@ -352,7 +363,7 @@ const paginatedActivities = computed(() => {
 
                         <!-- Quick Actions and Recent Activity -->
                         <div class="space-y-4">
-                            <!-- Quick Access - Updated with oceanic blue -->
+                            <!-- Quick Access - Always shown -->
                             <div class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
                                 <h3 class="mb-4 text-lg font-semibold text-white">Quick Access</h3>
                                 <div class="grid gap-3 sm:grid-cols-2">
@@ -379,8 +390,8 @@ const paginatedActivities = computed(() => {
                                 </div>
                             </div>
 
-                            <!-- Recent Activity - Updated with oceanic blue -->
-                            <div class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
+                            <!-- Recent Activity - Only shown when user is logged in -->
+                            <div v-if="user" class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
                                 <div class="mb-3 flex flex-col space-y-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                                     <h3 class="text-lg font-semibold">Recent Activity</h3>
                                     <div class="flex space-x-1 sm:space-x-2">
@@ -484,7 +495,7 @@ const paginatedActivities = computed(() => {
             </div>
         </div>
 
-        <!-- Report Modal -->
+        <!-- Report Modal - Show different content based on auth state -->
         <Modal :show="showReportModal" @close="showReportModal = false">
             <div class="p-6 modal-content">
                 <h3 class="mb-6 text-center text-xl font-medium text-white">What would you like to report?</h3>

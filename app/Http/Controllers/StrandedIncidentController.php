@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 class StrandedIncidentController extends Controller
 {
@@ -640,4 +641,30 @@ class StrandedIncidentController extends Controller
         return redirect()->route('stranded.incident.index')
             ->with('success', 'You have successfully marked a stranded incident report as false.');
     }
+
+    // unauthenticated user
+    // In your controller:
+public function publicSubmit(Request $request)
+{
+    // Process the form submission
+    $incident = new StrandedIncident();
+    // ... set properties
+
+    // For anonymous users, generate a tracking ID
+    if (!Auth::check()) {
+        $trackingId = Str::random(10); // Or use a more sophisticated method
+        $incident->tracking_id = $trackingId;
+    } else {
+        $incident->user_id = Auth::id();
+    }
+
+    $incident->save();
+
+    // Return the tracking ID to anonymous users
+    if (!Auth::check()) {
+        return redirect()->route('public.tracking.confirmation', ['id' => $trackingId]);
+    }
+
+    return redirect()->route('stranded.incident.view', ['id' => $incident->id]);
+}
 }
