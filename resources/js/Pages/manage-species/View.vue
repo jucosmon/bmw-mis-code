@@ -160,7 +160,7 @@ const closeFileModal = () => {
                             {{ props.species.is_active ? 'Active' : 'Inactive' }}
                         </span>
 
-                        <div v-if="page.props.auth.user.user_role==='bpemo_admin'" class="flex gap-3">
+                        <div v-if="page.props.auth?.user?.user_role==='bpemo_admin'" class="flex gap-3">
                             <CustomButton v-if="props.species.is_active"
                                 :onclick="confirmArchiveSpecies"
                                 variant="danger"
