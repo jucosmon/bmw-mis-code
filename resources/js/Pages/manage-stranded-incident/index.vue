@@ -9,6 +9,7 @@ const props = page ? page.props : {
     strandedIncidents: [],
     notifications: [],
     success: '',
+    errors: {}
 };
 
 // Determine if the user is a public_user or not
@@ -69,6 +70,13 @@ const resolvedIncidentsButton = () => {
                     <div v-if="props?.success" class="glass-panel mb-6 p-4 border border-green-400/30 text-green-400">
                         <strong class="font-bold">Success! </strong>
                         <span>{{ props?.success}}</span>
+                    </div>
+
+                    <!-- Error message -->
+                    <div v-if="props?.errors && Object.keys(props.errors).length > 0" class="glass-panel mb-6 p-4 border border-gray-100 text-red-400">
+                        <ul>
+                            <li v-for="(error, key) in props.errors" :key="key"><strong class="font-bold">Invalid! </strong>{{ error }}</li>
+                        </ul>
                     </div>
 
                     <!-- Header section -->
@@ -353,6 +361,12 @@ const resolvedIncidentsButton = () => {
     border-radius: 0.75rem;
     overflow: hidden;
     transition: all 0.3s ease;
+}
+
+/* Error message styling */
+.glass-panel[class*="border-red"] {
+    background: rgba(220, 38, 38, 0.05);
+    border-color: rgba(220, 38, 38, 0.3);
 }
 
 .incident-card {

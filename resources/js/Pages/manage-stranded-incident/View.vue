@@ -158,7 +158,7 @@ const updateButtonStatusPublic = computed(() => {
 
 // Update button validation for responders
 const updateButtonStatusResponder = computed(() => {
-    if (isPublicUser.value) {
+    if (isPublicUser.value || !page.props.auth.user) {
         return false;
     }
 

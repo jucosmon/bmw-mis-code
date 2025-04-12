@@ -93,6 +93,27 @@ class StrandedIncidentController extends Controller
 
     public function createPage()
     {
+        $user = Auth::user();
+
+        if ($user && $user->user_role === 'public_user') {
+            // Check user's last report
+            $lastReport = StrandedIncident::where('user_id', $user->id)
+                ->latest()
+                ->first();
+
+            if ($lastReport) {
+                $now = now();
+                $lastReportTime = $lastReport->created_at;
+                // Calculate minutes elapsed since last report (correct direction)
+                $timeSinceLastReport = (int)$lastReportTime->diffInMinutes($now);
+
+                if ($timeSinceLastReport < 5) {
+                    return redirect()->route('stranded.incident.index')
+                        ->withErrors(['cooldown' => 'Please wait ' . (5 - $timeSinceLastReport) . ' more minutes before submitting another report.']);
+                }
+            }
+        }
+
         return Inertia::render('manage-stranded-incident/Create', [
             'municipalities' => Municipality::all(),
             'barangays' => Barangay::all()
@@ -103,9 +124,27 @@ class StrandedIncidentController extends Controller
     {
         $user = Auth::user();
 
-        if($user){
+        if ($user) {
+            // Check user's last report
+            if($user->user_role === 'public_user') {
+                $lastReport = StrandedIncident::where('user_id', $user->id)
+                    ->latest()
+                    ->first();
+
+                if ($lastReport) {
+                    $now = now();
+                    $lastReportTime = $lastReport->created_at;
+                    // Calculate minutes elapsed since last report (correct direction)
+                    $timeSinceLastReport = (int)$lastReportTime->diffInMinutes($now);
+
+                    if ($timeSinceLastReport < 5) {
+                        return redirect()->route('stranded.incident.index')
+                            ->withErrors(['cooldown' => 'Please wait ' . (5 - $timeSinceLastReport) . ' more minutes before submitting another report.']);
+                    }
+                }
+            }
             $reportStatus = ($user->user_role !== 'public_user') ? 'verified' : 'pending';
-        }else{
+        } else {
             $reportStatus = 'pending';
         }
 
@@ -148,7 +187,7 @@ class StrandedIncidentController extends Controller
             'municipality_id' => $request->municipality_id,
             'barangay_id' => $request->barangay_id,
             'is_active' => true,
-            'user_id' => $user ? $user?->id : null,
+            'user_id' => $user ? $user->id : null,
         ]);
 
         // Handle file uploads
@@ -176,7 +215,6 @@ class StrandedIncidentController extends Controller
             ->with('success', 'You have successfully created a stranded incident report');
         }
     }
-
     protected function createNotification( $strandedIncident, $action)
     {
         // Get the authenticated user
