@@ -564,9 +564,30 @@ const knownReports = new Set();
 
 // Add function to play emergency sound
 const playEmergencySound = () => {
-  const audio = new Audio('/sounds/emergency-alert.mp3');
-  audio.volume = 0.5;
-  audio.play().catch(err => console.error('Error playing sound:', err));
+  try {
+    const audio = new Audio();
+    audio.src = '/sounds/emergency-alert.mp3';
+    audio.preload = 'auto';
+    audio.volume = 0.5;
+
+    // Add error handling for loading
+    audio.onerror = (e) => {
+      console.error('Error loading emergency sound:', e);
+    };
+
+    // Only play once loaded
+    audio.oncanplaythrough = () => {
+      audio.play().catch(err => {
+        console.error('Error playing sound:', err);
+        // If autoplay blocked, try playing on user interaction
+        if (err.name === 'NotAllowedError') {
+          console.log('Autoplay blocked - sound will play on next user interaction');
+        }
+      });
+    };
+  } catch (err) {
+    console.error('Error initializing audio:', err);
+  }
 };
 
 // Add function to check for new emergency reports
