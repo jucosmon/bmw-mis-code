@@ -783,7 +783,7 @@ onUnmounted(() => {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">account_circle</span>
-                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user ? `${props.strandedIncident.user.first_name} ${props.strandedIncident.user.last_name}` : 'Unknown Reporter' }}</span>
+                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user ? `${props.strandedIncident.user.first_name} ${props.strandedIncident.user.last_name}` : 'Anonymous' }}</span>
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">phone</span>
@@ -1044,10 +1044,9 @@ onUnmounted(() => {
                                             <div class="flex items-center mb-1">
                                                 <span class="material-icons material-icons-round text-md mr-3">account_circle</span>
                                                 <div>
-                                                    <p class="text-md font-large text-white">{{ page.props?.auth?.user ? `${comment.user.first_name} ${comment.user.last_name}` : 'Anonymous' }}</p>
+                                                    <p class="text-md font-large text-white">{{ comment.user ? `${comment.user.first_name} ${comment.user.last_name}` : 'Anonymous' }}</p>
                                                     <span class="text-xs text-white/60">{{ new Date(comment.created_at).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) }}</span>
                                                 </div>
-
                                             </div>
                                             <p v-if="editingCommentId !== comment.id" class="text-white/90 ml-8">{{ comment.text }}</p>
                                             <div v-else class="ml-6 mt-2">

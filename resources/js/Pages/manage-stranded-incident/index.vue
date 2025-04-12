@@ -172,7 +172,7 @@ const resolvedIncidentsButton = () => {
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
-                                            <span class="truncate">{{ strandedIncidents.user?.first_name }} {{ strandedIncidents.user?.last_name }}</span>
+                                            <span class="truncate">{{ strandedIncidents.user ? strandedIncidents.user.first_name + ' ' + strandedIncidents.user.last_name : 'Anonymous' }}</span>
                                         </span>
 
                                         <!-- Location -->
@@ -277,7 +277,7 @@ const resolvedIncidentsButton = () => {
                                                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                 </svg>
-                                                <span class="truncate">{{ strandedIncidents.user?.first_name }} {{ strandedIncidents.user?.last_name }}</span>
+                                                <span class="truncate">{{ strandedIncidents.user ? strandedIncidents.user.first_name + ' ' + strandedIncidents.user.last_name : 'Anonymous' }}</span>
                                             </span>
 
                                             <!-- Location -->
