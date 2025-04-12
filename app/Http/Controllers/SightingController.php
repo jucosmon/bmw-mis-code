@@ -451,14 +451,12 @@ class SightingController extends Controller
 
     public function archive(Request $request, $id)
     {
-        // Validate the request, ensuring the password is provided
-        $request->validate([
-            'password' => 'nullable|string',
-        ]);
-
-        // Check if the provided password matches the authenticated user's password
         $currentUser = Auth::user();
+
         if($currentUser){
+            $request->validate([
+                'password' => 'required|string',
+            ]);
             if (!Hash::check($request->password, $currentUser->password)) {
                 return back()->withErrors(['password' => 'The provided password is incorrect.']);
             }
@@ -479,14 +477,14 @@ class SightingController extends Controller
 
     public function unarchive(Request $request, $id)
     {
-        // Validate the request, ensuring the password is provided
-        $request->validate([
-            'password' => 'nullable|string',
-        ]);
+        $currentUser = Auth::user();
 
         // Check if the provided password matches the authenticated user's password
-        $currentUser = Auth::user();
         if($currentUser){
+            $request->validate([
+                'password' => 'required|string',
+            ]);
+
             if (!Hash::check($request->password, $currentUser->password)) {
                 return back()->withErrors(['password' => 'The provided password is incorrect.']);
             }
