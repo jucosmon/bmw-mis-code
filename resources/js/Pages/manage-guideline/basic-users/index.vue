@@ -22,7 +22,7 @@ const guidelinesCategory = (category) => {
 };
 
 const guidelinesRole = computed(() => {
-    switch (page.props.auth.user.user_role) {
+    switch (page.props.auth?.user?.user_role) {
         case 'lgu_responder':
             return 'LGU Responder';
         case 'barangay_official':
@@ -30,7 +30,7 @@ const guidelinesRole = computed(() => {
         case 'public_user':
             return 'Public User';
         default:
-            return 'Invalid Role';
+            return 'Public User';
     }
 });
 const title = computed(() => `Guidelines (${guidelinesRole.value})`);

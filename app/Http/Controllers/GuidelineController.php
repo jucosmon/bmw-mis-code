@@ -18,7 +18,7 @@ class GuidelineController extends Controller
     public function indexForBasicUser (){
         $user = Auth::user();
 
-        $guidelines = Guideline::where('user_role', $user->user_role)
+        $guidelines = Guideline::where('user_role', $user ? $user->user_role : 'public_user')
             ->where('is_active', true)
             ->get();
 
@@ -34,10 +34,16 @@ class GuidelineController extends Controller
     // Fetch the guideline with its items and media files
     $guideline = Guideline::with(['items'])->findOrFail($id);
 
-    // Check if the user has access to the guideline
-    if ($guideline->user_role !== $user->user_role) {
-        abort(403, 'You cannot access a guideline for this user type');
+    if($user){
+        if ($guideline->user_role !== $user->user_role) {
+            abort(403, 'You cannot access a guideline for this user type');
+        }
+    }else{
+        if($guideline->user_role !== 'public_user'){
+            abort(403, 'You cannot access a guideline for this user type');
+        }
     }
+
 
     foreach ($guideline->items as $item) {
         $item->mediaFiles = MediaFile::where('item_id', $item->id)->get();
