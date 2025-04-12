@@ -37,12 +37,11 @@ const props = defineProps({
 
 const showPassword = ref(false);
 
-const isPublicUser  = computed(() => page.props.auth.user.user_role === 'public_user');
-const isBpemoAdmin = computed(() => page.props.auth.user.user_role === 'bpemo_admin');
-const isBpemoStaff = computed(() => page.props.auth.user.user_role === 'bpemo_staff');
-const isLguResponder = computed(() => page.props.auth.user.user_role === 'lgu_responder');
-const isBarangayOfficial = computed(() => page.props.auth.user.user_role === 'barangay_official');
-
+const isPublicUser = computed(() => page.props?.auth?.user?.user_role === 'public_user' || false);
+const isBpemoAdmin = computed(() => page.props?.auth?.user?.user_role === 'bpemo_admin' || false);
+const isBpemoStaff = computed(() => page.props?.auth?.user?.user_role === 'bpemo_staff' || false);
+const isLguResponder = computed(() => page.props?.auth?.user?.user_role === 'lgu_responder' || false);
+const isBarangayOfficial = computed(() => page.props?.auth?.user?.user_role === 'barangay_official' || false);
 
 // form defaults
 const form = useForm({
@@ -114,7 +113,7 @@ const closeModal = () => {
 // Archiving For public users only
 const archiveButtonStatus = computed(() => {
     return ((isPublicUser.value || isBarangayOfficial.value || isLguResponder.value)
-    && props.sighting.report_status === 'pending');
+    && props.sighting.report_status === 'pending' || !page.props?.auth?.user);
 });
 
 const archiveSighting = () => {
@@ -144,24 +143,24 @@ const archiveSighting = () => {
 
 // Update button validation for regular sighting reports
 const updateButton = computed(() => {
-    return ((isPublicUser.value || isBarangayOfficial.value || isLguResponder.value)
-    && props.sighting.report_status === 'pending' && props.sighting.is_active === true
-    && page.props.auth.user.id === props.sighting.user_id);
+    return (isPublicUser.value || isBarangayOfficial.value || isLguResponder.value || !page.props?.auth?.user) &&
+           (props.sighting.report_status === 'pending' &&
+           props.sighting.is_active === true) &&
+           (page.props?.auth?.user?.id === props.sighting?.user_id || !page.props?.auth?.user);
 });
-
 
 // Update button validation for verifiers
 const updateButtonStatusVerifier = computed(() => {
-    return ((isBpemoAdmin.value || isBpemoStaff.value)
-    && (props.sighting.report_status != 'false')
-    && props.sighting.is_active === true);
+    return (isBpemoAdmin.value || isBpemoStaff.value) &&
+           props.sighting.report_status !== 'false' &&
+           props.sighting.is_active === true;
 });
 
 //unverify button
 const unverifyButtonStatus = computed(() => {
     return props.sighting.report_status === 'verified' &&
-           (isBpemoAdmin.value || isBpemoStaff.value)
-           && props.sighting.is_active === true;
+           (isBpemoAdmin.value || isBpemoStaff.value) &&
+           props.sighting.is_active === true;
 });
 
 console.log('verify button',updateButtonStatusVerifier.value);
@@ -554,7 +553,7 @@ const downloadReport = () => {
                                 <button
                                     class="action-button-gradient success text-sm mb-2"
                                     @click="confirmArchiveSighting"
-                                    v-if="props.sighting.is_active===false && isPublicUser"
+                                    v-if="props.sighting.is_active===false && archiveButtonStatus"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restore</span>
                                     Unarchive
@@ -761,25 +760,27 @@ const downloadReport = () => {
                         <h2 class="text-lg font-semibold text-gray-100">
                             {{ props.sighting.is_active ? 'Are you sure you want to archive this Sighting report?' : 'Are you sure you want to unarchive this Sighting report?'}}
                         </h2>
-                        <div class="mt-4">
-                            <label for="admin-password" class="text-sm text-gray-250">
-                                Confirm by entering your password
-                            </label>
-                            <input
-                                :type="showPassword ? 'text' : 'password'"
-                                id="admin-password"
-                                v-model="form.password"
-                                class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Enter your password"
-                            />
-                            <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
-                                {{ form.errors.password }}
-                            </p>
-                        </div>
+                        <div v-if="page.props?.auth?.user">
+                            <div class="mt-4">
+                                <label for="admin-password" class="text-sm text-gray-250">
+                                    Confirm by entering your password
+                                </label>
+                                <input
+                                    :type="showPassword ? 'text' : 'password'"
+                                    id="admin-password"
+                                    v-model="form.password"
+                                    class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    placeholder="Enter your password"
+                                />
+                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                                    {{ form.errors.password }}
+                                </p>
+                            </div>
 
-                        <div class="flex my-4">
-                            <Checkbox name="showPassword" v-model:checked="showPassword" />
-                            <span class="ms-2 text-sm text-white">Show Password</span>
+                            <div class="flex my-4">
+                                <Checkbox name="showPassword" v-model:checked="showPassword" />
+                                <span class="ms-2 text-sm text-white">Show Password</span>
+                            </div>
                         </div>
                         <div class="mt-6 flex justify-end space-x-4">
                             <SecondaryButton @click="closeModal">Cancel</SecondaryButton>

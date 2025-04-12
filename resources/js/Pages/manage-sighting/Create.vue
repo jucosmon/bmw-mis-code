@@ -614,6 +614,7 @@ const sizeOptions = [
                       autocomplete="detailed_location"
                       class="form-textarea"
                       placeholder="Please add more details of the exact location"
+                      required
                     ></textarea>
                     <InputError class="mt-2" :message="form.errors.detailed_location" />
                   </div>

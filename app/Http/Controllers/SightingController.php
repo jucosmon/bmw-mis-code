@@ -22,15 +22,16 @@ class SightingController extends Controller
     {
         $user = Auth::user();
 
-        // Retrieve pending sightings based on user role with sightedSpecies relationship
-        $sightings = Sighting::with('sightedSpecies.species')->where('is_active', true);
-
-        if ($user->user_role === 'public_user' || $user->user_role === 'lgu_responder' || $user->user_role === 'barangay_official') {
-            $sightings->where('user_id', $user->id);
+        if($user){
+            // Retrieve pending sightings based on user role with sightedSpecies relationship
+            $sightings = Sighting::with('sightedSpecies.species')->where('is_active', true);
+            if ($user->user_role === 'public_user' || $user->user_role === 'lgu_responder' || $user->user_role === 'barangay_official') {
+                $sightings->where('user_id', $user->id);
+            }
         }
 
         return Inertia::render('manage-sighting/index', [
-            'sightings' => $sightings->with(['user'])->get(),
+            'sightings' => $user ? $sightings->with(['user'])->get() : null,
             'success' => session('success'),
             'municipalities' => Municipality::all(),
             'barangays' => Barangay::all()
@@ -51,8 +52,11 @@ class SightingController extends Controller
     {
         $user = Auth::user();
 
-        // Determine report status based on user role
-        $reportStatus = ($user->user_role === 'bpemo_admin' ||$user->user_role === 'bpemo_staff') ? 'verified' : 'pending';
+        if($user){
+            $reportStatus = ($user->user_role === 'bpemo_admin' ||$user->user_role === 'bpemo_staff') ? 'verified' : 'pending';
+        }else{
+            $reportStatus = 'pending';
+        }
 
         // Validate the incoming request
         $request->validate([
@@ -87,9 +91,8 @@ class SightingController extends Controller
             'municipality_id' => $request->municipality_id,
             'barangay_id' => $request->barangay_id,
             'is_active' => true,
-            'user_id' => $user->id,
+            'user_id' => $user?->id,
         ]);
-
 
         // Handle file uploads
         if ($request->hasFile('mediaFiles')) {
@@ -118,8 +121,13 @@ class SightingController extends Controller
 
         $this->createNotification($sighting, 'create');
 
-        return redirect()->route('sighting.index')
-        ->with('success', 'You have successfully created a sighting report');
+        if($user){
+            return redirect()->route('sighting.index')
+            ->with('success', 'You have successfully created a sighting report');
+        }else{
+            return redirect()->route('sighting.view', $sighting->id)
+            ->with('success', 'You have successfully created a sighting report');
+        }
     }
 
     protected function createNotification( $sighting, $action)
@@ -127,29 +135,33 @@ class SightingController extends Controller
         // Get the authenticated user
         $user = Auth::user();
 
-        // Determine the user role
-        $userRole = '';
-        switch ($user->user_role) {
-            case "bpemo_admin":
-                $userRole = "BPEMO Administrator";
-                break;
-            case "bpemo_staff":
-                $userRole = "BPEMO Staff";
-                break;
-            case "lgu_responder":
-                $userRole = "LGU Responder";
-                break;
-            case "barangay_official":
-                $userRole = "Barangay Official";
-                break;
-            default:
-                $userRole = 'Public User';
+        if($user){
+            switch ($user->user_role) {
+                case "bpemo_admin":
+                    $userRole = "BPEMO Administrator";
+                    break;
+                case "bpemo_staff":
+                    $userRole = "BPEMO Staff";
+                    break;
+                case "lgu_responder":
+                    $userRole = "LGU Responder";
+                    break;
+                case "barangay_official":
+                    $userRole = "Barangay Official";
+                    break;
+                default:
+                    $userRole = 'Public User';
+            }
+            $userName ="{$user->first_name} {$user->last_name}";
+        }else{
+            $userName ="Anonymous";
+            $userRole = 'Public User';
         }
 
         if($action ==='create'){
             // Create the notification
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} reported a new sighting.",
+                'content' => "[{$userRole}] {$userName} reported a new sighting.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'sighting',
@@ -162,7 +174,7 @@ class SightingController extends Controller
 
         } else if($action === 'verified'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} already reviewed the report and verified the sighting.",
+                'content' => "[{$userRole}] {$userName} already reviewed the report and verified the sighting.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'sighting',
@@ -174,7 +186,7 @@ class SightingController extends Controller
             ]);
         } else if($action === 'archived'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} archived the reported sighting.",
+                'content' => "[{$userRole}] {$userName} archived the reported sighting.",
                 'category' => 'false',
                 'notif_for' => 'all',
                 'type' => 'sighting',
@@ -186,7 +198,7 @@ class SightingController extends Controller
             ]);
         } else if($action === 'unarchived'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} unarchived an archived sighting.",
+                'content' => "[{$userRole}] {$userName} unarchived an archived sighting.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'sighting',
@@ -198,7 +210,7 @@ class SightingController extends Controller
             ]);
         } else if($action === 'false'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is already onsite and marked the reported sighting as false.",
+                'content' => "[{$userRole}] {$userName} is already onsite and marked the reported sighting as false.",
                 'category' => 'false',
                 'notif_for' => 'all',
                 'type' => 'sighting',
@@ -210,7 +222,7 @@ class SightingController extends Controller
             ]);
         } else if($action === 'unverify'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is unverified a verified sighting.",
+                'content' => "[{$userRole}] {$userName} is unverified a verified sighting.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'sighting',
@@ -224,7 +236,6 @@ class SightingController extends Controller
         else {
             abort(403, 'Invalid action');
         }
-
     }
 
     public function view($id)
@@ -258,7 +269,7 @@ class SightingController extends Controller
     //update page for public users
     public function updatePage($id)
     {
-        $user = Auth::user();
+        // $user = Auth::user();
         $sighting = Sighting::with(['sightedSpecies'])->findOrFail($id);
 
         // Load media files
@@ -304,9 +315,17 @@ class SightingController extends Controller
         ]);
 
         $user = Auth::user();
-        if (($user->user_role !== 'bpemo_admin' && $user->user_role !== 'bpemo_staff') && ($request->report_status !== 'pending' || $request->is_active === 'false')) {
-            abort(403, 'Unauthorized action. The report is already verified as true.');
+
+        if($user){
+            if (($user->user_role !== 'bpemo_admin' && $user->user_role !== 'bpemo_staff') && ($request->report_status !== 'pending' || $request->is_active === 'false')) {
+                abort(403, 'Unauthorized action. The report is already verified as true.');
+            }
+        }else{
+            if ($request->report_status !== 'pending' || $request->is_active === 'false') {
+                abort(403, 'Unauthorized action. The report is already verified as true.');
+            }
         }
+
 
         $sighting = Sighting::findOrFail($id);
 
@@ -434,13 +453,15 @@ class SightingController extends Controller
     {
         // Validate the request, ensuring the password is provided
         $request->validate([
-            'password' => 'required|string',
+            'password' => 'nullable|string',
         ]);
 
         // Check if the provided password matches the authenticated user's password
         $currentUser = Auth::user();
-        if (!Hash::check($request->password, $currentUser->password)) {
-            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        if($currentUser){
+            if (!Hash::check($request->password, $currentUser->password)) {
+                return back()->withErrors(['password' => 'The provided password is incorrect.']);
+            }
         }
 
         $sighting = Sighting::findOrFail($id);
@@ -460,13 +481,15 @@ class SightingController extends Controller
     {
         // Validate the request, ensuring the password is provided
         $request->validate([
-            'password' => 'required|string',
+            'password' => 'nullable|string',
         ]);
 
         // Check if the provided password matches the authenticated user's password
         $currentUser = Auth::user();
-        if (!Hash::check($request->password, $currentUser->password)) {
-            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        if($currentUser){
+            if (!Hash::check($request->password, $currentUser->password)) {
+                return back()->withErrors(['password' => 'The provided password is incorrect.']);
+            }
         }
 
         $sighting = Sighting::findOrFail($id);

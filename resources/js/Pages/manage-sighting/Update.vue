@@ -543,8 +543,12 @@ watch(showMap, async (newValue) => {
 });
 
 const buttonStatus = computed(() => {
+    // Return false if no user is logged in
+    if (!currentUser.value) return false;
+
+    // Check report status and user role conditions
     return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') &&
-    (currentUser.value !== 'lgu_responder'  && currentUser.value !== 'barangay_official' && currentUser.value !== 'public_user');
+        (currentUser.value !== 'lgu_responder' && currentUser.value !== 'barangay_official' && currentUser.value !== 'public_user');
 });
 const showVerifyModal = ref(false);
 const showFalseModal = ref(false);

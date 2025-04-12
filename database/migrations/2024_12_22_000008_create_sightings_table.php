@@ -23,7 +23,7 @@ return new class extends Migration
             $table->enum('report_status', ['pending', 'verified', 'false'])->default('pending'); // Current status of the report
             $table->timestamps(); // Created at
             $table->boolean('is_active')->default( true); // Flag indicating if the sighting record is active
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Foreign key for user
+            $table->foreignId('user_id')->constrained()->onDelete('set null')->nullable(); // Foreign key for user
             $table->foreignId('municipality_id')->constrained()->onDelete('set null')->nullable(); // Foreign key for municipality
             $table->foreignId('barangay_id')->constrained()->onDelete('set null')->nullable(); // Foreign key for barangay
         });
