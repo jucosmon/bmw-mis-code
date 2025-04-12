@@ -12,26 +12,27 @@ const props = page ? page.props : {
 };
 
 // Determine if the user is a public_user or not
-const isPublicUser = computed(() => page && page.props.auth.user.user_role === 'public_user');
+const isPublicUser = computed(() => page && page.props?.auth?.user?.user_role === 'public_user' || !page.props?.auth?.user);
 
 const filterStatus = ref('all'); // Default filter is "all"
 
 // Filter strandedIncidents based on the selected status
 const filteredStrandedIncidents = computed(() => {
     if (filterStatus.value === 'all') {
-        return props.strandedIncidents;
+        return props.strandedIncidents || [];
     }
-    return props.strandedIncidents.filter(incident => incident.report_status === filterStatus.value);
+    return (props.strandedIncidents || []).filter(incident => incident.report_status === filterStatus.value);
 });
 
 // Group stranded incidents by status
 const groupedIncidents = computed(() => {
+    const incidents = filteredStrandedIncidents.value || [];
     return {
-        pending: filteredStrandedIncidents.value.filter(incident => incident.report_status === 'pending'),
-        verified: filteredStrandedIncidents.value.filter(incident => incident.report_status === 'verified'),
-        completed: filteredStrandedIncidents.value.filter(incident => incident.report_status === 'completed'),
+        pending: incidents.filter(incident => incident.report_status === 'pending'),
+        verified: incidents.filter(incident => incident.report_status === 'verified'),
+        completed: incidents.filter(incident => incident.report_status === 'completed'),
         resolved: isPublicUser.value
-            ? filteredStrandedIncidents.value.filter(incident => incident.report_status === 'resolved')
+            ? incidents.filter(incident => incident.report_status === 'resolved')
             : [], // Don't include resolved incidents if not a public_user
     };
 });
@@ -103,6 +104,7 @@ const resolvedIncidentsButton = () => {
                                     </svg>
                                 </button>
                                 <select
+                                    v-if="page.props?.auth?.user"
                                     v-model="filterStatus"
                                     class="filter-select"
                                 >
@@ -208,9 +210,18 @@ const resolvedIncidentsButton = () => {
                             </div>
                         </div>
                     </div>
+                    <!-- Show No Incidents Message if Filtered Status has No Results -->
+                    <div v-if="!page.props?.auth?.user"
+                        class="glass-panel text-center py-10 px-4">
+                        <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="mt-4 text-lg sm:text-xl font-medium text-white">Register / Log in Now</h3>
+                        <p class="mt-2 text-sm text-white/60">Please register your account and login to view report history.</p>
+                    </div>
 
                     <!-- Show No Incidents Message if Filtered Status has No Results -->
-                    <div v-if="(filterStatus === 'all' && (!filteredStrandedIncidents || filteredStrandedIncidents.length === 0)) ||
+                    <div v-if="page.props?.auth?.user && (filterStatus === 'all' && (!filteredStrandedIncidents || filteredStrandedIncidents.length === 0)) ||
                                 (groupedIncidents[filterStatus] && Array.isArray(groupedIncidents[filterStatus]) && groupedIncidents[filterStatus].length === 0)"
                         class="glass-panel text-center py-10 px-4">
                         <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">

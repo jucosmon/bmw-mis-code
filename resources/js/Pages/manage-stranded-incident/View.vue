@@ -82,7 +82,7 @@ const updateRoute = computed(() => {
             || props.strandedIncident.report_status === 'false'
         );
 
-    if (isPublicUser.value) {
+    if (isPublicUser.value || !page.props?.auth?.user) {
         return route('stranded.incident.update.page', { id: props.strandedIncident.id });
     } else if (isResponderEligible) {
         return route('stranded.incident.responder.update.page', { id: props.strandedIncident.id });
@@ -107,6 +107,7 @@ const unarchiveRoute = computed(() => {
 
 // main methods with consecutive modals
 const updateIncident = () => {
+
     router.visit(updateRoute.value);
 };
 
@@ -122,7 +123,7 @@ const closeModal = () => {
 
 // Archiving For public users only
 const archiveButtonStatus = computed(() => {
-    return (isPublicUser.value && props.strandedIncident.report_status === 'pending');
+    return (isPublicUser.value && props.strandedIncident.report_status === 'pending' || !page.props.auth.user);
 });
 
 const archiveIncident = () => {
@@ -152,8 +153,7 @@ const archiveIncident = () => {
 
 // Update button validation for Public users only
 const updateButtonStatusPublic = computed(() => {
-    return isPublicUser.value && props.strandedIncident.report_status === 'pending';
-});
+    return isPublicUser.value && props.strandedIncident.report_status === 'pending' || !page.props.auth.user});
 
 
 // Update button validation for responders
@@ -667,7 +667,7 @@ onUnmounted(() => {
                                 <button
                                     class="action-button-gradient success text-sm mb-2"
                                     @click="confirmArchiveIncident"
-                                    v-if="props.strandedIncident.is_active===false && isPublicUser"
+                                    v-if="props.strandedIncident.is_active===false && archiveButtonStatus"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restore</span>
                                     Unarchive
@@ -1110,24 +1110,26 @@ onUnmounted(() => {
                             <h2 class="text-lg font-semibold text-gray-100">
                                {{ props.strandedIncident.is_active ? 'Are you sure you want to archive this stranded incident report?' : 'Are you sure you want to unarchive this stranded incident report?'}}
                             </h2>
-                            <div class="mt-4">
-                                <label for="admin-password" class="text-sm text-gray-250">
-                                    Confirm by entering your password
-                                </label>
-                                <input
-                                    :type="showPassword ? 'text' : 'password'"
-                                    id="admin-password"
-                                    v-model="form.password"
-                                    class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                    placeholder="Enter your password"
-                                />
-                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
-                                    {{ form.errors.password }}
-                                </p>
-                            </div>
-                            <div class="flex my-4">
-                                <Checkbox name="showPassword" v-model:checked="showPassword" />
-                                <span class="ms-2 text-sm text-white">Show Password</span>
+                            <div v-if="page.props.auth.user">
+                                <div class="mt-4">
+                                    <label for="admin-password" class="text-sm text-gray-250">
+                                        Confirm by entering your password
+                                    </label>
+                                    <input
+                                        :type="showPassword ? 'text' : 'password'"
+                                        id="admin-password"
+                                        v-model="form.password"
+                                        class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                        placeholder="Enter your password"
+                                    />
+                                    <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                                        {{ form.errors.password }}
+                                    </p>
+                                </div>
+                                <div class="flex my-4">
+                                    <Checkbox name="showPassword" v-model:checked="showPassword" />
+                                    <span class="ms-2 text-sm text-white">Show Password</span>
+                                </div>
                             </div>
                             <div class="mt-6 flex justify-end space-x-4">
                                 <SecondaryButton class="text-white" @click="closeModal">Cancel</SecondaryButton>

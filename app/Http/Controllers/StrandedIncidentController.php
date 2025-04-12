@@ -13,7 +13,6 @@ use App\Traits\HandlesFalseReports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
@@ -26,29 +25,31 @@ class StrandedIncidentController extends Controller
     {
         $user = Auth::user();
 
-        if (in_array($user->user_role, ['bpemo_admin', 'bpemo_staff'])) {
+        if (in_array($user?->user_role, ['bpemo_admin', 'bpemo_staff'])) {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('is_active', true)
                 ->with(['user'])
                 ->get();
-        } elseif ($user->user_role === 'lgu_responder') {
+        } elseif ($user?->user_role === 'lgu_responder') {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('municipality_id', $user->municipality_id)
                 ->where('is_active', true)
                 ->with(['user'])
                 ->get();
-        } elseif ($user->user_role === 'barangay_official') {
+        } elseif ($user?->user_role === 'barangay_official') {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed'])
                 ->where('barangay_id', $user->barangay_id)
                 ->where('is_active', true)
                 ->with(['user'])
                 ->get();
-        } else {
+        } elseif ($user?->user_role === 'public_user') {
             $strandedIncidents = StrandedIncident::whereIn('report_status', ['pending', 'verified', 'completed', 'resolved'])
                 ->where('user_id', $user->id)
                 ->where('is_active', true)
                 ->with(['user'])
                 ->get();
+        }else{
+            $strandedIncidents = null;
         }
 
         return Inertia::render('manage-stranded-incident/index', [
@@ -102,8 +103,11 @@ class StrandedIncidentController extends Controller
     {
         $user = Auth::user();
 
-        // Determine report status based on user role
-        $reportStatus = ($user->user_role !== 'public_user') ? 'verified' : 'pending';
+        if($user){
+            $reportStatus = ($user->user_role !== 'public_user') ? 'verified' : 'pending';
+        }else{
+            $reportStatus = 'pending';
+        }
 
         // Validate the incoming request
         $request->validate([
@@ -144,7 +148,7 @@ class StrandedIncidentController extends Controller
             'municipality_id' => $request->municipality_id,
             'barangay_id' => $request->barangay_id,
             'is_active' => true,
-            'user_id' => $user->id,
+            'user_id' => $user ? $user?->id : null,
         ]);
 
         // Handle file uploads
@@ -164,8 +168,13 @@ class StrandedIncidentController extends Controller
 
         $this->createNotification($strandedIncident, 'create');
 
-        return redirect()->route('stranded.incident.index')
-        ->with('success', 'You have successfully created a stranded incident report');
+        if($user){
+            return redirect()->route('stranded.incident.index')
+            ->with('success', 'You have successfully created a stranded incident report');
+        }else{
+            return redirect()->route('stranded.incident.view', ['id' => $strandedIncident->id])
+            ->with('success', 'You have successfully created a stranded incident report');
+        }
     }
 
     protected function createNotification( $strandedIncident, $action)
@@ -173,29 +182,34 @@ class StrandedIncidentController extends Controller
         // Get the authenticated user
         $user = Auth::user();
 
-        // Determine the user role
-        $userRole = '';
-        switch ($user->user_role) {
-            case "bpemo_admin":
-                $userRole = "BPEMO Administrator";
-                break;
-            case "bpemo_staff":
-                $userRole = "BPEMO Staff";
-                break;
-            case "lgu_responder":
-                $userRole = "LGU Responder";
-                break;
-            case "barangay_official":
-                $userRole = "Barangay Official";
-                break;
-            default:
-                $userRole = 'Public User';
+        if($user){
+            switch ($user->user_role) {
+                case "bpemo_admin":
+                    $userRole = "BPEMO Administrator";
+                    break;
+                case "bpemo_staff":
+                    $userRole = "BPEMO Staff";
+                    break;
+                case "lgu_responder":
+                    $userRole = "LGU Responder";
+                    break;
+                case "barangay_official":
+                    $userRole = "Barangay Official";
+                    break;
+                default:
+                    $userRole = 'Public User';
+            }
+            $userName ="{$user->first_name} {$user->last_name}";
+        }else{
+            $userName ="Anonymous";
+            $userRole = 'Public User';
         }
+
 
         if($action ==='create'){
             // Create the notification
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} reported a new stranding incident.",
+                'content' => "[{$userRole}] {$userName} reported a new stranding incident.",
                 'category' => 'general',
                 'notif_for' => 'responders',
                 'type' => 'stranding',
@@ -208,7 +222,7 @@ class StrandedIncidentController extends Controller
 
         } else if($action === 'verified'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is already onsite and verified the stranding incident.",
+                'content' => "[{$userRole}] {$userName} is already onsite and verified the stranding incident.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'stranding',
@@ -220,7 +234,7 @@ class StrandedIncidentController extends Controller
             ]);
         } else if($action === 'completed'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} marked the stranding incident as completed.",
+                'content' => "[{$userRole}] {$userName} marked the stranding incident as completed.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'stranding',
@@ -232,7 +246,7 @@ class StrandedIncidentController extends Controller
             ]);
         } else if($action === 'resolved'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} marked the stranding incident as resolved.",
+                'content' => "[{$userRole}] {$userName} marked the stranding incident as resolved.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'stranding',
@@ -244,7 +258,7 @@ class StrandedIncidentController extends Controller
             ]);
         }else if($action === 'unresolved'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} updated the stranding incident as unresolved.",
+                'content' => "[{$userRole}] {$userName} updated the stranding incident as unresolved.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'stranding',
@@ -256,7 +270,7 @@ class StrandedIncidentController extends Controller
             ]);
         } else if($action === 'archived'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} archived the reported stranding incident.",
+                'content' => "[{$userRole}] {$userName} archived the reported stranding incident.",
                 'category' => 'false',
                 'notif_for' => 'responders',
                 'type' => 'stranding',
@@ -268,7 +282,7 @@ class StrandedIncidentController extends Controller
             ]);
         } else if($action === 'unarchived'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} unarchived an archived stranding incident.",
+                'content' => "[{$userRole}] {$userName} unarchived an archived stranding incident.",
                 'category' => 'general',
                 'notif_for' => 'all',
                 'type' => 'stranding',
@@ -280,7 +294,7 @@ class StrandedIncidentController extends Controller
             ]);
         } else if($action === 'false'){
             Notification::create([
-                'content' => "[{$userRole}] {$user->first_name} {$user->last_name} is already onsite and marked the reported stranding incident as false.",
+                'content' => "[{$userRole}] {$userName} is already onsite and marked the reported stranding incident as false.",
                 'category' => 'false',
                 'notif_for' => 'all',
                 'type' => 'stranding',
@@ -315,12 +329,13 @@ class StrandedIncidentController extends Controller
         });
 
         $userId = Auth::id();
-        $userRespondAction = $strandedIncident->respondActions->firstWhere('user_id', $userId);
+        $userRespondAction = $userId ? $strandedIncident->respondActions->firstWhere('user_id', $userId) : null;
 
         foreach ($strandedIncident->strandedSpecies as $strandedSpecies) {
             $species = Species::find($strandedSpecies->species_id);
             $strandedSpecies->species_name = $species ? $species->name : 'Unknown Species';
         }
+
         return Inertia::render('manage-stranded-incident/View', [
             'strandedIncident' => $strandedIncident,
             'respondActions' => $strandedIncident->respondActions->toArray(),
@@ -331,7 +346,6 @@ class StrandedIncidentController extends Controller
             'barangays' => Barangay::all()
         ]);
     }
-
 
     //update page for public users
     public function updatePage($id)
@@ -404,9 +418,16 @@ class StrandedIncidentController extends Controller
         ]);
 
         $user = Auth::user();
-        if ($user->user_role === 'public_user' && $request->report_status !== 'pending') {
-            abort(403, 'Unauthorized action. The report is already reviewed by responders.');
+        if($user){
+            if ($user->user_role === 'public_user' && $request->report_status !== 'pending') {
+                abort(403, 'Unauthorized action. The report is already reviewed by responders.');
+            }
+        }else{
+            if ($request->report_status !== 'pending') {
+                abort(403, 'Unauthorized action. The report is already reviewed by responders.');
+            }
         }
+
 
         $strandedIncident = StrandedIncident::findOrFail($id);
 
@@ -548,16 +569,17 @@ class StrandedIncidentController extends Controller
     //archiving
     public function archive(Request $request, $id)
     {
-        // Validate the request, ensuring the password is provided
-        $request->validate([
-            'password' => 'required|string',
-        ]);
-
-        // Check if the provided password matches the authenticated user's password
         $currentUser = Auth::user();
-        if (!Hash::check($request->password, $currentUser->password)) {
-            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        if($currentUser){
+            $request->validate([
+                'password' => 'required|string',
+            ]);
+
+            if (!Hash::check($request->password, $currentUser->password)) {
+                return back()->withErrors(['password' => 'The provided password is incorrect.']);
+            }
         }
+
 
         $strandedIncident = StrandedIncident::findOrFail($id);
         $strandedIncident->is_active = false;
@@ -574,15 +596,18 @@ class StrandedIncidentController extends Controller
 
     public function unarchive(Request $request, $id)
     {
-        // Validate the request, ensuring the password is provided
-        $request->validate([
-            'password' => 'required|string',
-        ]);
+
 
         // Check if the provided password matches the authenticated user's password
         $currentUser = Auth::user();
-        if (!Hash::check($request->password, $currentUser->password)) {
-            return back()->withErrors(['password' => 'The provided password is incorrect.']);
+        if($currentUser){
+            $request->validate([
+                'password' => 'required|string',
+            ]);
+
+            if (!Hash::check($request->password, $currentUser->password)) {
+                return back()->withErrors(['password' => 'The provided password is incorrect.']);
+            }
         }
 
         $strandedIncident = StrandedIncident::findOrFail($id);
