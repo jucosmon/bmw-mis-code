@@ -161,7 +161,7 @@ const closeFileModal = () => {
                         </span>
 
                         <div v-if="page.props.auth?.user?.user_role==='bpemo_admin'" class="flex gap-3">
-                            <CustomButton v-if="props.species.is_active"
+                            <!-- <CustomButton v-if="props.species.is_active"
                                 :onclick="confirmArchiveSpecies"
                                 variant="danger"
                                 icon="archive"
@@ -174,7 +174,7 @@ const closeFileModal = () => {
                                 icon="unarchive"
                                 >
                                 Unarchive
-                            </CustomButton>
+                            </CustomButton> -->
                             <CustomButton
                                 icon="edit"
                                 :onclick="updateSpecies"
