@@ -1044,7 +1044,7 @@ onUnmounted(() => {
                                             <div class="flex items-center mb-1">
                                                 <span class="material-icons material-icons-round text-md mr-3">account_circle</span>
                                                 <div>
-                                                    <p class="text-md font-large text-white">{{ comment.user.first_name }} {{ comment.user.last_name }}</p>
+                                                    <p class="text-md font-large text-white">{{ page.props?.auth?.user ? `${comment.user.first_name} ${comment.user.last_name}` : 'Anonymous' }}</p>
                                                     <span class="text-xs text-white/60">{{ new Date(comment.created_at).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) }}</span>
                                                 </div>
 
@@ -1059,7 +1059,7 @@ onUnmounted(() => {
                                                 />
                                             </div>
                                         </div>
-                                        <div v-if="comment.user_id === page.props.auth.user.id" class="relative">
+                                        <div v-if="comment.user_id === page.props.auth?.user?.id" class="relative">
                                             <button
                                                 class="text-white/50 hover:text-white"
                                                 @click.stop="comment.showOptions = !comment.showOptions; $event.stopPropagation();"
