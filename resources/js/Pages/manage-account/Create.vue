@@ -22,7 +22,7 @@ const props = defineProps({
     },
 });
 
-const maxDate = new Date().toISOString().split('T')[0];
+const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0];
 
 onMounted(() => {
     if (page.props.auth?.user?.user_role === 'lgu_responder') {

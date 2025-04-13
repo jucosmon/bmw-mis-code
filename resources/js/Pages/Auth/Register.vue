@@ -4,7 +4,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const formErrors = ref([]);
 const form = useForm({
@@ -19,7 +19,7 @@ const form = useForm({
     terms_accepted: false,
 });
 
-const maxDate = new Date().toISOString().split('T')[0];
+const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0];
 
 // State for the "Show Password" checkbox and terms modal
 const showPassword = ref(false);

@@ -20,7 +20,7 @@ const props = defineProps({
 
 const page = usePage();
 const barangaysList = ref(props.barangays);
-const maxDate = new Date().toISOString().split('T')[0];
+const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0];
 
 // Filter barangays based on selected municipality
 const fetchBarangays = (municipalityId) => {
