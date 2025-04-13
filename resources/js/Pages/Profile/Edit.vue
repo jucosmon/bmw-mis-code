@@ -47,6 +47,21 @@ const userRole = computed(() => {
     }
 });
 
+const positions = computed(() => {
+    switch (page.props.auth.user.user_role) {
+        case 'bpemo_admin':
+            return ['BPEMO CRM Division Head', 'BPEMO Head'];
+        case 'bpemo_staff':
+            return ['BPEMO CRM Staff', 'BPEMO CRM Coordinator'];
+        case 'lgu_responder':
+            return ['LGU Official', 'LGU Staff', 'LGU MAO Staff', 'LGU MAO Fisheries Technician'];
+        case 'barangay_official':
+            return ['Barangay Captain', 'Barangay Kagawad', 'Barangay Secretary', 'Barangay Treasurer'];
+        default:
+            return ['Invalid'];
+    }
+});
+
 // Initialize form with existing user data for updating
 const form = useForm({
     first_name: page.props.auth.user.first_name || '',
@@ -213,15 +228,15 @@ const allowOnlyNumbers = (event) => {
 
                             <div v-if="page.props.auth.user.user_role!=='public_user'" class="md:col-span-2">
                                 <div class="space-y-2">
-                                    <InputLabel for="position" value="User's Position" class="text-gray-700" />
-                                    <TextInput
-                                        id="position"
-                                        type="text"
-                                        v-model="form.position"
-                                        required
-                                        class="w-full transition duration-150 ease-in-out"
-                                    />
-                                    <InputError class="mt-1" :message="form.errors.position" />
+                                    <InputLabel for="position" value="User's Position" class="text-gray-700"/>
+                                    <select id="position" v-model="form.position" required
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                                        <option value="" disabled>Select user's position</option>
+                                        <option v-for="position in positions" :key="position" :value="position">
+                                            {{ position }}
+                                        </option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.position" />
                                 </div>
                             </div>
 

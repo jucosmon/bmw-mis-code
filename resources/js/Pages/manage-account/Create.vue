@@ -53,6 +53,21 @@ const userRole = computed(() => {
   }
 });
 
+const positions = computed(() => {
+    switch (props.type) {
+        case 'bpemo_admin':
+            return ['BPEMO CRM Division Head', 'BPEMO Head'];
+        case 'bpemo_staff':
+            return ['BPEMO CRM Staff', 'BPEMO CRM Coordinator'];
+        case 'lgu_responder':
+            return ['LGU Official', 'LGU Staff', 'LGU MAO Staff', 'LGU MAO Fisheries Technician'];
+        case 'barangay_official':
+            return ['Barangay Captain', 'Barangay Kagawad', 'Barangay Secretary', 'Barangay Treasurer'];
+        default:
+            return ['Not a Responder'];
+    }
+});
+
 // defined routes for different current user type
 const backRoute = computed(() => {
     if (page.props.auth?.user?.user_role === 'lgu_responder') {
@@ -184,9 +199,19 @@ const allowOnlyNumbers = (event) => {
 
                         <!-- Position and Location -->
                         <div class="space-y-6">
-                            <div>
+                            <!-- <div>
                                 <InputLabel for="position" value="User's Position" />
                                 <TextInput id="position" type="text" v-model="form.position" required class="input-field" />
+                                <InputError class="mt-2" :message="form.errors.position" />
+                            </div> -->
+                            <div>
+                                <InputLabel for="position" value="User's Position" />
+                                <select id="position" v-model="form.position" required class="input-field">
+                                    <option value="" disabled>Select user's position</option>
+                                    <option v-for="position in positions" :key="position" :value="position">
+                                        {{ position }}
+                                    </option>
+                                </select>
                                 <InputError class="mt-2" :message="form.errors.position" />
                             </div>
 

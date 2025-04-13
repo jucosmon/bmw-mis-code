@@ -135,6 +135,21 @@ const allowOnlyNumbers = (event) => {
     }
 };
 
+const positions = computed(() => {
+    switch (props.user.user_role) {
+        case 'bpemo_admin':
+            return ['BPEMO CRM Division Head', 'BPEMO Head'];
+        case 'bpemo_staff':
+            return ['BPEMO CRM Staff', 'BPEMO CRM Coordinator'];
+        case 'lgu_responder':
+            return ['LGU Official', 'LGU Staff', 'LGU MAO Staff', 'LGU MAO Fisheries Technician'];
+        case 'barangay_official':
+            return ['Barangay Captain', 'Barangay Kagawad', 'Barangay Secretary', 'Barangay Treasurer'];
+        default:
+            return ['Not a Responder'];
+    }
+});
+
 </script>
 
 <template>
@@ -217,10 +232,15 @@ const allowOnlyNumbers = (event) => {
                             <!-- Position and Location -->
                             <div class="space-y-6" v-if="props.user.user_role!=='public_user'">
                                 <div>
-                                    <InputLabel for="position" value="User's Position" />
-                                    <TextInput id="position" type="text" v-model="form.position" required class="input-field" />
-                                    <InputError class="mt-2" :message="form.errors.position" />
-                                </div>
+                                <InputLabel for="position" value="User's Position" />
+                                <select id="position" v-model="form.position" required class="input-field">
+                                    <option value="" disabled>Select user's position</option>
+                                    <option v-for="position in positions" :key="position" :value="position">
+                                        {{ position }}
+                                    </option>
+                                </select>
+                                <InputError class="mt-2" :message="form.errors.position" />
+                            </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div>
