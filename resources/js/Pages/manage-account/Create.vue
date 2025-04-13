@@ -98,9 +98,8 @@ const form = useForm({
 
 const submit = () => {
     // Check if contact number is at least 11 characters
-    if (form.contact_number && form.contact_number.length < 11) {
-        // Optionally, set an error message or handle it as needed
-        alert("Contact number must be at least 11 digits long.");
+    if (form.contact_number && (form.contact_number.length !== 10 || form.contact_number[0] !== '9')) {
+        alert("Contact number must be 10 digits long and start with '9'.");
         return; // Prevent form submission
     }
 
@@ -172,10 +171,20 @@ const allowOnlyNumbers = (event) => {
                                 <TextInput id="email" type="email" v-model="form.email" required autocomplete="email" class="input-field" />
                                 <InputError class="mt-2" :message="form.errors.email" />
                             </div>
-
                             <div>
                                 <InputLabel for="contact_number" value="Contact Number" />
-                                <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" class="input-field" />
+                                <div class="flex items-center w-full">
+                                    <span class="text-gray-100 pr-2 pt-2">+63</span>
+                                    <TextInput
+                                        id="contact_number"
+                                        type="text"
+                                        v-model="form.contact_number"
+                                        @keydown="allowOnlyNumbers"
+                                        maxlength="10"
+                                        class="input-field flex-1"
+                                        placeholder="9XXXXXXXXX"
+                                    />
+                                </div>
                                 <InputError class="mt-2" :message="form.errors.contact_number" />
                             </div>
 

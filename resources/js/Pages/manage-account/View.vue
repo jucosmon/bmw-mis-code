@@ -209,7 +209,7 @@ const disableUser = ()=> {
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">phone</span>
-                                    <span class="ml-3">{{ props.user.contact_number }}</span>
+                                    <span class="ml-3">+63 {{ props.user.contact_number }}</span>
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">{{ props.user.sex.toLowerCase() === 'male' ? 'male' : 'female' }}</span>

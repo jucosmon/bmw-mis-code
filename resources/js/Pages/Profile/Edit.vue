@@ -77,8 +77,8 @@ const form = useForm({
 
 const formErrors = ref(null);
 const submit = () => {
-    if (form.contact_number.length < 11) {
-        alert("Contact number must be at least 11 digits long.");
+    if (form.contact_number && (form.contact_number.length !== 10 || form.contact_number[0] !== '9')) {
+        alert("Contact number must be 10 digits long and start with '9'.");
         return; // Prevent form submission
     }
     const hasChanges = Object.keys(form.data())
@@ -184,17 +184,21 @@ const allowOnlyNumbers = (event) => {
                                 />
                                 <InputError class="mt-1" :message="form.errors.email" />
                             </div>
-
                             <div class="space-y-2">
-                                <InputLabel for="contact_number" value="Contact Number" class="text-gray-700" />
-                                <TextInput
-                                    id="contact_number"
-                                    type="text"
-                                    v-model="form.contact_number"
-                                    @keydown="allowOnlyNumbers"
-                                    class="w-full transition duration-150 ease-in-out"
-                                />
-                                <InputError class="mt-1" :message="form.errors.contact_number" />
+                                <InputLabel for="contact_number" value="Contact Number" class="text-gray-700"/>
+                                <div class="flex items-center w-full">
+                                    <span class="text-gray-100 pr-2 pt-2">+63</span>
+                                    <TextInput
+                                        id="contact_number"
+                                        type="text"
+                                        v-model="form.contact_number"
+                                        @keydown="allowOnlyNumbers"
+                                        maxlength="10"
+                                        class="w-full transition duration-150 ease-in-out flex-1"
+                                        placeholder="9XXXXXXXXX"
+                                    />
+                                </div>
+                                <InputError class="mt-2" :message="form.errors.contact_number" />
                             </div>
 
                             <div class="space-y-2">

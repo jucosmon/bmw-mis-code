@@ -26,7 +26,7 @@ class ProfileUpdateRequest extends FormRequest
         ],
         'first_name' => ['required', 'string', 'max:255'],
         'last_name' => ['required', 'string', 'max:255'],
-        'contact_number' => ['required', 'string', 'min:11'],
+        'contact_number' => ['required', 'string', 'min:10'],
         'birthdate' => ['required', 'date'],
         'sex' => ['required', 'in:male,female,other'],
         'position' => ['nullable', 'string', 'max:255'],
