@@ -39,6 +39,8 @@ const maxDate = new Date().toISOString().split('T')[0];
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const existingImages = ref(props.strandedIncident.mediaFiles ? props.strandedIncident.mediaFiles : []);
+const videoMaxDuration = 60; // 3 minutes in seconds
+const errorMessage = ref('');
 
 const backRoute = computed(() => {
     return route('stranded.incident.view', { id: props.strandedIncident.id });
@@ -96,17 +98,49 @@ const hasChanges = computed(() => {
     return dataChanged || mediaFilesChanged || deletedImagesChanged;
 });
 
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
 
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute or less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
 
-const handleNewFileChange = (event) => {
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+const handleNewFileChange = async (event) => {
     const files = event.target.files;
-    // Append new files to the mediaFiles array without resetting the form
+    errorMessage.value = '';
+
+    // Validate each video file
+    for (const file of files) {
+        if (file.type.startsWith('video/')) {
+            const validation = await validateVideoDuration(file);
+            if (!validation.valid) {
+                errorMessage.value = validation.message;
+                return;
+            }
+        }
+    }
+
+    // Append new files to the mediaFiles array
     form.mediaFiles.push(...Array.from(files));
 
-    // Generate previews for each selected image
-    previewNewImages.value = Array.from(files).map(file => {
-        return URL.createObjectURL(file);
-    });
+    // Generate previews for each selected file
+    const newPreviews = Array.from(files).map(file => ({
+        url: URL.createObjectURL(file),
+        type: file.type.startsWith('video/') ? 'video' : 'image'
+    }));
+
+    previewNewImages.value.push(...newPreviews);
 };
 
 // Remove selected preview image
@@ -122,6 +156,11 @@ const removeExistingImage = (index) => {
     existingImages.value.splice(index, 1);
 };
 const submit = () => {
+    if (form.mediaFiles.length === 0) {
+        errorMessage.value = 'Please upload at least one photo or video';
+        return;
+    }
+
     if (hasChanges.value) {
         form.deletedImages = deletedImages.value;
 
@@ -807,26 +846,56 @@ watch(showMap, async (newValue) => {
 
                             <!-- New Images -->
                             <div class="preview-section">
+                                <div v-if="errorMessage" class="error-container">
+                                    <p>{{ errorMessage }}</p>
+                                </div>
                                 <h4 class="preview-title">Upload New Images</h4>
-                                <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                                    <span class="material-icons sm:mr-2">cloud_upload</span>
-                                    <span class="hidden sm:block">Browse Files</span>
-                                </label>
+                                <div class="flex flex-wrap gap-4">
+                                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">cloud_upload</span>
+                                        Browse Files
+                                    </label>
+                                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">camera_alt</span>
+                                        Take Photo/Video
+                                    </label>
+                                </div>
                                 <input
                                     id="mediaFiles"
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,video/*"
                                     multiple
                                     @change="handleNewFileChange"
                                     class="hidden"
                                 />
+                                <input
+                                    id="cameraCapture"
+                                    type="file"
+                                    accept="image/*,video/*"
+                                    multiple
+                                    capture
+                                    @change="handleNewFileChange"
+                                    class="hidden"
+                                />
+                                <p class="text-sm text-blue-300 mt-2">
+                                    * You can upload images or videos (max 3 minutes)
+                                </p>
+                                <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block mt-1">
+                                    Required at least 1 media file
+                                </span>
                                 <InputError class="mt-2" :message="form.errors.mediaFiles" />
+                                <p v-if="errorMessage" class="text-red-400 text-sm mt-2">{{ errorMessage }}</p>
 
                                 <!-- Preview New Images -->
                                 <div v-if="previewNewImages.length" class="mt-4">
                                     <div class="preview-grid">
-                                        <div v-for="(image, index) in previewNewImages" :key="index" class="preview-item group">
-                                            <img :src="image" alt="Image Preview" class="preview-image"/>
+                                        <div v-for="(file, index) in previewNewImages" :key="index" class="preview-item group">
+                                            <template v-if="file.type === 'image'">
+                                                <img :src="file.url" alt="Image Preview" class="preview-image"/>
+                                            </template>
+                                            <template v-else-if="file.type === 'video'">
+                                                <video :src="file.url" controls class="preview-image"></video>
+                                            </template>
                                             <button
                                                 @click="removeNewImage(index)"
                                                 type="button"
@@ -1168,7 +1237,7 @@ input[type="range"] {
     border: 1px solid rgba(255, 68, 68, 0.2);
     border-radius: 8px;
     padding: 1.25rem;
-    color: #ff4444;
+    color: #ff7b7b;
     margin-bottom: 1.5rem;
 }
 

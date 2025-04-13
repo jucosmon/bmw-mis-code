@@ -18,6 +18,8 @@ const locationSource = ref('manual');
 const isGeocodingInProgress = ref(false);
 const maxDate = new Date().toISOString().split('T')[0];
 const showMap = ref(false);
+const errorMessage = ref('');
+const videoMaxDuration = 60; // 3 minutes in seconds
 const props = defineProps({
     municipalities: {
         type: Array,
@@ -58,8 +60,39 @@ watch(() => form.municipality_id, (newValue) => {
   }
 });
 
-const handleFileChange = (event) => {
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute or less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+const handleFileChange = async (event) => {
   const files = event.target.files;
+  errorMessage.value = '';
+
+  // Validate each video file
+  for (const file of files) {
+    if (file.type.startsWith('video/')) {
+      const validation = await validateVideoDuration(file);
+      if (!validation.valid) {
+        errorMessage.value = validation.message;
+        return;
+      }
+    }
+  }
+
   form.mediaFiles = Array.from(files);
 
   previewImages.value = Array.from(files).map((file) => {
@@ -214,6 +247,11 @@ const previousStep = () => {
 
 // Enhance submit function with loading state
 const submit = () => {
+  if (form.mediaFiles.length === 0) {
+    errorMessage.value = 'Please upload at least one photo or video';
+    return;
+  }
+
   if (createRoute.value) {
     isSubmitting.value = true;
     form.post(createRoute.value, {
@@ -613,6 +651,10 @@ watch(showMap, async (newValue) => {
               </ul>
             </div>
 
+            <div v-if="errorMessage" class="error-container">
+              <p>{{ errorMessage }}</p>
+            </div>
+
             <!-- Step 1: Basic Information -->
             <div v-show="currentStep === 1" class="item-card">
               <div class="item-header mb-4">
@@ -919,13 +961,42 @@ watch(showMap, async (newValue) => {
 
                 <div class="media-section">
                   <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-                  <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                    Browse Files
-                  </label>
-                  <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="hidden" />
-                  <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block">
-                        Required at least 1 media
-                    </span>
+                  <div class="flex flex-wrap gap-4">
+                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                      Upload Files
+                    </label>
+                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                      Take Photo/Video
+                    </label>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="mediaFiles"
+                    @change="handleFileChange"
+                    multiple
+                    class="hidden"
+                  />
+                  <input
+                    id="cameraCapture"
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    capture
+                    @change="handleFileChange"
+                    class="hidden"
+                />
+
+                  <p class="text-sm text-blue-300 mt-2">
+                    * You can upload images or videos (max 1 minute)
+                  </p>
+                  <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block mt-1">
+                    Required at least 1 media file
+                  </span>
+                  <span v-if="errorMessage" class="text-sm text-red-400 block mt-1">
+                    {{ errorMessage }}
+                  </span>
+
                   <!-- Preview Section -->
                   <div v-if="previewImages.length" class="preview-section mt-4">
                     <h4 class="preview-title">Media Preview</h4>
