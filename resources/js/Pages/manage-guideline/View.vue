@@ -135,10 +135,17 @@ const updateButton = () => {
                             <h1 class="guideline-title-gradient">
                                 {{ props.guideline.title }}
                             </h1>
-                            <div class="category-badge">
-                                <span class="material-icons material-icons-round text-sm mr-2">category</span>
-                                <p>{{ props.guideline.category }}</p>
+                            <div class="flex gap-4">
+                                <div class="category-badge">
+                                    <span class="material-icons material-icons-round text-sm mr-2">category</span>
+                                    <p>{{ props.guideline.category }}</p>
+                                </div>
+                                <div class="category-badge">
+                                    <span class="material-icons material-icons-round text-sm mr-2">language</span>
+                                    <p>{{ props.guideline.language }}</p>
+                                </div>
                             </div>
+
                         </div>
                     </div>
 

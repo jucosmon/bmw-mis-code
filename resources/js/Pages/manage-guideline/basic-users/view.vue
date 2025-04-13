@@ -67,10 +67,17 @@ const backRoute = () => {
                     <div class="guideline-header">
                         <div class="flex flex-col">
                             <h1 class="guideline-title-gradient">{{ props.guideline.title }}</h1>
-                            <div class="category-badge">
-                                <span class="material-icons material-icons-round text-sm mr-2">category</span>
-                                <p>{{ props.guideline.category }}</p>
+                            <div class="flex gap-4">
+                                <div class="category-badge">
+                                    <span class="material-icons material-icons-round text-sm mr-2">category</span>
+                                    <p>{{ props.guideline.category }}</p>
+                                </div>
+                                <div class="category-badge">
+                                    <span class="material-icons material-icons-round text-sm mr-2">language</span>
+                                    <p>{{ props.guideline.language }}</p>
+                                </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -80,7 +87,7 @@ const backRoute = () => {
                         <div class="space-y-4">
                             <h2 class="text-lg font-semibold border-b pb-2 flex items-center text-white border-opacity-20">
                                 <span class="material-icons material-icons-round mr-2">description</span>
-                                Description
+                                {{ props.guideline.language === 'English' ? 'Description' : 'Deskripsyon' }}
                             </h2>
                             <p class="text-white/90">{{ props.guideline.description }}</p>
                         </div>
@@ -89,14 +96,14 @@ const backRoute = () => {
                         <div class="space-y-4">
                             <h2 class="text-lg font-semibold border-b pb-2 flex items-center text-white border-opacity-20">
                                 <span class="material-icons material-icons-round mr-2">list</span>
-                                Guidelines
+                                {{ props.guideline.language === 'English' ? 'Guidelines' : 'Mga Giya' }}
                             </h2>
                             <div class="space-y-4">
                                 <div v-for="(item, index) in sortedItems" :key="item.id"
                                      class="info-row group p-4 rounded-lg">
                                     <h3 class="step-title">
                                         <span class="material-icons material-icons-round mr-2">article</span>
-                                        Step {{ index + 1 }}
+                                        {{ props.guideline.language === 'English' ? 'Steps' : 'Ika' }} {{ index + 1 }}
                                     </h3>
                                     <p class="text-white/90 ml-8">{{ item.text }}</p>
 

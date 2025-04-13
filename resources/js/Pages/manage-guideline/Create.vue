@@ -27,6 +27,7 @@ const form = useForm({
     description: '',
     category: '',
     user_role: props.user_role,
+    language:'',
     items: [
         {
             count: 1, // Initialize count for the first item
@@ -157,8 +158,8 @@ const getFileName = (file) => {
 
           <!-- Guidelines Information Section -->
           <div class="guideline-info-container">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div class="sm:col-span-2">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div class="sm:col-span-3">
                 <InputLabel for="title" value="Title" />
                 <TextInput
                   id="title"
@@ -170,7 +171,7 @@ const getFileName = (file) => {
                 <InputError :message="formErrors?.title" class="mt-2" />
               </div>
 
-              <div class="sm:col-span-2">
+              <div class="sm:col-span-3">
                 <InputLabel for="description" value="Description" />
                 <TextInput
                   id="description"
@@ -194,6 +195,15 @@ const getFileName = (file) => {
                 <InputError class="mt-2" :message="form.errors.category" />
               </div>
               <div>
+                <InputLabel for="language" value="Language" />
+                <select v-model="form.language" class="w-full" required>
+                    <option value="" disabled>Select an option</option>
+                    <option value="english">English</option>
+                    <option value="bisaya">Bisaya</option>
+                </select>
+                <InputError class="mt-2" :message="form.errors.language" />
+              </div>
+              <div>
                 <InputLabel for="user_role" value="User Role" />
                 <select v-model="form.user_role" class="w-full" required disabled>
                     <option value="" disabled>Select an option</option>
@@ -203,6 +213,7 @@ const getFileName = (file) => {
                 </select>
                 <InputError class="mt-2" :message="form.errors.user_role" />
               </div>
+
             </div>
           </div>
 

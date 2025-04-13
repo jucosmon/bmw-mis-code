@@ -106,15 +106,6 @@ Route::middleware(['auth', 'verified', 'active', 'notRestricted'])->group(functi
 
     Route::prefix('guideline')->group(function (){
 
-        // // VIEW GUIDELINES FOR THE CORRESPONDING ROLES
-        // Route::prefix('user')->middleware(['role:lgu_responder,barangay_official,public_user'])->group(function () {
-        //     //viewing another guideline
-        //     Route::get('/view/{id}', action: [GuidelineController::class, 'viewForBasicUser'])
-        //         ->name('guideline.view');
-        //     Route::get('/', [GuidelineController::class, 'indexForBasicUser'])
-        //         ->name('guideline.index');
-        // });
-
         // MANAGING GUIDELINES MAINLY BY BPEMO ADMIN
         Route::middleware(['role:bpemo_admin'])->group(function () {
             //creating another guideline
@@ -267,97 +258,98 @@ Route::get('/test', function() {
 });
 
 
-// public access
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::prefix('access')->group(function(){
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::prefix('stranded-incident')->group(function () {
-    // index
-    Route::get('/', [StrandedIncidentController::class, 'index'])->name('stranded.incident.index');
-    //creating another stranded incident
-    Route::get('/create-page', [StrandedIncidentController::class, 'createPage'])
-    ->name('stranded.incident.createPage');
-    Route::post('/create', [StrandedIncidentController::class, 'create'])
-        ->name('stranded.incident.create');
-    //viewing another stranded incident
-    Route::get('/view/{id}', [StrandedIncidentController::class, 'view'])
-        ->name('stranded.incident.view');
-    //updating another stranded incident
-    Route::get('/public-user/update-page/{id}', [StrandedIncidentController::class, 'updatePage'])
-        ->name('stranded.incident.update.page');
-    Route::post('/update/{id}', [StrandedIncidentController::class, 'update'])
-        ->name('stranded.incident.update');
+    Route::prefix('stranded-incident')->group(function () {
+        // index
+        Route::get('/', [StrandedIncidentController::class, 'index'])->name('stranded.incident.index');
+        //creating another stranded incident
+        Route::get('/create-page', [StrandedIncidentController::class, 'createPage'])
+        ->name('stranded.incident.createPage');
+        Route::post('/create', [StrandedIncidentController::class, 'create'])
+            ->name('stranded.incident.create');
+        //viewing another stranded incident
+        Route::get('/view/{id}', [StrandedIncidentController::class, 'view'])
+            ->name('stranded.incident.view');
+        //updating another stranded incident
+        Route::get('/public-user/update-page/{id}', [StrandedIncidentController::class, 'updatePage'])
+            ->name('stranded.incident.update.page');
+        Route::post('/update/{id}', [StrandedIncidentController::class, 'update'])
+            ->name('stranded.incident.update');
 
-    //archiving another stranded incident
-    Route::patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
-        ->name('stranded.incident.archive');
-    //unarchiving another stranded incident
-    Route::patch('/unarchive/{id}', [StrandedIncidentController::class, 'unarchive'])
-        ->name('stranded.incident.unarchive');
+        //archiving another stranded incident
+        Route::patch('/archive/{id}', [StrandedIncidentController::class, 'archive'])
+            ->name('stranded.incident.archive');
+        //unarchiving another stranded incident
+        Route::patch('/unarchive/{id}', [StrandedIncidentController::class, 'unarchive'])
+            ->name('stranded.incident.unarchive');
 
 
-    // comments inside a specific stranded incident
-    Route::prefix('comments')->group(function () {
-        Route::post('/create', [CommentController::class, 'create'])
-            ->name('stranded.incident.comment.create');
+        // comments inside a specific stranded incident
+        Route::prefix('comments')->group(function () {
+            Route::post('/create', [CommentController::class, 'create'])
+                ->name('stranded.incident.comment.create');
 
-        Route::patch('/update/{comment}', [CommentController::class, 'update'])
-            ->name('stranded.incident.comment.update');
+            Route::patch('/update/{comment}', [CommentController::class, 'update'])
+                ->name('stranded.incident.comment.update');
 
-        Route::patch('/archive/{comment}', [CommentController::class, 'archive'])
-            ->name('stranded.incident.comment.archive');
+            Route::patch('/archive/{comment}', [CommentController::class, 'archive'])
+                ->name('stranded.incident.comment.archive');
+        });
     });
+
+
+    // manage sightings
+    Route::prefix('sighting')->group(function () {
+        // index
+        Route::get('/', [SightingController::class, 'index'])->name('sighting.index');
+        //create
+        Route::get('/create-page', [SightingController::class, 'createPage'])
+        ->name('sighting.createPage');
+        Route::post('/create', [SightingController::class, 'create'])
+            ->name('sighting.create');
+        //view
+        Route::get('/view/{id}', [SightingController::class, 'view'])
+            ->name('sighting.view');
+        //update
+        Route::get('/update-page/{id}', [SightingController::class, 'updatePage'])
+            ->name('sighting.update.page');
+        Route::post('/update/{id}', [SightingController::class, 'update'])
+            ->name('sighting.update');
+        //archiving another stranded incident
+        Route::patch('/archive/{id}', [SightingController::class, 'archive'])
+            ->name('sighting.archive');
+        //unarchiving another stranded incident
+        Route::patch('/unarchive/{id}', [SightingController::class, 'unarchive'])
+            ->name('sighting.unarchive');
+        Route::get('/finished', [SightingController::class, 'indexFinishedSightings'])
+            ->name('sighting.finished.index');
+    });
+
+    Route::prefix('guideline')->group(function (){
+            Route::get('/view/{id}', action: [GuidelineController::class, 'viewForBasicUser'])
+                ->name('guideline.view');
+            Route::get('/', [GuidelineController::class, 'indexForBasicUser'])
+                ->name('guideline.index');
+    });
+
+    Route::prefix('species')->group(function () {
+        Route::get('/', [SpeciesController::class, 'index'])
+            ->name('species.index');
+        Route::get('/search', [SpeciesController::class, 'search'])
+            ->name('species.search');
+        Route::get('/result', [SpeciesController::class, 'resultPage'])
+            ->name('species.result');
+        Route::get('/view/{id}', [SpeciesController::class, 'view'])
+            ->name('species.view');
+    });
+
+
+    Route::get('/public/track', function () {
+        return Inertia::render('Public/TrackReport');
+    })->name('public.track');
+
+    Route::post('/public/track', [StrandedIncidentController::class, 'publicTrack'])
+        ->name('public.track.submit');
 });
-
-
-// manage sightings
-Route::prefix('sighting')->group(function () {
-    // index
-    Route::get('/', [SightingController::class, 'index'])->name('sighting.index');
-    //create
-    Route::get('/create-page', [SightingController::class, 'createPage'])
-    ->name('sighting.createPage');
-    Route::post('/create', [SightingController::class, 'create'])
-        ->name('sighting.create');
-    //view
-    Route::get('/view/{id}', [SightingController::class, 'view'])
-        ->name('sighting.view');
-    //update
-    Route::get('/update-page/{id}', [SightingController::class, 'updatePage'])
-        ->name('sighting.update.page');
-    Route::post('/update/{id}', [SightingController::class, 'update'])
-        ->name('sighting.update');
-    //archiving another stranded incident
-    Route::patch('/archive/{id}', [SightingController::class, 'archive'])
-        ->name('sighting.archive');
-    //unarchiving another stranded incident
-    Route::patch('/unarchive/{id}', [SightingController::class, 'unarchive'])
-        ->name('sighting.unarchive');
-    Route::get('/finished', [SightingController::class, 'indexFinishedSightings'])
-        ->name('sighting.finished.index');
-});
-
-Route::prefix('guideline')->group(function (){
-        Route::get('/view/{id}', action: [GuidelineController::class, 'viewForBasicUser'])
-            ->name('guideline.view');
-        Route::get('/', [GuidelineController::class, 'indexForBasicUser'])
-            ->name('guideline.index');
-});
-
-Route::prefix('species')->group(function () {
-    Route::get('/', [SpeciesController::class, 'index'])
-        ->name('species.index');
-    Route::get('/search', [SpeciesController::class, 'search'])
-        ->name('species.search');
-    Route::get('/result', [SpeciesController::class, 'resultPage'])
-        ->name('species.result');
-    Route::get('/view/{id}', [SpeciesController::class, 'view'])
-        ->name('species.view');
-});
-
-
-Route::get('/public/track', function () {
-    return Inertia::render('Public/TrackReport');
-})->name('public.track');
-
-Route::post('/public/track', [StrandedIncidentController::class, 'publicTrack'])
-    ->name('public.track.submit');

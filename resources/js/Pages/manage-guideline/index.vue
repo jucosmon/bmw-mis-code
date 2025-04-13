@@ -42,6 +42,7 @@ const PER_PAGE = 5; // Number of items per page
 const currentPage = ref(1); // Initialize current page
 const filterStatus = ref('active'); // Default filter to 'active'
 const filterCategory = ref('all'); // Default filter to 'all'
+const filterLanguage = ref('english'); // Default filter to 'english'
 
 // Filter guideline based on the selected status and category
 const filteredGuidelines = computed(() => {
@@ -53,12 +54,16 @@ const filteredGuidelines = computed(() => {
         const categoryMatch = filterCategory.value === 'all'
             || guideline.category === filterCategory.value;
 
-        return statusMatch && categoryMatch;
+        const languageMatch = filterLanguage.value === 'english'
+            ? guideline.language === 'english'
+            : guideline.language === 'bisaya';
+
+        return statusMatch && categoryMatch && languageMatch;
     });
 });
 
 // Watch for filter changes and reset pagination
-watch([filterStatus, filterCategory], () => {
+watch([filterStatus, filterCategory, filterLanguage], () => {
     currentPage.value = 1;
 }, { immediate: true });
 
@@ -94,6 +99,10 @@ const backRoute = () => {
 // Toggle between active and inactive guidelines
 const toggleActiveInactive = () => {
     filterStatus.value = filterStatus.value === 'active' ? 'inactive' : 'active';
+};
+
+const toggleLanguage = () => {
+    filterLanguage.value = filterLanguage.value === 'english' ? 'bisaya' : 'english';
 };
 
 </script>
@@ -177,6 +186,20 @@ const toggleActiveInactive = () => {
                                         ></div>
                                     </div>
                                 </div>
+                                <div class="flex items-center">
+                                    <span class="text-white mr-2">{{ filterLanguage === 'english' ? 'English' : 'Bisaya' }}</span>
+                                    <div
+                                        @click="toggleLanguage"
+                                        class="w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors duration-300"
+                                        :class="{ 'bg-green-400/50': filterLanguage === 'english', 'bg-gray-300/30': filterLanguage !== 'english' }"
+                                    >
+                                        <div
+                                            class="bg-white w-4 h-4 rounded-full shadow-md transition-transform duration-300 ease-in-out"
+                                            :class="{ 'translate-x-4': filterLanguage === 'english' }"
+                                        ></div>
+                                    </div>
+                                </div>
+
 
                                 <button
                                     type="button"

@@ -36,18 +36,24 @@ const guidelinesRole = computed(() => {
 const title = computed(() => `Guidelines (${guidelinesRole.value})`);
 
 const filterStatus = ref('all'); // Default filter
+const filterLanguage = ref('english'); // Default filter to 'english'
+const toggleLanguage = () => {
+    filterLanguage.value = filterLanguage.value === 'english' ? 'bisaya' : 'english';
+};
 
 // Filter guideline based on the selected status
 const filteredGuidelines = computed(() => {
-    if (filterStatus.value === 'marine_turtles') {
-        return props.guidelines.filter((guideline) => guideline.category === 'marine_turtles');
-    } else if (filterStatus.value === 'marine_mammals') {
-        return props.guidelines.filter((guideline) => guideline.category === 'marine_mammals');
-    } else if (filterStatus.value === 'sharks_rays') {
-        return props.guidelines.filter((guideline) => guideline.category === 'sharks_rays');
-    } else {
-        return props.guidelines; // 'all'
+    let filtered = props.guidelines;
+
+    // Filter by category
+    if (filterStatus.value !== 'all') {
+        filtered = filtered.filter((guideline) => guideline.category === filterStatus.value);
     }
+
+    // Filter by language
+    filtered = filtered.filter((guideline) => guideline.language === filterLanguage.value);
+
+    return filtered;
 });
 
 // Button routes
@@ -114,6 +120,19 @@ const viewGuideline = (id) => {
                                     Sharks and Rays
                                 </button>
                             </div>
+                            <div class="flex items-center">
+                                    <span class="text-white mr-2">{{ filterLanguage === 'english' ? 'English' : 'Bisaya' }}</span>
+                                    <div
+                                        @click="toggleLanguage"
+                                        class="w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors duration-300"
+                                        :class="{ 'bg-green-400/50': filterLanguage === 'english', 'bg-gray-300/30': filterLanguage !== 'english' }"
+                                    >
+                                        <div
+                                            class="bg-white w-4 h-4 rounded-full shadow-md transition-transform duration-300 ease-in-out"
+                                            :class="{ 'translate-x-4': filterLanguage === 'english' }"
+                                        ></div>
+                                    </div>
+                                </div>
                         </div>
 
                         <!-- Guidelines List -->

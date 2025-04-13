@@ -112,6 +112,7 @@ class GuidelineController extends Controller
             'description' => 'string|required',
             'user_role' => 'required|in:lgu_responder,barangay_official,public_user',
             'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
+            'language' => 'required|in:english,filipino,bisaya',
             'items' => 'required|array|min:1',
             'items.*.count' => 'required|integer|min:1',
             'items.*.text' => 'required|string',
@@ -124,6 +125,7 @@ class GuidelineController extends Controller
             'description' => $request->description,
             'user_role' => $request->user_role,
             'category' => $request->category,
+            'language' => $request->language,
             'is_active' => true
         ]);
 
@@ -185,6 +187,7 @@ class GuidelineController extends Controller
             'description' => 'string|required',
             'user_role' => 'required|in:lgu_responder,barangay_official,public_user',
             'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
+            'language' => 'required|in:english,filipino,bisaya',
             'items' => 'required|array|min:1',
             'items.*.count' => 'required|integer|min:1',
             'items.*.text' => 'required|string',
