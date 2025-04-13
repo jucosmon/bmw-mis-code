@@ -130,14 +130,44 @@ const toggleTermsModal = () => {
                     <div class="grid grid-cols-7 gap-3">
                         <div class="form-group col-span-4">
                             <InputLabel for="first_name" value="First Name" class="form-label" />
-                            <TextInput id="first_name" type="text" v-model="form.first_name" required class="input-field" />
+                            <TextInput
+                                id="first_name"
+                                type="text"
+                                v-model="form.first_name"
+                                required
+                                minlength="2"
+                                class="input-field"
+                                @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
+                            />
                             <InputError :message="form.errors.first_name" />
+                            <span v-if="form.first_name.length > 0 && form.first_name.length < 2" class="text-xs text-red-400">
+                                First name must be at least 2 characters
+                            </span>
                         </div>
 
                         <div class="form-group col-span-3">
                             <InputLabel for="last_name" value="Last Name" class="form-label" />
-                            <TextInput id="last_name" type="text" v-model="form.last_name" required maxlength="10" class="input-field" />
+                            <TextInput
+                                id="last_name"
+                                type="text"
+                                v-model="form.last_name"
+                                required
+                                minlength="2"
+                                class="input-field"
+                                @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
+                            />
                             <InputError :message="form.errors.last_name" />
+                            <span v-if="form.last_name.length > 0 && form.last_name.length < 2" class="text-xs text-red-400">
+                                Last name must be at least 2 characters
+                            </span>
                         </div>
                     </div>
 

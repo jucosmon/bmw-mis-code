@@ -621,6 +621,7 @@ onMounted(() => {
     const emergencySound = new Audio();
     emergencySound.src = '/sounds/emergency-alert.mp3';
     emergencySound.load();
+    console.log('User Role' ,page);
 
     // Initialize map without immediate marker update
     nextTick(() => {
@@ -772,6 +773,26 @@ const getStatusBadgeClass = (status) => {
 
 // Add array to track new emergency markers
 let newEmergencyMarkers = [];
+
+const barangayName =(id)=> {
+    const barangay = page.props.barangays.find(b => b.id === id);
+    return barangay ? barangay.name : 'Unknown';
+}
+
+const municipalityName =(id)=> {
+    const municipality = page.props.municipalities.find(m => m.id === id);
+    return municipality ? municipality.name : 'Unknown';
+}
+
+const placeInfo = computed(() => {
+  switch(user.value.user_role) {
+    case 'bpemo_admin': return "Bohol's Marine Wildlife Dashboard";
+    case 'bpemo_staff': return "Bohol's Marine Wildlife Dashboard";
+    case 'barangay_official': return user.value.barangay_id ? `${barangayName(user.value.barangay_id)} of ${municipalityName(user.value.municipality_id)} Marine Wildlife Dashboard` : 'Barangay Dashboard';
+    case 'lgu_responder': return user.value.municipality_id ? `${municipalityName(user.value.municipality_id)} Marine Wildlife Dashboard` : 'Dashboard';
+    default: return 'Marine Wildlife Monitoring Dashboard';
+  }
+});
 </script>
 
 <template>
@@ -792,7 +813,7 @@ let newEmergencyMarkers = [];
           <!-- Welcome message -->
           <div class="mb-10 text-center">
             <h3 class="profile-title-gradient">
-              Welcome {{ user.first_name }} {{ user.last_name }}
+              Welcome to {{ placeInfo }}
             </h3>
             <p class="text-white text-opacity-80">
               Marine Wildlife Monitoring Dashboard

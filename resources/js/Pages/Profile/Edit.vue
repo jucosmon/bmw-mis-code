@@ -154,8 +154,17 @@ const allowOnlyNumbers = (event) => {
                                     required
                                     autocomplete="first_name"
                                     class="w-full transition duration-150 ease-in-out"
+                                    minlength="2"
+                                    @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
                                 />
                                 <InputError class="mt-1" :message="form.errors.first_name" />
+                                <span v-if="form.first_name.length > 0 && form.first_name.length < 2" class="text-xs text-red-400">
+                                    First name must be at least 2 characters
+                                </span>
                             </div>
 
                             <div class="space-y-2">
@@ -167,8 +176,17 @@ const allowOnlyNumbers = (event) => {
                                     required
                                     autocomplete="last_name"
                                     class="w-full transition duration-150 ease-in-out"
+                                    minlength="2"
+                                    @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
                                 />
                                 <InputError class="mt-1" :message="form.errors.last_name" />
+                                <span v-if="form.last_name.length > 0 && form.last_name.length < 2" class="text-xs text-red-400">
+                                    Last name must be at least 2 characters
+                                </span>
                             </div>
 
                             <div class="space-y-2">

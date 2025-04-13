@@ -765,8 +765,19 @@ const sizeOptions = [
                 <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
                     Browse Files
                 </label>
-                <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="hidden" />
 
+                <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="mediaFiles"
+                    @change="handleFileChange"
+                    multiple
+                    class="hidden"
+                    capture="environment"
+                    required />
+                    <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block">
+                        Required at least 1 media
+                    </span>
                 <!-- Preview Section -->
                 <div v-if="previewImages.length" class="preview-section mt-4">
                   <h4 class="preview-title">Media Preview</h4>

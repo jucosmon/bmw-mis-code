@@ -182,14 +182,44 @@ const positions = computed(() => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="first_name" value="First Name" />
-                                    <TextInput id="first_name" type="text" v-model="form.first_name" required autocomplete="first_name" class="input-field" />
+                                    <TextInput id="first_name"
+                                        type="text"
+                                        v-model="form.first_name"
+                                        required
+                                        autocomplete="first_name"
+                                        class="input-field"
+                                        minlength="2"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"
+                                        />
                                     <InputError class="mt-2" :message="form.errors.first_name" />
+                                    <span v-if="form.first_name.length > 0 && form.first_name.length < 2" class="text-xs text-red-400">
+                                        First name must be at least 2 characters
+                                    </span>
                                 </div>
 
                                 <div>
                                     <InputLabel for="last_name" value="Last Name" />
-                                    <TextInput id="last_name" type="text" v-model="form.last_name" required autocomplete="last_name" class="input-field" />
+                                    <TextInput id="last_name"
+                                    type="text"
+                                    v-model="form.last_name"
+                                    required
+                                    autocomplete="last_name"
+                                    class="input-field"
+                                    minlength="2"
+                                    @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                    }"
+                                    />
                                     <InputError class="mt-2" :message="form.errors.last_name" />
+                                    <span v-if="form.last_name.length > 0 && form.last_name.length < 2" class="text-xs text-red-400">
+                                        Last name must be at least 2 characters
+                                    </span>
                                 </div>
 
                                 <div>

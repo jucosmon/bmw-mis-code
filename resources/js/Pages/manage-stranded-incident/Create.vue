@@ -923,7 +923,9 @@ watch(showMap, async (newValue) => {
                     Browse Files
                   </label>
                   <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="hidden" />
-
+                  <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block">
+                        Required at least 1 media
+                    </span>
                   <!-- Preview Section -->
                   <div v-if="previewImages.length" class="preview-section mt-4">
                     <h4 class="preview-title">Media Preview</h4>

@@ -66,7 +66,7 @@ defineProps({
             <!-- Footer Quote -->
             <div class="absolute bottom-0 w-full text-center pb-6">
                 <p class="quote-text">
-                    "The Ocean is a vast sanctuary, teeming with life to be understood and protected"
+                    "The greatest threat to marine wildlife is the belief that someone else will save it"
                 </p>
             </div>
         </div>

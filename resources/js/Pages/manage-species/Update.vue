@@ -224,23 +224,43 @@ const submit = () => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="name" value="Name" />
-                                    <TextInput id="name" type="text" v-model="form.name" required autocomplete="name" class="w-full" />
+                                    <TextInput id="name" type="text" v-model="form.name" required autocomplete="name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"/>
                                     <InputError class="mt-2" :message="form.errors.name" />
                                 </div>
 
                                 <div>
                                     <InputLabel for="scientific_name" value="Scientific Name" />
-                                    <TextInput id="scientific_name" type="text" v-model="form.scientific_name" autocomplete="scientific_name" class="w-full" />
+                                    <TextInput id="scientific_name" type="text" v-model="form.scientific_name" autocomplete="scientific_name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"/>
                                     <InputError class="mt-2" :message="form.errors.scientific_name" />
                                 </div>
                                 <div>
                                     <InputLabel for="common_name" value="Common Name" />
-                                    <TextInput id="common_name" type="text" v-model="form.common_name" autocomplete="common_name" class="w-full" />
+                                    <TextInput id="common_name" type="text" v-model="form.common_name" autocomplete="common_name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"/>
                                     <InputError class="mt-2" :message="form.errors.common_name" />
                                 </div>
                                 <div>
                                     <InputLabel for="local_name" value="Local Name" />
-                                    <TextInput id="local_name" type="text" v-model="form.local_name" autocomplete="local_name" class="w-full" />
+                                    <TextInput id="local_name" type="text" v-model="form.local_name" autocomplete="local_name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"/>
                                     <InputError class="mt-2" :message="form.errors.local_name" />
                                 </div>
                                 <div class="sm:col-span-2 col-span-1">
@@ -353,6 +373,7 @@ const submit = () => {
                                         multiple
                                         @change="handleNewFileChange"
                                         class="hidden"
+                                        required
                                     />
                                     <InputError class="mt-2" :message="form.errors.mediaFiles" />
                                 </div>

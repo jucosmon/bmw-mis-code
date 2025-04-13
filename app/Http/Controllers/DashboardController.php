@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barangay;
+use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,15 +18,25 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         if (!$user) {
-            return Inertia::render('dashboard/PublicUserDashboard');
+            return Inertia::render('dashboard/PublicUserDashboard',
+            [
+                'barangays' => Barangay::all(),
+                'municipalities' => Municipality::all(),
+            ]);
         }else{
             $role = $user->user_role;
 
             if($role === 'barangay_official' || $role === 'bpemo_admin' ||
             $role === 'bpemo_staff' || $role === 'lgu_responder') {
-                return Inertia::render('dashboard/ResponderDashboard');
+                return Inertia::render('dashboard/ResponderDashboard',
+            [
+                'barangays' => Barangay::all(),
+                'municipalities' => Municipality::all(),
+            ]);
             }else {
-                return Inertia::render('dashboard/PublicUserDashboard');
+                return Inertia::render('dashboard/PublicUserDashboard',
+            ['barangays' => Barangay::all(),
+                'municipalities' => Municipality::all(),]);
             }
         }
     }
