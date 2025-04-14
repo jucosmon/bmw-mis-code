@@ -18,18 +18,16 @@ defineProps({
         </div>
 
         <div class="relative min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-            <!-- Header - Logo Only -->
-            <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-                <div class="logo-container">
-                    <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image">
+            <div class="p-2 pl-2 z-10 flex justify-start absolute top-0 left-0">
+                <div class="flex items-center h-[80px]">
+                    <img src="/images/white_on_trans.png" class="h-[70px]" alt="Marine Wildlife Logo">
                 </div>
             </div>
-
             <!-- Main Content Area -->
             <div class="text-center max-w-5xl mx-auto mt-16">
                 <h1 class="title-gradient">BOHOL MARINE WILDLIFE</h1>
                 <h3 class="subtitle-gradient">MANAGEMENT INFORMATION SYSTEM</h3>
-                
+
                 <!-- Auth Buttons Moved Here -->
                 <div v-if="canLogin" class="auth-buttons">
                     <template v-if="$page.props.auth.user">
@@ -52,12 +50,23 @@ defineProps({
                         </Link>
                     </template>
                 </div>
+                <template v-if="!$page.props.auth.user">
+                    <div class="mt-8 mb-4">
+                        <Link :href="route('dashboard')" class="nav-button dashboard-btn pulse-animation mt-3">
+                            <span class="button-content text-lg">
+                                <i class="fas fa-exclamation-circle mr-3"></i>
+                                <span>Report Wildlife Incident</span>
+                            </span>
+                        </Link>
+                        <p class="text-white text-sm mt-2 opacity-80">Quick incident reporting - no login required</p>
+                    </div>
+                </template>
             </div>
 
             <!-- Footer Quote -->
             <div class="absolute bottom-0 w-full text-center pb-6">
                 <p class="quote-text">
-                    "The Ocean is a vast sanctuary, teeming with life to be understood and protected"
+                    "The greatest threat to marine wildlife is the belief that someone else will save it"
                 </p>
             </div>
         </div>
@@ -114,15 +123,17 @@ defineProps({
     min-width: 160px;
     position: relative;
     overflow: hidden;
+    text-align: center;
 }
 
 .button-content {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
     position: relative;
     z-index: 1;
+    width: 100%;
+    text-align: center;
 }
 
 .login-btn {
@@ -172,25 +183,6 @@ defineProps({
     color: #99ccff;
     font-style: italic;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.logo-container {
-    height: 70px; /* Slightly increased height */
-    display: flex;
-    align-items: center;
-    margin-left: 1rem;
-}
-
-.logo-image {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
-}
-
-.logo-image:hover {
-    transform: scale(1.05);
 }
 
 .auth-buttons {
@@ -245,9 +237,6 @@ defineProps({
         max-width: 250px;
         padding: 0.5rem 1.5rem;
         margin: 0.25rem 0;
-    }
-    .logo-container {
-        height: 60px;
     }
 }
 

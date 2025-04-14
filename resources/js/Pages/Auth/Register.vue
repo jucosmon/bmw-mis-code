@@ -1,9 +1,10 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const formErrors = ref([]);
 const form = useForm({
@@ -15,18 +16,64 @@ const form = useForm({
     contact_number:'',
     birthdate: '',
     sex:'',
-
+    terms_accepted: false,
 });
 
-// State for the "Show Password" checkbox
+const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0];
+
+// State for the "Show Password" checkbox and terms modal
 const showPassword = ref(false);
+const showTermsModal = ref(false);
+
+// Password validation indicators
+const passwordLength = computed(() => form.password.length >= 8);
+const passwordHasUppercase = computed(() => /[A-Z]/.test(form.password));
+const passwordHasLowercase = computed(() => /[a-z]/.test(form.password));
+const passwordHasNumber = computed(() => /[0-9]/.test(form.password));
+const passwordHasSpecial = computed(() => /[^A-Za-z0-9]/.test(form.password));
+
+// Overall password strength
+const passwordStrength = computed(() => {
+    const criteria = [
+        passwordLength.value,
+        passwordHasUppercase.value,
+        passwordHasLowercase.value,
+        passwordHasNumber.value,
+        passwordHasSpecial.value
+    ];
+
+    const metCriteria = criteria.filter(c => c).length;
+
+    if (metCriteria === 0) return { text: "Very Weak", color: "red" };
+    if (metCriteria === 1) return { text: "Weak", color: "red" };
+    if (metCriteria === 2) return { text: "Fair", color: "orange" };
+    if (metCriteria === 3) return { text: "Good", color: "yellow" };
+    if (metCriteria === 4) return { text: "Strong", color: "lightgreen" };
+    return { text: "Very Strong", color: "green" };
+});
 
 const submit = () => {
     // Check if contact number is at least 11 characters
-    if (form.contact_number && form.contact_number.length < 11) {
-        // Optionally, set an error message or handle it as needed
-        alert("Contact number must be at least 11 digits long.");
+    if (form.contact_number && (form.contact_number.length !== 10 || form.contact_number[0] !== '9')) {
+        alert("Contact number must be 10 digits long and start with '9'.");
         return; // Prevent form submission
+    }
+
+    // Check if terms are accepted
+    if (!form.terms_accepted) {
+        alert("You must accept the Terms and Conditions to register.");
+        return; // Prevent form submission
+    }
+
+    // Check password complexity
+    if (!passwordLength.value) {
+        alert("Password must be at least 8 characters long.");
+        return;
+    }
+
+    if (!passwordHasUppercase.value || !passwordHasLowercase.value || !passwordHasNumber.value) {
+        alert("Password must contain at least one uppercase letter, one lowercase letter, and one number.");
+        return;
     }
 
     form.post(route('register'), {
@@ -38,7 +85,6 @@ const submit = () => {
         },
         onFinish: () => form.reset('password', 'password_confirmation'), // Reset the entire form
     });
-
 };
 
 const allowOnlyNumbers = (event) => {
@@ -50,6 +96,10 @@ const allowOnlyNumbers = (event) => {
     if (!isNumber && !isControlKey) {
         event.preventDefault(); // Prevent the default action if the key is not a number or control key
     }
+};
+
+const toggleTermsModal = () => {
+    showTermsModal.value = !showTermsModal.value;
 };
 </script>
 
@@ -63,15 +113,15 @@ const allowOnlyNumbers = (event) => {
             <div class="absolute inset-0 bg-gradient-overlay"></div>
         </div>
 
-        <!-- Logo -->
-        <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-            <Link href="/" class="logo-container">
-                <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image">
+        <!-- Logo container -->
+        <div class="relative z-20 p-2">
+            <Link href="/" class="flex items-center">
+                <img src="/images/white_on_trans.png" style="height: 70px;" alt="Marine Wildlife Logo">
             </Link>
         </div>
 
         <!-- Register Form Container -->
-        <div class="relative min-h-screen flex flex-col items-center justify-center px-4">
+        <div class="relative z-20 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]">
             <div class="login-container">
                 <h2 class="title-gradient mb-6">Create Account</h2>
 
@@ -80,14 +130,44 @@ const allowOnlyNumbers = (event) => {
                     <div class="grid grid-cols-7 gap-3">
                         <div class="form-group col-span-4">
                             <InputLabel for="first_name" value="First Name" class="form-label" />
-                            <TextInput id="first_name" type="text" v-model="form.first_name" required class="input-field" />
+                            <TextInput
+                                id="first_name"
+                                type="text"
+                                v-model="form.first_name"
+                                required
+                                minlength="2"
+                                class="input-field"
+                                @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
+                            />
                             <InputError :message="form.errors.first_name" />
+                            <span v-if="form.first_name.length > 0 && form.first_name.length < 2" class="text-xs text-red-400">
+                                First name must be at least 2 characters
+                            </span>
                         </div>
 
                         <div class="form-group col-span-3">
                             <InputLabel for="last_name" value="Last Name" class="form-label" />
-                            <TextInput id="last_name" type="text" v-model="form.last_name" required maxlength="10" class="input-field" />
+                            <TextInput
+                                id="last_name"
+                                type="text"
+                                v-model="form.last_name"
+                                required
+                                minlength="2"
+                                class="input-field"
+                                @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
+                            />
                             <InputError :message="form.errors.last_name" />
+                            <span v-if="form.last_name.length > 0 && form.last_name.length < 2" class="text-xs text-red-400">
+                                Last name must be at least 2 characters
+                            </span>
                         </div>
                     </div>
 
@@ -97,18 +177,28 @@ const allowOnlyNumbers = (event) => {
                         <TextInput id="email" type="email" v-model="form.email" required class="input-field" />
                         <InputError :message="form.errors.email" />
                     </div>
-
-                    <div class="form-group">
+                    <div>
                         <InputLabel for="contact_number" value="Contact Number" class="form-label" />
-                        <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" class="input-field" />
-                        <InputError :message="form.errors.contact_number" />
+                        <div class="flex items-center w-full">
+                            <span class="text-gray-100 pr-2 pt-2">+63</span>
+                            <TextInput
+                                id="contact_number"
+                                type="text"
+                                v-model="form.contact_number"
+                                @keydown="allowOnlyNumbers"
+                                maxlength="10"
+                                class="input-field flex-1"
+                                placeholder="9XXXXXXXXX"
+                            />
+                        </div>
+                        <InputError class="mt-2" :message="form.errors.contact_number" />
                     </div>
 
                     <!-- Two Column Layout for Date and Sex -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-group">
                             <InputLabel for="birthdate" value="Birth Date" class="form-label" />
-                            <TextInput id="birthdate" type="date" v-model="form.birthdate" required class="input-field" />
+                            <TextInput id="birthdate" type="date" :max="maxDate" v-model="form.birthdate" required class="input-field" />
                             <InputError :message="form.errors.birthdate" />
                         </div>
 
@@ -134,6 +224,21 @@ const allowOnlyNumbers = (event) => {
                         <InputLabel for="password" value="Password" class="form-label" />
                         <TextInput id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" required class="input-field" />
                         <InputError :message="form.errors.password" />
+
+                        <!-- Password strength indicators -->
+                        <div class="password-requirements mt-2">
+                            <div class="password-strength" v-if="form.password">
+                                <span class="text-sm">Strength: </span>
+                                <span class="text-sm" :style="{color: passwordStrength.color}">{{ passwordStrength.text }}</span>
+                            </div>
+                            <ul class="text-xs space-y-1 mt-1">
+                                <li :class="passwordLength ? 'text-green-400' : 'text-white'">✓ At least 8 characters</li>
+                                <li :class="passwordHasUppercase ? 'text-green-400' : 'text-white'">✓ At least one uppercase letter</li>
+                                <li :class="passwordHasLowercase ? 'text-green-400' : 'text-white'">✓ At least one lowercase letter</li>
+                                <li :class="passwordHasNumber ? 'text-green-400' : 'text-white'">✓ At least one number</li>
+                                <li :class="passwordHasSpecial ? 'text-green-400' : 'text-white'">✓ Special character (recommended)</li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -142,10 +247,20 @@ const allowOnlyNumbers = (event) => {
                         <InputError :message="form.errors.password_confirmation" />
                     </div>
 
-                    <div class="flex items-center mb-2">
-                        <input type="checkbox" id="show-password" v-model="showPassword" class="checkbox-field">
-                        <label for="show-password" class="text-sm text-white ml-2">Show Password</label>
+                    <div class="flex my-4">
+                        <Checkbox name="showPassword" v-model:checked="showPassword" />
+                        <span class="ms-2 text-sm text-white">Show Password</span>
                     </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="flex items-center mt-4">
+                        <Checkbox name="terms" v-model:checked="form.terms_accepted" />
+                        <span class="ms-2 text-sm text-white">
+                            I agree to the
+                            <button type="button" @click="toggleTermsModal" class="text-blue-400 hover:underline">Terms and Conditions</button>
+                        </span>
+                    </div>
+                    <InputError :message="form.errors.terms_accepted" />
 
                     <!-- Submit Button -->
                     <div class="mt-4">
@@ -159,6 +274,45 @@ const allowOnlyNumbers = (event) => {
                         </p>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms and Conditions Modal -->
+    <div v-if="showTermsModal" class="terms-modal-container">
+        <div class="terms-modal">
+            <div class="terms-header">
+                <h3 class="terms-title">Terms and Conditions</h3>
+                <button @click="toggleTermsModal" class="close-button">&times;</button>
+            </div>
+            <div class="terms-content">
+                <h4>1. Introduction</h4>
+                <p>Welcome to BMWMIS. By registering for an account, you agree to comply with and be bound by the following terms and conditions.</p>
+
+                <h4>2. Use of Service</h4>
+                <p>You agree to use our service only for lawful purposes and in accordance with these Terms. You are responsible for maintaining the confidentiality of your account information.</p>
+
+                <h4>3. User Content</h4>
+                <p>Any content you submit through our platform may be used by Marine Wildlife for promotion, research, or educational purposes. We respect your privacy and will handle your data according to our Privacy Policy.</p>
+
+                <h4>4. Restrictions</h4>
+                <p>You may not use our services to post harmful, offensive, or illegal material, or to engage in activities that disrupt our services or harm marine wildlife.</p>
+
+                <h4>5. Data Protection</h4>
+                <p>We collect and process personal data as described in our Privacy Policy. By using our service, you consent to such processing and warrant that all data provided by you is accurate.</p>
+
+                <h4>6. Termination</h4>
+                <p>We reserve the right to terminate or suspend your account at our sole discretion, without notice, for conduct that we believe violates these Terms or is harmful to other users, us, or third parties, or for any other reason.</p>
+
+                <h4>7. Changes to Terms</h4>
+                <p>We may revise these Terms at any time by updating this page. You are expected to check this page from time to time to take notice of any changes we made.</p>
+
+                <h4>8. Contact</h4>
+                <p>If you have any questions about these Terms, please contact us at bmwmis.application@gmail.com</p>
+            </div>
+            <div class="terms-footer">
+                <button @click="toggleTermsModal" class="blue-button">Close</button>
+                <button @click="form.terms_accepted = true; toggleTermsModal();" class="green-button">Accept</button>
             </div>
         </div>
     </div>
@@ -183,6 +337,8 @@ const allowOnlyNumbers = (event) => {
     max-width: 460px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    z-index: 30;
 }
 
 .title-gradient {
@@ -259,21 +415,6 @@ select.input-field {
     transition: all 0.3s ease;
 }
 
-.logo-container {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    margin-left: 1rem;
-}
-
-.logo-image {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
-}
-
 .select-field {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2399ccff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
@@ -289,32 +430,123 @@ select.input-field {
     padding: 0.5rem;
 }
 
-/* Remove the gender-specific styles */
-.gender-options,
-.gender-option,
-.gender-button {
-    display: none;
+/* Password strength indicator styles */
+.password-requirements {
+    color: white;
+    opacity: 0.8;
 }
 
-@media (max-width: 480px) {
-    .gender-options {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .gender-option {
-        width: 100%;
-    }
-
-    .gender-button {
-        width: 100%;
-        justify-content: flex-start;
-    }
+/* Terms and conditions modal styles */
+.terms-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    padding: 1rem;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+.terms-modal {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.95), rgba(0, 64, 128, 0.95));
+    border-radius: 16px;
+    max-width: 700px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terms-title {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.close-button:hover {
+    opacity: 1;
+}
+
+.terms-content {
+    padding: 1.5rem;
+    color: white;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.terms-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #00ccff;
+}
+
+.terms-content p {
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.terms-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 1rem;
+}
+
+.blue-button, .green-button {
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 500;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.blue-button {
+    background: rgba(0, 153, 255, 0.2);
+    color: #00ccff;
+    border: 1px solid rgba(0, 204, 255, 0.3);
+}
+
+.blue-button:hover {
+    background: rgba(0, 153, 255, 0.3);
+}
+
+.green-button {
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    border: none;
+}
+
+.green-button:hover {
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
 }
 
 @media (max-width: 768px) {
@@ -347,12 +579,17 @@ select.input-field {
     .space-y-3 > * + * {
         margin-top: 0.5rem;
     }
+
+    .terms-modal {
+        max-height: 90vh;
+    }
 }
 
 @media (max-width: 480px) {
     .login-container {
         padding: 1.5rem;
-        margin: 0.75rem;
+        margin: 0.5rem;
+        margin-top: 0;
     }
 
     .title-gradient {
@@ -370,10 +607,6 @@ select.input-field {
         font-size: 0.9rem;
     }
 
-    .logo-container {
-        height: 45px;
-    }
-
     .form-group {
         margin-bottom: 0.5rem;
     }
@@ -385,7 +618,8 @@ select.input-field {
 
 @media (max-height: 700px) {
     .login-container {
-        margin: 4rem auto;
+        margin: 1rem auto;
+        padding: 1.25rem;
     }
 
     .space-y-3 > * + * {

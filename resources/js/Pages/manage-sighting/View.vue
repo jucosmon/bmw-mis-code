@@ -1,11 +1,15 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
 
@@ -31,12 +35,13 @@ const props = defineProps({
     },
 });
 
-const isPublicUser  = computed(() => page.props.auth.user.user_role === 'public_user');
-const isBpemoAdmin = computed(() => page.props.auth.user.user_role === 'bpemo_admin');
-const isBpemoStaff = computed(() => page.props.auth.user.user_role === 'bpemo_staff');
-const isLguResponder = computed(() => page.props.auth.user.user_role === 'lgu_responder');
-const isBarangayOfficial = computed(() => page.props.auth.user.user_role === 'barangay_official');
+const showPassword = ref(false);
 
+const isPublicUser = computed(() => page.props?.auth?.user?.user_role === 'public_user' || false);
+const isBpemoAdmin = computed(() => page.props?.auth?.user?.user_role === 'bpemo_admin' || false);
+const isBpemoStaff = computed(() => page.props?.auth?.user?.user_role === 'bpemo_staff' || false);
+const isLguResponder = computed(() => page.props?.auth?.user?.user_role === 'lgu_responder' || false);
+const isBarangayOfficial = computed(() => page.props?.auth?.user?.user_role === 'barangay_official' || false);
 
 // form defaults
 const form = useForm({
@@ -108,7 +113,7 @@ const closeModal = () => {
 // Archiving For public users only
 const archiveButtonStatus = computed(() => {
     return ((isPublicUser.value || isBarangayOfficial.value || isLguResponder.value)
-    && props.sighting.report_status === 'pending');
+    && props.sighting.report_status === 'pending' || !page.props?.auth?.user);
 });
 
 const archiveSighting = () => {
@@ -138,24 +143,24 @@ const archiveSighting = () => {
 
 // Update button validation for regular sighting reports
 const updateButton = computed(() => {
-    return ((isPublicUser.value || isBarangayOfficial.value || isLguResponder.value)
-    && props.sighting.report_status === 'pending' && props.sighting.is_active === true
-    && page.props.auth.user.id === props.sighting.user_id);
+    return (isPublicUser.value || isBarangayOfficial.value || isLguResponder.value || !page.props?.auth?.user) &&
+           (props.sighting.report_status === 'pending' &&
+           props.sighting.is_active === true) &&
+           (page.props?.auth?.user?.id === props.sighting?.user_id || !page.props?.auth?.user);
 });
-
 
 // Update button validation for verifiers
 const updateButtonStatusVerifier = computed(() => {
-    return ((isBpemoAdmin.value || isBpemoStaff.value)
-    && (props.sighting.report_status != 'false')
-    && props.sighting.is_active === true);
+    return (isBpemoAdmin.value || isBpemoStaff.value) &&
+           props.sighting.report_status !== 'false' &&
+           props.sighting.is_active === true;
 });
 
 //unverify button
 const unverifyButtonStatus = computed(() => {
     return props.sighting.report_status === 'verified' &&
-           (isBpemoAdmin.value || isBpemoStaff.value)
-           && props.sighting.is_active === true;
+           (isBpemoAdmin.value || isBpemoStaff.value) &&
+           props.sighting.is_active === true;
 });
 
 console.log('verify button',updateButtonStatusVerifier.value);
@@ -212,9 +217,15 @@ const marker = ref(null);
 // Initialize Leaflet map
 onMounted(() => {
   nextTick(() => {
-    console.log('Sighting:', props.sighting); // Log the Sighting for debugging
+    console.log('Sighting:', props.sighting);
 
-    // Initialize the map with the latitude and longitude from props
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: markerIcon,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+    });
+
     map.value = L.map('map', {
       dragging: false, // Disable dragging
       scrollWheelZoom: false, // Disable zooming with the mouse wheel
@@ -223,12 +234,10 @@ onMounted(() => {
       boxZoom: false, // Disable box zooming
     }).setView([props.sighting.latitude, props.sighting.longitude], 13);
 
-    // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map.value);
 
-    // Add a marker at the specified location (non-draggable)
     marker.value = L.marker([props.sighting.latitude, props.sighting.longitude]).addTo(map.value);
   });
 });
@@ -259,52 +268,229 @@ const closeDownloadModal = () => {
 };
 
 const downloadReport = () => {
-    const element = document.querySelector(".exportable-content");
+    // Create a clean PDF document container
+    const pdfContainer = document.createElement('div');
+    pdfContainer.className = 'pdf-export';
+    pdfContainer.style.width = '210mm';
+    pdfContainer.style.padding = '10mm';
+    pdfContainer.style.backgroundColor = 'white';
+    pdfContainer.style.color = '#333';
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
 
-    // Add PDF-specific class before generating
-    element.classList.add('pdf-mode');
+    // ===== HEADER =====
+    const header = document.createElement('div');
+    header.style.textAlign = 'center';
+    header.style.marginBottom = '5mm';
 
-    // Add report title and timestamp at the top
-    const reportHeader = document.createElement('div');
-    reportHeader.className = 'pdf-header';
-    reportHeader.innerHTML = `
-        <h1 style="text-align: center; font-size: 24px; color: #00366b; margin-bottom: 8px;">Marine Wildlife Sighting Report</h1>
-        <p style="text-align: center; font-size: 14px; color: #666; margin-bottom: 20px;">Generated on ${new Date().toLocaleString()}</p>
-        <div style="border-bottom: 2px solid #00366b; margin-bottom: 20px;"></div>
-    `;
+    const title = document.createElement('h1');
+    title.textContent = 'Marine Wildlife Sighting Report';
+    title.style.fontSize = '20px';
+    title.style.color = '#003366';
+    title.style.marginBottom = '2mm';
+    title.style.fontWeight = 'bold';
 
-    // Insert the header at the beginning of the content
-    element.insertBefore(reportHeader, element.firstChild);
+    const subtitle = document.createElement('p');
+    subtitle.textContent = `Generated on ${new Date().toLocaleDateString()}`;
+    subtitle.style.fontSize = '12px';
+    subtitle.style.color = '#666';
 
-    const options = {
-        filename: `Sighting_Report_${props.sighting.id}.pdf`,
-        margin: [15, 15, 15, 15], // Top, right, bottom, left margins
-        jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-            compress: true
-        },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            letterRendering: true
-        },
-        image: {
-            type: 'jpeg',
-            quality: 1
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    header.appendChild(title);
+    header.appendChild(subtitle);
+    pdfContainer.appendChild(header);
+
+    // Function to add section with minimal spacing
+    const addSection = (title, content) => {
+        const section = document.createElement('div');
+        section.style.marginBottom = '6mm';
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.textContent = title;
+        sectionTitle.style.fontSize = '14px';
+        sectionTitle.style.fontWeight = 'bold';
+        sectionTitle.style.color = '#003366';
+        sectionTitle.style.marginBottom = '2mm';
+        sectionTitle.style.paddingBottom = '1mm';
+        sectionTitle.style.borderBottom = '1px solid #e5e7eb';
+
+        section.appendChild(sectionTitle);
+
+        if (typeof content === 'string') {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = content;
+            paragraph.style.lineHeight = '1.4';
+            paragraph.style.fontSize = '12px';
+            section.appendChild(paragraph);
+        } else {
+            section.appendChild(content);
+        }
+
+        return section;
     };
 
-    html2pdf().from(element).set(options).save().then(() => {
-        // Clean up after PDF generation
-        element.removeChild(reportHeader);
-        element.classList.remove('pdf-mode');
-        closeDownloadModal();
-    });
+    // Reporter information with minimal spacing
+    const reporterName = props.sighting.user ?
+        `${props.sighting.user.first_name} ${props.sighting.user.last_name}` :
+        'Unknown Reporter';
+
+    const reporterDetails = document.createElement('p');
+    reporterDetails.style.fontSize = '12px';
+    reporterDetails.style.lineHeight = '1.4';
+    reporterDetails.innerHTML =
+        `<strong>Name:</strong> ${reporterName}<br>` +
+        `<strong>Contact:</strong> ${props.sighting.user?.contact_number || 'Not specified'}<br>` +
+        `<strong>Email:</strong> ${props.sighting.user?.email || 'Not specified'}<br>` +
+        `<strong>Role:</strong> ${props.sighting.user?.user_role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Not specified'}`;
+
+    pdfContainer.appendChild(addSection('Reporter Information', reporterDetails));
+
+    // Sighting details with minimal spacing
+    const sightingDetails = document.createElement('p');
+    sightingDetails.style.fontSize = '12px';
+    sightingDetails.style.lineHeight = '1.4';
+    sightingDetails.innerHTML =
+        `<strong>Date:</strong> ${props.sighting.date || 'Not specified'}<br>` +
+        `<strong>Time:</strong> ${props.sighting.time || 'Not specified'}<br>` +
+        `<strong>Certainty Level:</strong> ${props.sighting.certainty_level || 'Not specified'}<br>` +
+        `<strong>Location:</strong> ${barangayName.value}, ${municipalityName.value}<br>` +
+        `<strong>Detailed Location:</strong> ${props.sighting.detailed_location || 'Not specified'}<br>` +
+        `<strong>Report Status:</strong> ${props.sighting.report_status || 'Not specified'}<br>` +
+        `<strong>Additional Information:</strong> ${props.sighting.more_information || 'None'}`;
+
+
+    pdfContainer.appendChild(addSection('Sighting Details', sightingDetails));
+
+    // Sighted species with minimal spacing
+    if (props.sightedSpecies && props.sightedSpecies.length > 0) {
+        const speciesList = document.createElement('div');
+        speciesList.style.fontSize = '12px';
+        speciesList.style.lineHeight = '1.4';
+
+        const speciesIntro = document.createElement('p');
+        speciesIntro.textContent = `The following ${props.sightedSpecies.length} species were observed in this sighting:`;
+        speciesIntro.style.marginBottom = '3mm';
+        speciesList.appendChild(speciesIntro);
+
+        props.sightedSpecies.forEach((species, index) => {
+            const speciesItem = document.createElement('div');
+            speciesItem.style.marginBottom = '4mm';
+
+            const speciesContent = document.createElement('p');
+            speciesContent.innerHTML =
+                `<strong>${index + 1}. ${species.species_name || 'Unknown Species'}</strong><br>` +
+                `Size: ${sizeText(species.size) || 'Not specified'}<br>` +
+                `Behavior: ${species.behavior_observed || 'Not specified'}<br>` +
+                `Description: ${species.species_description || 'Not specified'}`;
+
+            speciesItem.appendChild(speciesContent);
+            speciesList.appendChild(speciesItem);
+        });
+
+        pdfContainer.appendChild(addSection('Sighted Species', speciesList));
+    }
+
+    // Location and map with minimal spacing
+    const locationSection = document.createElement('div');
+    locationSection.style.marginBottom = '6mm';
+
+    const locationTitle = document.createElement('div');
+    locationTitle.textContent = 'Location Information';
+    locationTitle.style.fontSize = '14px';
+    locationTitle.style.fontWeight = 'bold';
+    locationTitle.style.color = '#003366';
+    locationTitle.style.marginBottom = '2mm';
+    locationTitle.style.paddingBottom = '1mm';
+    locationTitle.style.borderBottom = '1px solid #e5e7eb';
+    locationSection.appendChild(locationTitle);
+
+    // Location text
+    const locationText = document.createElement('p');
+    locationText.style.fontSize = '12px';
+    locationText.style.lineHeight = '1.4';
+    locationText.style.marginBottom = '2mm';
+
+    if (props.sighting.latitude && props.sighting.longitude) {
+        locationText.innerHTML =
+            `<strong>Coordinates:</strong> ${props.sighting.latitude} lat. | ${props.sighting.longitude} long.`;
+    } else {
+        locationText.innerHTML = '<strong>Coordinates:</strong> No GPS coordinates available';
+    }
+
+    locationSection.appendChild(locationText);
+
+    // Add map only if coordinates are valid
+    if (props.sighting.latitude && props.sighting.longitude) {
+        const captureMap = async () => {
+            try {
+                const mapElement = document.getElementById('map');
+                if (mapElement) {
+                    // Ensure the map has fully loaded before capturing
+                    // Increased delay for map tiles to load properly
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // Force a map repaint to ensure visibility
+                    if (map.value) {
+                        map.value.invalidateSize();
+                    }
+
+                    // Use a higher scale for better quality
+                    const canvas = await html2canvas(mapElement, {
+                        useCORS: true,
+                        scale: 2,
+                        logging: true, // Enable logging to debug issues
+                        backgroundColor: '#ffffff',
+                        allowTaint: true,
+                        foreignObjectRendering: false
+                    });
+
+                    const mapImage = document.createElement('img');
+                    mapImage.src = canvas.toDataURL('image/png');
+                    mapImage.style.width = '100%';
+                    mapImage.style.maxHeight = '120mm';
+                    mapImage.style.border = '1px solid #e5e7eb';
+
+                    locationSection.appendChild(mapImage);
+                }
+            } catch (error) {
+                console.error('Error capturing map:', error);
+                const errorText = document.createElement('p');
+                errorText.textContent = 'Unable to display map. Error: ' + error.message;
+                errorText.style.color = '#dc2626';
+                errorText.style.fontSize = '12px';
+                locationSection.appendChild(errorText);
+            }
+        };
+
+        // Call the map capture function
+        captureMap();
+    }
+
+    pdfContainer.appendChild(locationSection);
+
+    // Add the container to document temporarily
+    document.body.appendChild(pdfContainer);
+
+    // Wait longer to ensure map renders completely before generating PDF
+    setTimeout(() => {
+        // PDF generation options
+        const options = {
+            filename: `Sighting_Report_${props.sighting.id}.pdf`,
+            margin: [5, 5, 5, 5],
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Generate PDF
+        html2pdf().from(pdfContainer).set(options).save().then(() => {
+            // Clean up
+            document.body.removeChild(pdfContainer);
+            closeDownloadModal();
+        });
+    }, 1500);
 };
 </script>
 
@@ -329,6 +515,10 @@ const downloadReport = () => {
                         <p class="notification-text">{{ props?.success }}</p>
                     </div>
                 </div>
+                <Link class="mt-10 ml-5 md:mt-0 md:ml-0 mb-3 flex items-center w-fit" :href="backRoute">
+                    <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 text-sm text-white">arrow_back</span>
+                    <span class="text-lg font-semibold text-white">Back</span>
+                </Link>
 
                 <!-- Sighting Header Card -->
                 <div class="profile-card mb-6">
@@ -363,7 +553,7 @@ const downloadReport = () => {
                                 <button
                                     class="action-button-gradient success text-sm mb-2"
                                     @click="confirmArchiveSighting"
-                                    v-if="props.sighting.is_active===false && isPublicUser"
+                                    v-if="props.sighting.is_active===false && archiveButtonStatus"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restore</span>
                                     Unarchive
@@ -474,7 +664,7 @@ const downloadReport = () => {
 
                             <div v-if="props.sightedSpecies && props.sightedSpecies.length > 0" class="mt-6">
                                 <h3 class="text-lg font-semibold text-white mb-3 flex items-center border-b border-white/10 pb-2">
-                                    <span class="material-icons material-icons-round mr-2">pets</span>
+                                    <span class="material-icons material-icons-round mr-2">water_drop</span>
                                     Sighted Species
                                 </h3>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -570,20 +760,27 @@ const downloadReport = () => {
                         <h2 class="text-lg font-semibold text-gray-100">
                             {{ props.sighting.is_active ? 'Are you sure you want to archive this Sighting report?' : 'Are you sure you want to unarchive this Sighting report?'}}
                         </h2>
-                        <div class="mt-4">
-                            <label for="admin-password" class="text-sm text-gray-250">
-                                Confirm by entering your password
-                            </label>
-                            <input
-                                type="password"
-                                id="admin-password"
-                                v-model="form.password"
-                                class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Enter your password"
-                            />
-                            <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
-                                {{ form.errors.password }}
-                            </p>
+                        <div v-if="page.props?.auth?.user">
+                            <div class="mt-4">
+                                <label for="admin-password" class="text-sm text-gray-250">
+                                    Confirm by entering your password
+                                </label>
+                                <input
+                                    :type="showPassword ? 'text' : 'password'"
+                                    id="admin-password"
+                                    v-model="form.password"
+                                    class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    placeholder="Enter your password"
+                                />
+                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                                    {{ form.errors.password }}
+                                </p>
+                            </div>
+
+                            <div class="flex my-4">
+                                <Checkbox name="showPassword" v-model:checked="showPassword" />
+                                <span class="ms-2 text-sm text-white">Show Password</span>
+                            </div>
                         </div>
                         <div class="mt-6 flex justify-end space-x-4">
                             <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
@@ -602,7 +799,7 @@ const downloadReport = () => {
                                 Confirm by entering your password
                             </label>
                             <input
-                                type="password"
+                                :type="showPassword ? 'text' : 'password'"
                                 id="bpemo-password"
                                 v-model="form.unverify_password"
                                 class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -611,6 +808,10 @@ const downloadReport = () => {
                             <p v-if="form.errors.unverify_password" class="text-sm text-red-500 mt-1">
                                 {{ form.errors.unverify_password }}
                             </p>
+                        </div>
+                        <div class="flex my-4">
+                            <Checkbox name="showPassword" v-model:checked="showPassword" />
+                            <span class="ms-2 text-sm text-white">Show Password</span>
                         </div>
                         <div class="mt-6 flex justify-end space-x-4">
                             <SecondaryButton class="text-white" @click="closeUnverifyModal">Cancel</SecondaryButton>

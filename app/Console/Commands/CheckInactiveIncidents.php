@@ -7,6 +7,7 @@ use App\Models\StrandedIncident;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class CheckInactiveIncidents extends Command
 {
@@ -29,16 +30,18 @@ class CheckInactiveIncidents extends Command
      */
     public function handle()
     {
+        Log::info("Schedule task ran at " . now());
+
         // Get incidents that are still active and haven't been updated in 30 minutes
         $inactiveIncidents = StrandedIncident::where('is_active', true)
             ->where('report_status', 'pending')
             ->where(function ($query) {
                 $query->whereDoesntHave('respondActions')
                       ->orWhereHas('respondActions', function ($query) {
-                          $query->where('status', '!=', 'unavailable');
+                          $query->where('response_status', '!=', 'unavailable');
                       }, '<', 1);
             })
-            ->where('updated_at', '<', Carbon::now()->subMinutes(30))
+            ->where('updated_at', '<', Carbon::now()->subMinutes(2))
             ->get();
 
         if ($inactiveIncidents->isEmpty()) {

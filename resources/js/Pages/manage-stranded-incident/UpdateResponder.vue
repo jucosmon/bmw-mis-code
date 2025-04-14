@@ -1,4 +1,5 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue';
@@ -6,7 +7,10 @@ import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
+
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 const page = usePage();
@@ -31,10 +35,13 @@ const props = defineProps({
     }
 });
 
+const maxDate = new Date().toISOString().split('T')[0];
 const currentUserRole = page.props.auth.user.user_role;
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const existingImages = ref(props.strandedIncident.mediaFiles ? props.strandedIncident.mediaFiles : []);
+const videoMaxDuration = 60; // 3 minutes in seconds
+const errorMessage = ref('');
 
 const backRoute = computed(() => {
     return route('stranded.incident.view', {id: props.strandedIncident.id});
@@ -97,18 +104,54 @@ const hasChanges = computed(() => {
     return dataChanged || mediaFilesChanged || deletedImagesChanged || reportStatusChanged;
 });
 
-const handleNewFileChange = (event) => {
-    const files = event.target.files;
-    // Append new files to the mediaFiles array without resetting the form
-    form.mediaFiles.push(...Array.from(files));
+// Add video duration validation function
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
 
-    // Generate previews for each selected image
-    previewNewImages.value = Array.from(files).map(file => {
-        return URL.createObjectURL(file);
-    });
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute or less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
 };
 
-// Remove selected preview image
+// Update handleNewFileChange function
+const handleNewFileChange = async (event) => {
+    const files = event.target.files;
+    errorMessage.value = '';
+
+    // Validate each video file
+    for (const file of files) {
+        if (file.type.startsWith('video/')) {
+            const validation = await validateVideoDuration(file);
+            if (!validation.valid) {
+                errorMessage.value = validation.message;
+                return;
+            }
+        }
+    }
+
+    // Append new files to the mediaFiles array
+    form.mediaFiles.push(...Array.from(files));
+
+    // Generate previews for each selected file
+    const newPreviews = Array.from(files).map(file => ({
+        url: URL.createObjectURL(file),
+        type: file.type.startsWith('video/') ? 'video' : 'image'
+    }));
+
+    previewNewImages.value.push(...newPreviews);
+};
+
+// Remove selected preview image or video
 const removeNewImage = (index) => {
     previewNewImages.value.splice(index, 1);
     form.mediaFiles.splice(index, 1);
@@ -236,6 +279,7 @@ const initializeMap = () => {
 
     // Wait for DOM to be ready
     nextTick(() => {
+
         // Check if map container exists
         const mapContainer = document.getElementById('map');
         if (!mapContainer) {
@@ -246,6 +290,13 @@ const initializeMap = () => {
         cleanupMap();
 
         try {
+            // Fix for Leaflet default icon
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: markerIcon,
+                iconUrl: markerIcon,
+                shadowUrl: markerShadow,
+            });
             map.value = L.map('map').setView([defaultLat, defaultLng], 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -361,6 +412,10 @@ const falseIncident = () => {
 };
 
 const verifyIncident = () => {
+    if (form.mediaFiles.length === 0) {
+        errorMessage.value = 'Please upload at least one photo or video';
+        return;
+    }
     if (!validateForm()) {
         alert('Please fill in all required fields before verifying the incident.');
         return;
@@ -404,6 +459,11 @@ const validateForm = () => {
 const submit = (e) => {
     e.preventDefault();
     form.clearErrors();
+
+    if (form.mediaFiles.length === 0) {
+    errorMessage.value = 'Please upload at least one photo or video';
+    return;
+  }
 
     if (buttonStatus.value) {
         return;
@@ -584,7 +644,7 @@ watch(showMap, async (newValue) => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="date" value="Date of the Incident" />
-                                    <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                                    <TextInput required id="date" type="date" :max="maxDate" v-model="form.date" autocomplete="date" class="w-full" />
                                     <InputError class="mt-2" :message="form.errors.date" />
                                 </div>
                                 <div>
@@ -598,7 +658,7 @@ watch(showMap, async (newValue) => {
                         <!-- Species Information Section -->
                         <div class="form-section">
                             <h3 class="section-title">
-                                <span class="material-icons mr-2">pets</span>
+                                <span class="material-icons mr-2">water_drop</span>
                                 Species Information
                             </h3>
                             <div class="grid grid-cols-1 gap-6">
@@ -832,29 +892,60 @@ watch(showMap, async (newValue) => {
 
                             <!-- New Images -->
                             <div class="preview-section">
+                                <div v-if="errorMessage" class="error-container">
+                                    <p>{{ errorMessage }}</p>
+                                </div>
                                 <h4 class="preview-title">Upload New Images</h4>
-                                <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                                    <span class="material-icons mr-2">cloud_upload</span>
-                                    Browse Files
-                                </label>
+                                <div class="flex flex-wrap gap-4">
+                                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">cloud_upload</span>
+                                        Browse Files
+                                    </label>
+                                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">camera_alt</span>
+                                        Take Photo/Video
+                                    </label>
+                                </div>
+
                                 <input
                                     id="mediaFiles"
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,video/*"
                                     multiple
                                     @change="handleNewFileChange"
                                     class="hidden"
                                 />
+                                <input
+                                    id="cameraCapture"
+                                    type="file"
+                                    accept="image/*,video/*"
+                                    multiple
+                                    capture
+                                    @change="handleNewFileChange"
+                                    class="hidden"
+                                />
+                                <p class="text-sm text-blue-300 mt-2">
+                                    * You can upload images or videos (max 3 minutes)
+                                </p>
+                                <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block mt-1">
+                                    Required at least 1 media file
+                                </span>
+                                <p v-if="errorMessage" class="text-sm text-red-400 mt-1">{{ errorMessage }}</p>
                                 <InputError class="mt-2" :message="form.errors.mediaFiles" />
 
                                 <!-- Preview New Images -->
                                 <div v-if="previewNewImages.length" class="mt-4">
                                     <div class="preview-grid">
-                                        <div v-for="(image, index) in previewNewImages" :key="index" class="preview-item group">
-                                            <img :src="image" alt="Image Preview" class="preview-image"/>
+                                        <div v-for="(file, index) in previewNewImages" :key="index" class="preview-item group">
+                                            <template v-if="file.type === 'image'">
+                                                <img :src="file.url" alt="Image Preview" class="preview-image"/>
+                                            </template>
+                                            <template v-else-if="file.type === 'video'">
+                                                <video :src="file.url" controls class="preview-image"></video>
+                                            </template>
                                             <button
-                                                type="button"
                                                 @click="removeNewImage(index)"
+                                                type="button"
                                                 class="remove-button"
                                             >
                                                 <span class="material-icons">close</span>
@@ -868,49 +959,59 @@ watch(showMap, async (newValue) => {
                         <!-- Submit and Cancel Buttons -->
                         <div class="mt-6 pt-4 border-t border-opacity-20 border-cyan-200">
                             <!-- Submit and Cancel Buttons for regular update -->
-                            <div v-if="!buttonStatus" class="flex items-center justify-between w-full">
-                                <Link :href="backRoute" class="cancel-button">Cancel</Link>
+                            <div v-if="!buttonStatus" class="flex items-center justify-end gap-4 w-full">
+                                <CustomButton
+                                    :onClick="backRoute"
+                                    variant="secondary"
+                                    icon="cancel"
+                                    >
+                                    Cancel
+                                </CustomButton>
 
-                                <button
+                                <CustomButton
                                     type="submit"
                                     :disabled="form.processing"
-                                    class="create-button"
+                                    icon="save"
                                     :class="{ 'opacity-50': form.processing }"
                                 >
-                                    Update Incident
-                                </button>
+                                    Update
+                                </CustomButton>
                             </div>
 
                             <!-- False and Verify buttons for pending cases -->
                             <div v-else class="flex items-center justify-end gap-4 w-full">
-                                <Link :href="backRoute" class="cancel-button">Cancel</Link>
+                                <CustomButton
+                                    :onClick="backRoute"
+                                    icon="arrow_back"
+                                    variant="secondary">Cancel</CustomButton>
 
                                 <div class="flex flex-wrap sm:flex-nowrap gap-3">
-                                    <button
+                                    <CustomButton
                                         :disabled="form.processing"
                                         :class="{ 'opacity-50': form.processing }"
-                                        class="danger-button"
-                                        @click="falseIncident"
+                                        :onClick="falseIncident"
                                         type="button"
+                                        variant="danger"
+                                        icon="dangerous"
                                         formnovalidate
                                     >
                                         <span class="flex items-center justify-center">
                                             <span class="material-icons mr-1">cancel</span>
                                             <span class="hidden sm:inline">Mark as False</span>
                                         </span>
-                                    </button>
-                                    <button
+                                    </CustomButton>
+                                    <CustomButton
                                         :disabled="form.processing"
                                         :class="{ 'opacity-50': form.processing }"
-                                        class="verify-button"
                                         type="button"
-                                        @click="verifyIncident"
+                                        icon="check_circle"
+                                        :onClick="verifyIncident"
                                     >
                                         <span class="flex items-center justify-center">
                                             <span class="material-icons mr-1">check_circle</span>
                                             <span class="hidden sm:inline">Verify as True</span>
                                         </span>
-                                    </button>
+                                    </CustomButton>
                                 </div>
                             </div>
                         </div>
@@ -1133,7 +1234,7 @@ input[type="range"] {
     top: 4px;
     right: 4px;
     padding: 4px;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.75);
     border-radius: 50%;
     color: rgba(255, 255, 255, 0.9);
     transition: all 0.2s ease;
@@ -1141,16 +1242,16 @@ input[type="range"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-}
-
-.preview-item:hover .remove-button {
     opacity: 1;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
 }
 
 .remove-button:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 0, 0, 0.75);
     transform: scale(1.1);
+    color: white;
 }
 
 /* Map Styles */
@@ -1262,8 +1363,6 @@ input[type="range"] {
     outline: none;
 }
 
-.create-button,
-.cancel-button,
 .danger-button,
 .verify-button {
     padding: 0.75rem 1.5rem;
@@ -1273,20 +1372,6 @@ input[type="range"] {
     min-width: 140px;
     text-align: center;
     transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
 }
 
 .danger-button {
@@ -1309,11 +1394,6 @@ input[type="range"] {
     justify-content: center;
 }
 
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
 
 .danger-button:hover {
     transform: translateY(-1px);
@@ -1325,8 +1405,6 @@ input[type="range"] {
     box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
-.create-button:active,
-.cancel-button:active,
 .danger-button:active,
 .verify-button:active {
     transform: translateY(0);
@@ -1338,7 +1416,7 @@ input[type="range"] {
     border: 1px solid rgba(255, 68, 68, 0.2);
     border-radius: 8px;
     padding: 1.25rem;
-    color: #ff4444;
+    color: #fa7c7c;
     margin-bottom: 1.5rem;
 }
 

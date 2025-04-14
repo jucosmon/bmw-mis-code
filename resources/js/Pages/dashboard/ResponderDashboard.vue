@@ -3,9 +3,6 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 import { supabase } from '@/supabase';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
-import 'leaflet.markercluster';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -29,11 +26,10 @@ const roleConfig = computed(() => {
   return config;
 });
 
-// Helper function to determine location filters based on user role
 function getLocationFilter() {
   if (['bpemo_admin', 'bpemo_staff'].includes(user.value.user_role)) {
     console.log('Admin/Staff role detected - no location filter');
-    return {}; // No location filter for BPEMO roles - they see everything
+    return {};
   } else if (user.value.user_role === 'barangay_official' && user.value.barangay_id) {
     console.log('Barangay official detected - filtering by barangay:', user.value.barangay_id);
     return { barangay_id: user.value.barangay_id }; // Filter by user's barangay
@@ -42,11 +38,9 @@ function getLocationFilter() {
     return { municipality_id: user.value.municipality_id }; // Filter by user's municipality
   }
   console.log('No specific role filter applied');
-  return {}; // Default case
+  return {};
 }
 
-
-// Role-based titles and descriptions
 const dashboardTitle = computed(() => {
   switch(user.value.user_role) {
     case 'bpemo_admin': return 'BPEMO Admin Dashboard';
@@ -60,7 +54,6 @@ const dashboardTitle = computed(() => {
 const map = ref(null);
 const markers = ref([]);
 
-// Stats data
 const stats = ref({
   totalUsers: 0,
   totalStrandings: {
@@ -136,7 +129,7 @@ const fetchData = async () => {
 
   if (strandings) {
     // Count total unresolved (pending + verified)
-    const unresolvedStrandings = strandings.filter(s => s.report_status !== 'resolved');
+    const unresolvedStrandings = strandings.filter(s => s.report_status !== 'resolved' && s.report_status !== 'false');
     stats.value.totalStrandings.total = unresolvedStrandings.length;
 
     // Breakdown by status
@@ -213,16 +206,17 @@ const fetchData = async () => {
   let activeStrandingsQuery = supabase
     .from('stranded_incidents')
     .select(`
-      *,
-      barangay:barangay_id(name),
-      municipality:municipality_id(name),
-      stranded_species (
         *,
-        species (*)
-      )
+        barangay:barangay_id(name),
+        municipality:municipality_id(name),
+        stranded_species (
+            *,
+            species (*)
+        ),
+        report_status
     `)
     .eq('is_active', true)
-    .not('report_status', 'eq', 'resolved');
+    .in('report_status', ['pending', 'verified', 'completed']);
 
   // Apply location filters to active strandings
   if (locationFilter.barangay_id) {
@@ -240,10 +234,11 @@ const fetchData = async () => {
       sighted_species (
         *,
         species (*)
-      )
+      ),
+      report_status
     `)
     .eq('is_active', true)
-    .eq('report_status', 'pending');
+    .in('report_status', ['pending', 'verified']);
 
   // Apply location filters to active sightings
   if (locationFilter.barangay_id) {
@@ -252,38 +247,59 @@ const fetchData = async () => {
     activeSightingsQuery = activeSightingsQuery.eq('municipality_id', locationFilter.municipality_id);
   }
 
-  const { data: activeStrandings } = await activeStrandingsQuery;
-  const { data: activeSightings } = await activeSightingsQuery;
+  const { data: activeStrandings, error: strandingsError } = await activeStrandingsQuery;
+  if (strandingsError) {
+    console.error('Error fetching strandings:', strandingsError);
+  }
+
+  const { data: activeSightings, error: sightingsError } = await activeSightingsQuery;
+  if (sightingsError) {
+    console.error('Error fetching sightings:', sightingsError);
+  }
 
   console.log('Fetched active strandings:', activeStrandings?.length);
   console.log('Fetched active sightings:', activeSightings?.length);
 
   if (activeStrandings || activeSightings) {
-    const processedStrandings = activeStrandings?.map(incident => ({
-      id: incident.id,
-      type: 'stranded',
-      species: incident.species_involved || 'Unknown',
-      location: `${incident.barangay?.name || 'Unknown'}, ${incident.municipality?.name || 'Unknown'}`,
-      date: incident.date,
-      status: incident.report_status,
-      latitude: incident.latitude,
-      longitude: incident.longitude,
-      viewUrl: `/stranded-incident/view/${incident.id}`
-    })) || [];
+    const processedStrandings = activeStrandings?.map(incident => {
+      console.log('Processing stranding incident:', incident.id, 'Status:', incident.report_status);
+      return {
+        id: incident.id,
+        type: 'stranded',
+        species: incident.species_involved || 'Unknown',
+        location: `${incident.barangay?.name || 'Unknown'}, ${incident.municipality?.name || 'Unknown'}`,
+        date: incident.date,
+        time: incident.time,
+        status: incident.report_status || 'pending',
+        latitude: incident.latitude,
+        longitude: incident.longitude,
+        viewUrl: `/stranded-incident/view/${incident.id}`
+      };
+    }) || [];
 
-    const processedSightings = activeSightings?.map(sighting => ({
-      id: sighting.id,
-      type: 'sighting',
-      species: sighting.sighted_species?.[0]?.species?.name || 'Unknown',
-      location: `${sighting.barangay?.name || 'Unknown'}, ${sighting.municipality?.name || 'Unknown'}`,
-      date: sighting.date,
-      status: sighting.report_status,
-      latitude: sighting.latitude,
-      longitude: sighting.longitude,
-      viewUrl: `/sighting/view/${sighting.id}`
-    })) || [];
+    const processedSightings = activeSightings?.map(sighting => {
+      console.log('Processing sighting:', sighting.id, 'Status:', sighting.report_status);
+      return {
+        id: sighting.id,
+        type: 'sighting',
+        species: sighting.sighted_species
+          .map(ss => ss.species?.name)
+          .filter(Boolean)
+          .join(', ') || 'Unknown Species',
+        location: `${sighting.barangay?.name || 'Unknown'}, ${sighting.municipality?.name || 'Unknown'}`,
+        date: sighting.date,
+        time: sighting.time,
+        status: sighting.report_status || 'pending',
+        latitude: sighting.latitude,
+        longitude: sighting.longitude,
+        viewUrl: `/sighting/view/${sighting.id}`
+      };
+    }) || [];
 
     activeReports.value = [...processedStrandings, ...processedSightings];
+    console.log('Total active reports:', activeReports.value.length);
+    console.log('Reports with statuses:', activeReports.value.map(r => ({ id: r.id, type: r.type, status: r.status })));
+
     totalReports.value = activeReports.value.length;
     updateMapMarkers();
   }
@@ -358,31 +374,14 @@ const updateMapMarkers = () => {
     return;
   }
 
-  // Clear existing markers and cluster group
-  if (map.value.markerClusterGroup) {
-    map.value.markerClusterGroup.clearLayers();
-    map.value.removeLayer(map.value.markerClusterGroup);
-  }
+  // Clear existing markers
   markers.value.forEach(marker => marker.remove());
   markers.value = [];
 
-  // Create a new marker cluster group with disabled animations
-  const markerCluster = L.markerClusterGroup({
-    maxClusterRadius: 30,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    zoomToBoundsOnClick: true,
-    animate: false,
-    animateAddingMarkers: false
-  });
-
-  map.value.markerClusterGroup = markerCluster;
-
-  // Filter and group reports with better logging
+  // Filter and create markers for reports
   const strandedReports = activeReports.value.filter(report => report.type === 'stranded');
   console.log('Total stranded reports:', strandedReports.length);
 
-  // Instead of grouping by location, we'll create a marker for each report
   strandedReports.forEach((report, index) => {
     try {
       if (!report.latitude || !report.longitude) {
@@ -401,9 +400,8 @@ const updateMapMarkers = () => {
       }
 
       // Add a tiny offset for reports with the same coordinates
-      // This will create a small spiral pattern when multiple reports share coordinates
-      const angle = index * (Math.PI * 2) / 8; // 8 positions in the spiral
-      const radius = 0.0001 * Math.floor(index / 8); // Increase radius every 8 reports
+      const angle = index * (Math.PI * 2) / 8;
+      const radius = 0.0001 * Math.floor(index / 8);
       const adjustedLat = lat + Math.cos(angle) * radius;
       const adjustedLng = lng + Math.sin(angle) * radius;
 
@@ -415,15 +413,35 @@ const updateMapMarkers = () => {
         adjustedLng
       });
 
+      // Create emoji marker based on status
+      const emoji = getMarkerEmoji(report.status);
+      const isNewPending = report.status === 'pending' && !knownReports.has(report.id);
+
+      // Create SVG-based marker
+      const svgSize = 25;
+      const svgMarker = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${svgSize*2}" height="${svgSize*2}" viewBox="0 0 ${svgSize*2} ${svgSize*2}">
+          <text x="${svgSize}" y="${svgSize}" font-size="${svgSize}"
+                text-anchor="middle" dominant-baseline="middle"
+                filter="drop-shadow(0px 0px 4px rgba(0,0,0,0.5))">
+            ${emoji}
+            ${report.status === 'pending' ?
+              `<animateTransform attributeName="transform" type="scale"
+                             values="1;1.2;1" dur="1.1s" repeatCount="indefinite" />` : ''}
+          </text>
+        </svg>`;
+
+      const svgBase64 = btoa(unescape(encodeURIComponent(svgMarker)));
+      const url = `data:image/svg+xml;base64,${svgBase64}`;
+
+      // Create marker with the SVG as icon
       const marker = L.marker([adjustedLat, adjustedLng], {
         icon: L.icon({
-          iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${getMarkerColor(report.status)}.png`,
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        })
+          iconUrl: url,
+          iconSize: [svgSize*2, svgSize*2],
+          iconAnchor: [svgSize, svgSize]
+        }),
+        zIndexOffset: isNewPending ? 1000 : (report.status === 'pending' ? 900 : 0)
       });
 
       const popupContent = `
@@ -433,29 +451,97 @@ const updateMapMarkers = () => {
           Status: ${report.status}<br>
           Location: ${report.location}<br>
           Coordinates: ${lat}, ${lng}<br>
-          Date: ${formatDate(report.date)}<br>
+          Date: ${formatDate(report.date, report.time)}<br>
           <a href="${report.viewUrl}" class="text-blue-600 hover:text-blue-800">View details</a>
         </div>
       `;
 
       marker.bindPopup(popupContent);
-      markerCluster.addLayer(marker);
+      marker.addTo(map.value);
       markers.value.push(marker);
+
+      // Play alert sound for new pending reports and zoom to them
+      if (isNewPending) {
+        playEmergencySound();
+        newEmergencyMarkers.push({lat, lng});
+
+        // Add special animation for new emergency markers
+        setTimeout(() => {
+          const attentionSize = 120;
+          const attentionSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="${attentionSize*2}" height="${attentionSize*2}" viewBox="0 0 ${attentionSize*2} ${attentionSize*2}">
+              <text x="${attentionSize}" y="${attentionSize}" font-size="${attentionSize}"
+                    text-anchor="middle" dominant-baseline="middle"
+                    filter="drop-shadow(0px 0px 8px rgba(255,0,0,0.8))">
+                ${emoji}
+                <animateTransform attributeName="transform" type="scale"
+                                values="1;2;1;1.8;1;1.5;1" dur="0.8s" repeatCount="10" />
+              </text>
+            </svg>`;
+
+          const attentionBase64 = btoa(unescape(encodeURIComponent(attentionSvg)));
+          const attentionUrl = `data:image/svg+xml;base64,${attentionBase64}`;
+
+          marker.setIcon(L.icon({
+            iconUrl: attentionUrl,
+            iconSize: [attentionSize*2, attentionSize*2],
+            iconAnchor: [attentionSize, attentionSize]
+          }));
+
+          setTimeout(() => {
+            marker.setIcon(L.icon({
+              iconUrl: url,
+              iconSize: [svgSize*2, svgSize*2],
+              iconAnchor: [svgSize, svgSize]
+            }));
+          }, 10000);
+        }, 1000);
+
+        setTimeout(() => {
+          knownReports.add(report.id);
+        }, 1000);
+      }
     } catch (error) {
       console.error('Error adding marker for report:', report.id, error);
     }
   });
 
-  // Add cluster group to map and fit bounds without animation
-  map.value.addLayer(markerCluster);
+  // If we have new emergency markers, zoom to the most recent one
+  if (newEmergencyMarkers.length > 0) {
+    playEmergencySound();
+    const latest = newEmergencyMarkers[newEmergencyMarkers.length - 1];
+    setTimeout(() => {
+      try {
+        console.log('Zooming to new emergency at coordinates:', latest);
+        map.value.setView([latest.lat, latest.lng], 16, {
+          animate: true,
+          duration: 1.5,
+          easeLinearity: 0.5
+        });
 
-  if (markerCluster.getBounds().isValid()) {
+        const mapContainer = document.getElementById('map');
+        if (mapContainer) {
+          mapContainer.classList.add('emergency-flash');
+          setTimeout(() => {
+            mapContainer.classList.remove('emergency-flash');
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('Error zooming to emergency:', error);
+      }
+    }, 800);
+    newEmergencyMarkers = [];
+  } else {
+    // If no emergency markers, try to fit all markers in view
     try {
-      map.value.fitBounds(markerCluster.getBounds(), {
-        padding: [50, 50],
-        maxZoom: 15,
-        animate: false // Disable bounds animation
-      });
+      const bounds = L.latLngBounds(markers.value.map(m => m.getLatLng()));
+      if (bounds.isValid()) {
+        map.value.fitBounds(bounds, {
+          padding: [100, 100],
+          maxZoom: 14,
+          animate: false
+        });
+      }
     } catch (error) {
       console.error('Error fitting bounds:', error);
       map.value.setView([9.8500, 124.1833], 10, { animate: false });
@@ -463,12 +549,80 @@ const updateMapMarkers = () => {
   }
 };
 
+// Replace color function with emoji function
+const getMarkerEmoji = (status) => {
+  switch (status) {
+    case 'pending': return '🚨'; // Emergency emoji
+    case 'verified': return '🚑'; // Ambulance emoji
+    case 'completed': return '✅'; // Check mark emoji
+    default: return '❓'; // Question mark for unknown status
+  }
+};
+
+// Add a Set to track known reports and avoid playing sounds multiple times
+const knownReports = new Set();
+
+// Add function to play emergency sound
+const playEmergencySound = () => {
+  try {
+    const audio = new Audio();
+    audio.src = '/sounds/emergency-alert.mp3';
+    audio.preload = 'auto';
+    audio.volume = 0.5;
+
+    // Add error handling for loading
+    audio.onerror = (e) => {
+      console.error('Error loading emergency sound:', e);
+    };
+
+    // Only play once loaded
+    audio.oncanplaythrough = () => {
+      audio.play().catch(err => {
+        console.error('Error playing sound:', err);
+        // If autoplay blocked, try playing on user interaction
+        if (err.name === 'NotAllowedError') {
+          console.log('Autoplay blocked - sound will play on next user interaction');
+        }
+      });
+    };
+  } catch (err) {
+    console.error('Error initializing audio:', err);
+  }
+};
+
+// Add function to check for new emergency reports
+const checkForNewEmergencies = (newReports) => {
+  const pendingReports = newReports.filter(report =>
+    report.status === 'pending' && !knownReports.has(report.id)
+  );
+
+  if (pendingReports.length > 0) {
+    playEmergencySound();
+    pendingReports.forEach(report => knownReports.add(report.id));
+  }
+};
+
+// Update your watch statement
+watch(activeReports, (newReports, oldReports) => {
+  if (oldReports) {
+    // Check for new emergency reports
+    checkForNewEmergencies(newReports);
+  }
+  nextTick(() => updateMapMarkers());
+}, { deep: true });
+
 // Add cleanup function ref
 const cleanup = ref(null);
 
 // Update onMounted and move cleanup logic
 onMounted(() => {
   try {
+    // Preload emergency sound
+    const emergencySound = new Audio();
+    emergencySound.src = '/sounds/emergency-alert.mp3';
+    emergencySound.load();
+    console.log('User Role' ,page);
+
     // Initialize map without immediate marker update
     nextTick(() => {
       initializeMap();
@@ -478,6 +632,7 @@ onMounted(() => {
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'stranded_incidents' },
           async () => {
+            console.log('Stranding data changed, fetching updates...');
             await fetchData();
           }
         )
@@ -487,6 +642,7 @@ onMounted(() => {
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'sightings' },
           async () => {
+            console.log('Sighting data changed, fetching updates...');
             await fetchData();
           }
         )
@@ -497,16 +653,24 @@ onMounted(() => {
         supabase.removeChannel(strandings);
         supabase.removeChannel(sightings);
         if (map.value) {
-          if (map.value.markerClusterGroup) {
-            map.value.markerClusterGroup.clearLayers();
-          }
+          markers.value.forEach(marker => marker.remove());
           map.value.remove();
         }
       };
 
-      // Initial data fetch
+      // Initial data fetch with retry in case of map init issues
       fetchData().then(() => {
-        nextTick(() => updateMapMarkers());
+        setTimeout(() => {
+          nextTick(() => {
+            try {
+              updateMapMarkers();
+              console.log('Map markers updated successfully');
+            } catch (error) {
+              console.error('Error updating map markers, retrying:', error);
+              setTimeout(() => updateMapMarkers(), 1000);
+            }
+          });
+        }, 500);
       }).catch(error => {
         console.error('Error fetching initial data:', error);
       });
@@ -523,11 +687,6 @@ onBeforeUnmount(() => {
   }
 });
 
-// Update your watch statement
-watch(activeReports, () => {
-  nextTick(() => updateMapMarkers());
-}, { deep: true });
-
 // Helper functions
 const getStatusColor = (status) => {
   const colors = {
@@ -538,14 +697,23 @@ const getStatusColor = (status) => {
   return colors[status] || 'text-gray-600 bg-gray-100';
 };
 
-const formatDate = (dateString) => {
+const formatDate = (dateString, timeString) => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
+  const time = timeString || '00:00';
+
+  // Convert 24-hour time to 12-hour format
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12; // Convert 0 to 12 for midnight
+
+  const formattedTime = `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+
+  return `${date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+    year: 'numeric'
+  })} ${formattedTime}`;
 };
 
 const getMarkerColor = (status) => {
@@ -561,7 +729,7 @@ const displayStats = computed(() => {
   // Base stats that all roles can see
   const baseStats = [
     {
-      label: 'Unresolved Strandings',
+      label: 'Active Strandings',
       value: stats.value.totalStrandings.total,
       icon: 'fas fa-life-ring',
       iconClass: 'bg-red-500/20 text-red-400 p-3 rounded-lg'
@@ -602,6 +770,29 @@ const getStatusBadgeClass = (status) => {
   };
   return `${baseClasses} ${statusColors[status] || 'bg-gray-500/20 text-gray-400'}`;
 };
+
+// Add array to track new emergency markers
+let newEmergencyMarkers = [];
+
+const barangayName =(id)=> {
+    const barangay = page.props.barangays.find(b => b.id === id);
+    return barangay ? barangay.name : 'Unknown';
+}
+
+const municipalityName =(id)=> {
+    const municipality = page.props.municipalities.find(m => m.id === id);
+    return municipality ? municipality.name : 'Unknown';
+}
+
+const placeInfo = computed(() => {
+  switch(user.value.user_role) {
+    case 'bpemo_admin': return "Bohol's Marine Wildlife Dashboard";
+    case 'bpemo_staff': return "Bohol's Marine Wildlife Dashboard";
+    case 'barangay_official': return user.value.barangay_id ? `${barangayName(user.value.barangay_id)} of ${municipalityName(user.value.municipality_id)} Marine Wildlife Dashboard` : 'Barangay Dashboard';
+    case 'lgu_responder': return user.value.municipality_id ? `${municipalityName(user.value.municipality_id)} Marine Wildlife Dashboard` : 'Dashboard';
+    default: return 'Marine Wildlife Monitoring Dashboard';
+  }
+});
 </script>
 
 <template>
@@ -622,7 +813,7 @@ const getStatusBadgeClass = (status) => {
           <!-- Welcome message -->
           <div class="mb-10 text-center">
             <h3 class="profile-title-gradient">
-              Welcome {{ user.first_name }} {{ user.last_name }}
+              Welcome to {{ placeInfo }}
             </h3>
             <p class="text-white text-opacity-80">
               Marine Wildlife Monitoring Dashboard
@@ -638,8 +829,8 @@ const getStatusBadgeClass = (status) => {
           ]">
             <div v-for="(stat, index) in displayStats" :key="index"
                  class="stat-card transform transition-all duration-300 hover:scale-105">
-              <div class="p-6 h-full flex items-center space-x-4">
-                <div class="flex-shrink-0">
+              <div class="sm:p-6 flex items-center space-x-4">
+                <div class="flex-shrink-0 hidden sm:block">
                   <div :class="stat.iconClass">
                     <i :class="stat.icon"></i>
                   </div>
@@ -660,12 +851,18 @@ const getStatusBadgeClass = (status) => {
                 <div class="map-container">
                   <div id="map" class="h-[300px] md:h-[500px]"></div>
                 </div>
-                <div class="flex flex-wrap gap-2 mt-4">
-                  <div v-for="status in ['Pending', 'Verified', 'Completed']"
-                       :key="status"
-                       class="status-badge">
-                    <span :class="`status-dot ${status.toLowerCase()}`"></span>
-                    <span>{{ status }}</span>
+                <div class="flex flex-wrap gap-4 mt-4">
+                  <div v-for="(status, index) in [
+                    {name: 'Pending', icon: '🚨', class: 'emergency-icon'},
+                    {name: 'Verified', icon: '🚑', class: ''},
+                    {name: 'Completed', icon: '✅', class: ''}
+                  ]"
+                       :key="index"
+                       class="status-badge px-4 py-2">
+                    <div class="emoji-legend-simple" :class="status.class">
+                      <span>{{ status.icon }}</span>
+                    </div>
+                    <span class="ml-2">{{ status.name }}</span>
                   </div>
                 </div>
               </div>
@@ -696,9 +893,16 @@ const getStatusBadgeClass = (status) => {
                           </span>
                         </div>
                         <p class="text-white/70 text-sm mt-1">{{ alert.location }}</p>
-                        <p class="text-white/60 text-xs mt-1">{{ formatDate(alert.date) }}</p>
+                        <p class="text-white/60 text-xs mt-1">{{ formatDate(alert.date, alert.time) }}</p>
+                        <Link :href="alert.viewUrl"
+                              class="text-blue-400 hover:text-blue-300 text-sm mt-2">
+                          View Details
+                        </Link>
                       </div>
                     </div>
+                  </div>
+                  <div v-if="recentAlerts.length===0" class="text-center mt-5">
+                    <h4 class="text-gray-200 font-medium">No recent alerts</h4>
                   </div>
                 </div>
               </div>
@@ -747,7 +951,7 @@ const getStatusBadgeClass = (status) => {
                         {{ report.location }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {{ formatDate(report.date) }}
+                        {{ formatDate(report.date, report.time) }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <span
@@ -766,7 +970,12 @@ const getStatusBadgeClass = (status) => {
                   </tbody>
                 </table>
               </div>
-              <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+
+              <div v-if="displayedReports.length===0" class="text-center my-5 justify-center">
+                <h4 class="text-gray-300 font-medium">No active reports</h4>
+             </div>
+
+              <div class="md:px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
                 <span class="text-sm text-gray-500">
                   Showing {{ ((currentPage - 1) * perPage) + 1 }} to
                   {{ Math.min(currentPage * perPage, totalReports) }}
@@ -781,7 +990,7 @@ const getStatusBadgeClass = (status) => {
                         ? 'border-gray-200 text-gray-400 bg-gray-50'
                         : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50']"
                   >
-                    Previous
+                    <span class="material-icons material-icons-round text-sm">arrow_back</span>
                   </button>
                   <button
                     @click="nextPage"
@@ -791,8 +1000,8 @@ const getStatusBadgeClass = (status) => {
                         ? 'border-gray-200 text-gray-400 bg-gray-50'
                         : 'border-transparent text-white bg-blue-600 hover:bg-blue-700']"
                   >
-                    Next
-                  </button>
+                  <span class="material-icons material-icons-round text-sm">arrow_forward</span>
+                </button>
                 </div>
               </div>
             </div>
@@ -1242,5 +1451,149 @@ a:hover {
 
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* Emoji marker styles */
+.emoji-marker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height: 100px;
+  font-size: 60px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  border: 3px solid rgba(0, 51, 102, 0.8);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  line-height: 100px;
+}
+
+/* NEW SUPER-SIZED MARKER STYLES */
+.custom-emoji-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.emoji-wrapper {
+  position: relative;
+  width: 200px !important;
+  height: 200px !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.emoji-background {
+  width: 180px !important;
+  height: 180px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 50% !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  border: 6px solid white !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+.emoji-background.pending {
+  background: rgba(255, 200, 200, 0.95) !important;
+  border-color: rgba(255, 0, 0, 0.9) !important;
+  animation: pulse 1.5s infinite;
+}
+
+.emoji-background.verified {
+  background: rgba(255, 255, 200, 0.95) !important;
+  border-color: rgba(255, 200, 0, 0.9) !important;
+}
+
+.emoji-background.completed {
+  background: rgba(200, 255, 200, 0.95) !important;
+  border-color: rgba(0, 200, 0, 0.9) !important;
+}
+
+.emoji-background.new-emergency {
+  animation: newEmergencyPulse 10s ease-in-out !important;
+  z-index: 9999 !important;
+}
+
+.emoji-text {
+  font-size: 100px !important;
+  line-height: 1 !important;
+}
+
+@keyframes newEmergencyPulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  10% { transform: scale(1.8); filter: brightness(1.5); }
+  20% { transform: scale(1); filter: brightness(1); }
+  30% { transform: scale(1.8); filter: brightness(1.5); }
+  40% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.8); filter: brightness(1.5); }
+  60% { transform: scale(1); filter: brightness(1); }
+  70% { transform: scale(1.5); filter: brightness(1.3); }
+  80% { transform: scale(1); filter: brightness(1); }
+  90% { transform: scale(1.3); filter: brightness(1.2); }
+}
+
+/* Pulsing animation for pending markers */
+.pulsing-marker {
+  animation: pulse 1.5s infinite;
+  transform-origin: center;
+}
+
+/* Special attention animation for new emergency markers */
+.new-marker {
+  animation: newMarkerAttention 10s ease-in-out;
+  transform-origin: center;
+  z-index: 2000 !important;
+}
+
+@keyframes newMarkerAttention {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  10% { transform: scale(1.5); filter: brightness(1.5); }
+  20% { transform: scale(1); filter: brightness(1); }
+  30% { transform: scale(1.5); filter: brightness(1.5); }
+  40% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.5); filter: brightness(1.5); }
+  60% { transform: scale(1); filter: brightness(1); }
+  70% { transform: scale(1.3); filter: brightness(1.3); }
+  80% { transform: scale(1); filter: brightness(1); }
+  90% { transform: scale(1.2); filter: brightness(1.2); }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.emoji-legend {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.4));
+}
+
+.emergency-icon {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
 }
 </style>

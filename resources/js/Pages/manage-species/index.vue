@@ -189,7 +189,7 @@ const toggleActiveInactive = () => {
 
                         <div class="flex flex-wrap justify-between items-center gap-3">
                             <div class="flex flex-wrap items-center gap-3">
-                                <div v-if="page.props.auth.user.user_role === 'bpemo_admin'" class="flex items-center">
+                                <div v-if="page.props.auth?.user?.user_role === 'bpemo_admin'" class="flex items-center">
                                     <span class="mr-2 text-white">{{ showActive ? 'Active' : 'Inactive' }}</span>
                                     <div
                                         @click="toggleActiveInactive"
@@ -224,7 +224,7 @@ const toggleActiveInactive = () => {
                             </div>
 
                             <button
-                                v-if="page.props.auth.user.user_role === 'bpemo_admin'"
+                                v-if="page.props.auth?.user?.user_role === 'bpemo_admin'"
                                 type="button"
                                 @click="createSpecies()"
                                 class="create-button flex items-center gap-1"

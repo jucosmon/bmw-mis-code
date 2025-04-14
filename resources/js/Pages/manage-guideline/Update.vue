@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage(); // Ensure page is initialized
@@ -40,6 +40,7 @@ const form = useForm({
     description: props.guideline.description || '',
     category: props.guideline.category || '',
     user_role: props.guideline.user_role || '',
+    language: props.guideline.language || '',
     items: props.itemsWithMediaFiles.map((item) => {
         console.log(`Processing Item ${item.count}:`, item); // Log entire item
         return {
@@ -267,8 +268,8 @@ const getFileName = (file) => {
 
             <!-- Guidelines Information Section -->
             <div class="guideline-info-container">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div class="sm:col-span-2">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="sm:col-span-3">
                   <InputLabel for="title" value="Title" />
                   <TextInput
                     id="title"
@@ -280,7 +281,7 @@ const getFileName = (file) => {
                   <InputError :message="formErrors?.title" class="mt-2" />
                 </div>
 
-                <div class="sm:col-span-2">
+                <div class="sm:col-span-3">
                   <InputLabel for="description" value="Description" />
                   <textarea
                     id="description"
@@ -301,7 +302,15 @@ const getFileName = (file) => {
                   </select>
                   <InputError class="mt-2" :message="form.errors.category" />
                 </div>
-
+                <div>
+                <InputLabel for="language" value="Language" />
+                <select v-model="form.language" class="w-full" required>
+                    <option value="" disabled>Select an option</option>
+                    <option value="english">English</option>
+                    <option value="bisaya">Bisaya</option>
+                </select>
+                <InputError class="mt-2" :message="form.errors.language" />
+              </div>
                 <div>
                   <InputLabel for="user_role" value="User Role" />
                   <select v-model="form.user_role" id="user_role" class="w-full" required disabled>
@@ -441,17 +450,19 @@ const getFileName = (file) => {
             </div>
 
             <!-- Form buttons -->
-            <div class="flex justify-between items-center mt-6">
-              <Link :href="backRoute"
-                    class="cancel-button">
+            <div class="flex justify-end gap-4 items-center mt-6">
+              <CustomButton
+                    :onClick="backRoute"
+                    icon="cancel"
+                    variant="secondary">
                 Cancel
-              </Link>
-              <PrimaryButton type="submit"
-                            :disabled="form.processing"
-                            class="create-button"
-                            :class="{ 'opacity-25': form.processing }">
-                Update
-              </PrimaryButton>
+              </CustomButton>
+              <CustomButton type="submit"
+                    :disabled="form.processing"
+                    icon="save"
+                    :class="{ 'opacity-25': form.processing }">
+                Save
+              </CustomButton>
             </div>
           </form>
         </div>
@@ -468,6 +479,7 @@ const getFileName = (file) => {
     font-weight: 600;
     text-align: center;
     background: linear-gradient(to right, #ffffff, #00ccff);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: 0.5px;
@@ -509,7 +521,7 @@ const getFileName = (file) => {
 input[type="text"],
 textarea,
 select {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgb(49 46 129 / 0.8) !important;
     backdrop-filter: blur(2px);
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     color: white !important;
@@ -521,26 +533,32 @@ select {
     padding: 0.75rem 1rem !important;
 }
 
-input[type="text"]:focus,
-textarea:focus,
-select:focus {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(0, 204, 255, 0.5) !important;
-    box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.25) !important;
-    outline: none !important;
-}
-
-textarea {
-    min-height: 8rem !important;
-    resize: vertical;
-}
-
 select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' height='24' viewBox='0 0 24 24' width='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     padding-right: 2.5rem !important;
+}
+
+select option {
+    background-color: rgb(49 46 129) !important;
+    color: white !important;
+    padding: 0.5rem !important;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    background: rgba(67 56 202 / 0.8) !important;
+    border-color: rgba(99 102 241, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(99 102 241, 0.25) !important;
+    outline: none !important;
+}
+
+textarea {
+    min-height: 8rem !important;
+    resize: vertical;
 }
 
 .preview-section {
@@ -681,42 +699,6 @@ select {
     background: rgba(0, 204, 255, 0.1);
 }
 
-.create-button,
-.cancel-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 50px;
-    min-width: 140px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-}
-
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.create-button:active,
-.cancel-button:active {
-    transform: translateY(0);
-}
-
 /* Spacing and Layout */
 .space-y-8 > * + * {
     margin-top: 2rem;
@@ -780,6 +762,7 @@ label {
     font-size: 1.125rem;
     font-weight: 600;
     background: linear-gradient(to right, #ffffff, #00ccff);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: 0.01em;

@@ -1,7 +1,7 @@
 <script setup>
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const page = usePage();
 const props = defineProps({
@@ -42,23 +42,30 @@ const PER_PAGE = 5; // Number of items per page
 const currentPage = ref(1); // Initialize current page
 const filterStatus = ref('active'); // Default filter to 'active'
 const filterCategory = ref('all'); // Default filter to 'all'
+const filterLanguage = ref('english'); // Default filter to 'english'
 
 // Filter guideline based on the selected status and category
 const filteredGuidelines = computed(() => {
-    let filtered = props.guidelines;
+    return props.guidelines.filter(guideline => {
+        const statusMatch = filterStatus.value === 'active'
+            ? guideline.is_active
+            : !guideline.is_active;
 
-    if (filterStatus.value === 'active') {
-        filtered = filtered.filter((guideline) => guideline.is_active);
-    } else if (filterStatus.value === 'inactive') {
-        filtered = filtered.filter((guideline) => !guideline.is_active);
-    }
+        const categoryMatch = filterCategory.value === 'all'
+            || guideline.category === filterCategory.value;
 
-    if (filterCategory.value !== 'all') {
-        filtered = filtered.filter((guideline) => guideline.category === filterCategory.value);
-    }
+        const languageMatch = filterLanguage.value === 'english'
+            ? guideline.language === 'english'
+            : guideline.language === 'bisaya';
 
-    return filtered;
+        return statusMatch && categoryMatch && languageMatch;
+    });
 });
+
+// Watch for filter changes and reset pagination
+watch([filterStatus, filterCategory, filterLanguage], () => {
+    currentPage.value = 1;
+}, { immediate: true });
 
 // Paginate the filtered guideline
 const paginatedGuidelines = computed(() => {
@@ -92,6 +99,10 @@ const backRoute = () => {
 // Toggle between active and inactive guidelines
 const toggleActiveInactive = () => {
     filterStatus.value = filterStatus.value === 'active' ? 'inactive' : 'active';
+};
+
+const toggleLanguage = () => {
+    filterLanguage.value = filterLanguage.value === 'english' ? 'bisaya' : 'english';
 };
 
 </script>
@@ -175,6 +186,20 @@ const toggleActiveInactive = () => {
                                         ></div>
                                     </div>
                                 </div>
+                                <div class="flex items-center">
+                                    <span class="text-white mr-2">{{ filterLanguage === 'english' ? 'English' : 'Bisaya' }}</span>
+                                    <div
+                                        @click="toggleLanguage"
+                                        class="w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors duration-300"
+                                        :class="{ 'bg-green-400/50': filterLanguage === 'english', 'bg-gray-300/30': filterLanguage !== 'english' }"
+                                    >
+                                        <div
+                                            class="bg-white w-4 h-4 rounded-full shadow-md transition-transform duration-300 ease-in-out"
+                                            :class="{ 'translate-x-4': filterLanguage === 'english' }"
+                                        ></div>
+                                    </div>
+                                </div>
+
 
                                 <button
                                     type="button"
@@ -190,57 +215,69 @@ const toggleActiveInactive = () => {
                         </div>
 
                         <!-- Guidelines List -->
-                        <div class="glass-panel overflow-hidden">
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full table-auto">
-                                    <thead>
-                                        <tr class="border-b border-white/10">
-                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">ID</th>
-                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">Title</th>
-                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">Status</th>
-                                            <th class="px-4 py-3 text-left text-sm font-medium text-white/80">Category</th>
-                                            <th class="px-4 py-3 text-center text-sm font-medium text-white/80">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="guideline in paginatedGuidelines" :key="guideline.id" class="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                            <td class="px-4 py-3 text-sm text-white/70">#{{ guideline.id }}</td>
-                                            <td class="px-4 py-3 text-sm text-white/90 font-medium">{{ guideline.title }}</td>
-                                            <td class="px-4 py-3">
+                        <div class="space-y-3">
+                            <div v-for="guideline in paginatedGuidelines" :key="guideline.id" class="incident-card">
+                                <div class="p-3 sm:p-4">
+                                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                                        <!-- Title and Details -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex gap-2">
+                                                <span class="text-xs text-white/70">#{{ guideline.id }}</span>
+                                                    <h4 class="text-sm sm:text-base font-semibold text-white truncate max-w-[300px]">
+                                                    {{ guideline.title }}
+                                                </h4>
+                                            </div>
+                                            <div class="mt-2 flex gap-4">
+                                                <span class="text-xs sm:text-sm font-medium text-white/60 mt-1">
+                                                    {{ guidelinesCategory(guideline.category) }}
+                                                </span>
                                                 <span :class="{
-                                                    'status-badge': true,
-                                                    'status-active': guideline.is_active,
-                                                    'status-inactive': !guideline.is_active
-                                                }">
+                                                        'status-badge': true,
+                                                        'status-active': guideline.is_active,
+                                                        'status-inactive': !guideline.is_active
+                                                    }">
                                                     {{ guideline.is_active ? 'Active' : 'Inactive' }}
                                                 </span>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-white/70">{{ guidelinesCategory(guideline.category) }}</td>
-                                            <td class="px-4 py-3 text-center">
-                                                <button
-                                                    class="view-button flex items-center gap-1 mx-auto"
-                                                    @click="viewGuideline(guideline.id)"
-                                                >
-                                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                    View
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                            </div>
+                                        </div>
 
-                            <!-- No Guidelines Message -->
-                            <div v-if="paginatedGuidelines.length === 0" class="text-center py-10 px-4">
-                                <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <h3 class="mt-4 text-lg sm:text-xl font-medium text-white">No guidelines found</h3>
-                                <p class="mt-2 text-sm text-white/60">No guidelines match the selected filters.</p>
+                                        <!-- View Button (hidden on mobile) -->
+                                        <button
+                                            @click="viewGuideline(guideline.id)"
+                                            class="view-button hidden sm:flex sm:max-h-10 sm:items-center sm:gap-1"
+                                        >
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            View
+                                        </button>
+                                    </div>
+
+                                    <!-- View Button (mobile only) -->
+                                    <div class="mt-3 sm:hidden">
+                                        <button
+                                            @click="viewGuideline(guideline.id)"
+                                            class="view-button w-full flex items-center justify-center gap-1"
+                                        >
+                                            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            View Guideline
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- No Guidelines Message -->
+                        <div v-if="paginatedGuidelines.length === 0" class="text-center py-10 px-4">
+                            <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 class="mt-4 text-lg sm:text-xl font-medium text-white">No guidelines found</h3>
+                            <p class="mt-2 text-sm text-white/60">No guidelines match the selected filters.</p>
                         </div>
 
                         <!-- Pagination -->
@@ -312,6 +349,23 @@ const toggleActiveInactive = () => {
     border-radius: 0.75rem;
     overflow: hidden;
     transition: all 0.3s ease;
+}
+
+/* Incident card */
+.incident-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.incident-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 /* Buttons */

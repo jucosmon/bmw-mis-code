@@ -1,19 +1,25 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, ref, watch } from 'vue';
 
 const page = usePage();
 const formErrors = ref(null);
 const previewImages = ref([]);
-const locationSource = ref('manual'); // 'manual' or 'gps'
+const locationSource = ref('manual');
 const isGeocodingInProgress = ref(false);
+const maxDate = new Date().toISOString().split('T')[0];
 const showMap = ref(false);
+const errorMessage = ref('');
+const videoMaxDuration = 60; // 3 minutes in seconds
 const props = defineProps({
     municipalities: {
         type: Array,
@@ -54,8 +60,39 @@ watch(() => form.municipality_id, (newValue) => {
   }
 });
 
-const handleFileChange = (event) => {
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute or less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+const handleFileChange = async (event) => {
   const files = event.target.files;
+  errorMessage.value = '';
+
+  // Validate each video file
+  for (const file of files) {
+    if (file.type.startsWith('video/')) {
+      const validation = await validateVideoDuration(file);
+      if (!validation.valid) {
+        errorMessage.value = validation.message;
+        return;
+      }
+    }
+  }
+
   form.mediaFiles = Array.from(files);
 
   previewImages.value = Array.from(files).map((file) => {
@@ -167,7 +204,7 @@ const isStepValid = computed(() => {
              form.condition &&
              form.certainty_level;
     case 2:
-      return (form.municipality_id && form.barangay_id && form.detailed_location) ||
+      return (form.detailed_location) ||
              (locationSource.value === 'gps' && form.latitude && form.longitude);
     case 3:
       return true; // Make step 3 always valid since environmental fields are optional
@@ -210,6 +247,11 @@ const previousStep = () => {
 
 // Enhance submit function with loading state
 const submit = () => {
+  if (form.mediaFiles.length === 0) {
+    errorMessage.value = 'Please upload at least one photo or video';
+    return;
+  }
+
   if (createRoute.value) {
     isSubmitting.value = true;
     form.post(createRoute.value, {
@@ -233,8 +275,15 @@ const initializeMap = () => {
   // Default to Philippines if no coordinates are set
   const defaultLat = 12.8797;
   const defaultLng = 121.7740;
+  // Fix for Leaflet default icon
+  delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: markerIcon,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+    });
 
-  map.value = L.map('map').setView([form.latitude || defaultLat, form.longitude || defaultLng], 6);
+  map.value = L.map('map').setView([form.latitude || defaultLat, form.longitude || defaultLng], 15);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
@@ -266,33 +315,100 @@ const initializeMap = () => {
   });
 };
 
-// Use current location
+// // Add getFallbackLocation helper function
+// const getFallbackLocation = async () => {
+//     try {
+//         const response = await fetch('https://ipapi.co/json/');
+//         const data = await response.json();
+//         return {
+//             latitude: data.latitude,
+//             longitude: data.longitude
+//         };
+//     } catch (error) {
+//         console.error('Fallback location fetch failed:', error);
+//         throw new Error('Could not retrieve fallback location');
+//     }
+// };
+
+// Update setLocationFromMap function
 const setLocationFromMap = async () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                locationSource.value = 'manual'; // Changed from 'gps' to 'manual'
-
-                form.latitude = latitude;
-                form.longitude = longitude;
-                showMap.value = true;
-
-                await nextTick();
-                if (!map.value) {
-                    await initializeMap();
-                } else {
-                    map.value.setView([latitude, longitude], 13);
-                    marker.value.setLatLng([latitude, longitude]);
-                }
-                await reverseGeocode(latitude, longitude);
-            },
-            () => {
-                alert('Failed to fetch current location. Please allow location access.');
-            }
-        );
-    } else {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    // Add detailed options for geolocation
+    const options = {
+        enableHighAccuracy: true, // Request most accurate location
+        timeout: 10000, // 10 seconds timeout
+        maximumAge: 0 // Don't use cached location
+    };
+
+    // Wrap geolocation in a promise for better async handling
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+
+        const { latitude, longitude } = position.coords;
+
+        // Update location source and form data
+        locationSource.value = 'manual';
+        form.latitude = latitude;
+        form.longitude = longitude;
+
+        // Show map
+        showMap.value = true;
+
+        // Ensure DOM is updated before manipulating map
+        await nextTick();
+
+        // Initialize or update map
+        if (!map.value) {
+            await initializeMap();
+        } else {
+            map.value.setView([latitude, longitude], 16);
+            marker.value.setLatLng([latitude, longitude]);
+        }
+
+        // Reverse geocode to get address details
+        await reverseGeocode(latitude, longitude);
+
+        // Success notification
+        alert(`Location found: ${latitude}, ${longitude}`);
+
+    } catch (error) {
+        // Detailed error handling
+        let errorMessage = 'Failed to fetch current location.';
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = 'Location access was denied. Please enable location permissions in your browser settings.';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information is currently unavailable. Please try again later.';
+                break;
+            case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+                break;
+        }
+
+        alert(errorMessage);
+
+        // // Fallback location method
+        // try {
+        //     const fallbackLocation = await getFallbackLocation();
+        //     // Use fallback location
+        //     form.latitude = fallbackLocation.latitude;
+        //     form.longitude = fallbackLocation.longitude;
+        //     showMap.value = true;
+        //     await nextTick();
+        //     await initializeMap();
+        //     await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
+        //     alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
+        // } catch (fallbackError) {
+        //     console.error('Fallback location failed', fallbackError);
+        // }
     }
 };
 
@@ -535,6 +651,10 @@ watch(showMap, async (newValue) => {
               </ul>
             </div>
 
+            <div v-if="errorMessage" class="error-container">
+              <p>{{ errorMessage }}</p>
+            </div>
+
             <!-- Step 1: Basic Information -->
             <div v-show="currentStep === 1" class="item-card">
               <div class="item-header mb-4">
@@ -549,6 +669,7 @@ watch(showMap, async (newValue) => {
                       required
                       id="date"
                       type="date"
+                      :max="maxDate"
                       v-model="form.date"
                       @blur="markFieldAsTouched('date')"
                       :class="{
@@ -713,7 +834,15 @@ watch(showMap, async (newValue) => {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <InputLabel for="municipality_id" value="Municipality" />
-                    <select v-model="form.municipality_id" class="form-select" :disabled="locationSource === 'gps' && isGeocodingInProgress">
+                    <select v-model="form.municipality_id" class="form-select"
+                    :disabled="locationSource === 'gps' && isGeocodingInProgress"
+                    @blur="markFieldAsTouched('municipality_id')"
+                        :class="{
+                        'input-required': getFieldState('municipality_id').isTouched &&
+                                        getFieldState('municipality_id').isEmpty,
+                        'input-valid': form.municipality_id
+                        }"
+                        >
                       <option value="" disabled>Select a municipality</option>
                       <option v-for="municipality in props.municipalities" :key="municipality.id" :value="municipality.id">
                         {{ municipality.name }}
@@ -724,7 +853,15 @@ watch(showMap, async (newValue) => {
 
                   <div>
                     <InputLabel for="barangay_id" value="Barangay" />
-                    <select v-model="form.barangay_id" class="form-select" :disabled="locationSource === 'gps' && isGeocodingInProgress">
+                    <select v-model="form.barangay_id" class="form-select"
+                    :disabled="locationSource === 'gps' && isGeocodingInProgress"
+                    @blur="markFieldAsTouched('barangay_id')"
+                        :class="{
+                        'input-required': getFieldState('barangay_id').isTouched &&
+                                        getFieldState('barangay_id').isEmpty,
+                        'input-valid': form.barangay_id
+                        }"
+                        >
                       <option value="" disabled>Select a barangay</option>
                       <option v-for="barangay in filteredBarangays" :key="barangay.id" :value="barangay.id">
                         {{ barangay.name }}
@@ -824,10 +961,41 @@ watch(showMap, async (newValue) => {
 
                 <div class="media-section">
                   <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-                  <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                    Browse Files
-                  </label>
-                  <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="hidden" />
+                  <div class="flex flex-wrap gap-4">
+                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                      Upload Files
+                    </label>
+                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                      Take Photo/Video
+                    </label>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="mediaFiles"
+                    @change="handleFileChange"
+                    multiple
+                    class="hidden"
+                  />
+                  <input
+                    id="cameraCapture"
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    capture
+                    @change="handleFileChange"
+                    class="hidden"
+                />
+
+                  <p class="text-sm text-blue-300 mt-2">
+                    * You can upload images or videos (max 1 minute)
+                  </p>
+                  <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block mt-1">
+                    Required at least 1 media file
+                  </span>
+                  <span v-if="errorMessage" class="text-sm text-red-400 block mt-1">
+                    {{ errorMessage }}
+                  </span>
 
                   <!-- Preview Section -->
                   <div v-if="previewImages.length" class="preview-section mt-4">
@@ -858,36 +1026,38 @@ watch(showMap, async (newValue) => {
             </div>
 
             <!-- Navigation Buttons -->
-            <div class="flex justify-between items-center mt-6">
-              <button
+            <div class="flex justify-end gap-4 items-center mt-6">
+              <CustomButton
                 type="button"
-                @click="previousStep"
+                variant="secondary"
+                :onClick="previousStep"
                 v-show="currentStep > 1"
-                class="cancel-button">
+                icon="arrow_back"
+                >
                 Previous
-              </button>
-              <div class="flex space-x-4">
-                <button
+              </CustomButton>
+              <div class="flex gap-4 space-x-4">
+                <CustomButton
                   v-if="currentStep < totalSteps"
                   type="button"
-                  @click="nextStep"
+                  icon="arrow_forward"
+                  :onClick="nextStep"
                   :disabled="!isStepValid"
-                  class="create-button"
                   :class="{ 'opacity-50 cursor-not-allowed': !isStepValid }">
                   Next
-                </button>
-                <button
+                </CustomButton>
+                <CustomButton
                   v-else
                   type="submit"
+                  icon="send"
                   :disabled="isSubmitting"
-                  class="create-button"
                   :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }">
                   <svg v-if="isSubmitting" class="animate-spin h-5 w-5 mr-2 inline-block" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
                   {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
-                </button>
+                </CustomButton>
               </div>
             </div>
           </form>
@@ -1046,42 +1216,6 @@ label {
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
     outline: none;
-}
-
-.create-button {
-    @apply px-6 py-2.5 text-sm font-medium;
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border-radius: 50px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.create-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #00b3e6, #00d9ff);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.cancel-button {
-    @apply px-6 py-2.5 text-sm font-medium inline-flex items-center justify-center;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.cancel-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Map styles */

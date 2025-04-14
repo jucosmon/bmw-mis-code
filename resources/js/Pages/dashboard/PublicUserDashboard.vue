@@ -7,7 +7,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
 const page = usePage();
-const user = computed(() => page.props.auth.user);
+const user = computed(() => page.props.auth?.user || null);
 const showReportModal = ref(false);
 
 const userStats = ref({
@@ -41,6 +41,8 @@ const totalPages = computed(() => Math.ceil(totalActivities.value / perPage.valu
 
 // Add fetchUserStats function
 const fetchUserStats = async () => {
+    if (!user.value) return;
+
     try {
         const userId = user.value.id;
 
@@ -162,9 +164,11 @@ const fetchTopSpecies = async () => {
 
 // Update fetchUserActivities function
 const fetchUserActivities = async () => {
+    if (!user.value) return;
+
     try {
         const userId = user.value.id;
-        console.log('Fetching activities for user:', userId); // Debug log
+        console.log('Fetching activities for user:', userId);
 
         const [sightingsRes, strandingsRes] = await Promise.all([
             supabase
@@ -179,8 +183,7 @@ const fetchUserActivities = async () => {
                         species (
                             name
                         )
-                    ),
-                    user_id
+                    )
                 `)
                 .eq('user_id', userId)
                 .eq('is_active', true),
@@ -192,45 +195,24 @@ const fetchUserActivities = async () => {
                     report_status,
                     municipality:municipality_id(name),
                     barangay:barangay_id(name),
-                    stranded_species (
-                        species (
-                            name
-                        )
-                    ),
+                    species_involved,
                     user_id
                 `)
                 .eq('user_id', userId)
                 .eq('is_active', true)
         ]);
 
-        console.log('Sightings response:', sightingsRes); // Debug log
-        console.log('Strandings response:', strandingsRes); // Debug log
-
         if (sightingsRes.error) throw sightingsRes.error;
         if (strandingsRes.error) throw strandingsRes.error;
 
-        const { data: activeSightings } = await supabase
-            .from('sightings')
-            .select(`
-                id,
-                date,
-                report_status,
-                municipality:municipality_id(name),
-                barangay:barangay_id(name),
-                sighted_species (
-                    species (
-                        name
-                    )
-                )
-            `)
-            .eq('user_id', userId)
-            .eq('is_active', true);
-
         const activities = [
-            ...(activeSightings?.map(sighting => ({
+            ...(sightingsRes.data?.map(sighting => ({
                 id: `sighting-${sighting.id}`,
                 type: 'sighting',
-                species: sighting.sighted_species?.[0]?.species?.name || 'Unknown Species',
+                species: sighting.sighted_species
+                    .map(ss => ss.species?.name)
+                    .filter(Boolean)
+                    .join(', ') || 'Unknown Species',
                 location: `${sighting.barangay?.name || 'Unknown Location'}, ${sighting.municipality?.name || 'Unknown Location'}`,
                 date: sighting.date,
                 status: sighting.report_status,
@@ -241,13 +223,13 @@ const fetchUserActivities = async () => {
                 type: 'stranded',
                 date: stranding.date,
                 status: stranding.report_status,
-                species: stranding.stranded_species[0]?.species?.name || 'Unknown Species',
+                species: stranding.species_involved || 'Unknown Species',
                 location: `${stranding.barangay?.name || 'Unknown Location'}, ${stranding.municipality?.name || 'Unknown Location'}`,
                 viewUrl: route('stranded.incident.view', stranding.id)
             })) || [])
         ];
 
-        console.log('Processed activities:', activities); // Debug log
+        console.log('Processed activities:', activities);
 
         recentActivities.value = activities.sort((a, b) =>
             new Date(b.date) - new Date(a.date)
@@ -278,9 +260,8 @@ onMounted(async () => {
     try {
         isLoading.value = true;
         await Promise.all([
-            fetchUserStats(),
             fetchTopSpecies(),
-            fetchUserActivities()
+            ...(user.value ? [fetchUserStats(), fetchUserActivities()] : [])
         ]);
     } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -302,21 +283,29 @@ const paginatedActivities = computed(() => {
     const end = start + perPage.value;
     return filtered.slice(start, end);
 });
+
+const numberOfSpecies = computed(() => {
+    if (user.value) {
+        return 10;
+    }
+    return 5;
+});
 </script>
 
 <template>
     <Head title="Dashboard" />
 
     <Sidebar>
-
         <div class="min-h-screen bg-cover bg-center relative oceanic-overlay" style="background-image: url('/images/landing.jpg')">
             <div class="relative">
-                <!-- Hero Section -->
-                <div class="relative flex items-center justify-center min-h-[300px] py-24 pt-12">
+                <!-- Hero Section - Show different welcome message based on auth state -->
+                <div class="relative flex items-center justify-center min-h-[300px] py-10 pt-12">
                     <div class="absolute inset-0 bg-gradient-to-b from-blue-900/80 to-cyan-800/90"></div>
                     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div class="text-center text-white">
-                            <h1 class="text-2xl font-bold sm:text-3xl text-shadow">Welcome, {{ user.first_name }}!</h1>
+                            <h1 class="text-2xl font-bold sm:text-3xl text-shadow">
+                                {{ user ? `Welcome, ${user.first_name}!` : 'Welcome to Marine Wildlife Monitoring' }}
+                            </h1>
                             <p class="mt-2 text-lg text-shadow">Help us protect marine wildlife</p>
                             <div class="mt-6">
                                 <PrimaryButton @click="showReportModal = true"
@@ -328,13 +317,13 @@ const paginatedActivities = computed(() => {
                     </div>
                 </div>
 
-                <!-- Added spacing class mt-8 (2rem/32px) between hero and main content -->
+                <!-- Main Content -->
                 <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8 mt-8">
                     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-                        <!-- Featured Species - Updated with oceanic blue -->
+                        <!-- Featured Species - Always shown -->
                         <div class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-white">Most Reported Species</h3>
+                                <h3 class="text-lg font-semibold text-white">Popular Species in Bohol</h3>
                                 <Link :href="route('species.index')"
                                     class="text-sm text-cyan-300 hover:text-cyan-200 hover:underline">
                                     View All →
@@ -343,24 +332,27 @@ const paginatedActivities = computed(() => {
                             <div v-if="isLoading" class="text-center py-4">
                                 Loading...
                             </div>
+                            <div v-if="featuredSpecies.length===0" class="text-center my-10 justify-center">
+                                <h4 class="text-gray-200 font-medium">No popular species yet</h4>
+                            </div>
                             <div v-else class="space-y-3">
-                                <Link v-for="species in featuredSpecies"
+                                <Link v-for="species in featuredSpecies.slice(0, numberOfSpecies)"
                                     :key="species.id"
                                     :href="route('species.view', species.id)"
-                                    class="block rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                    class="block rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                     <div class="flex justify-between items-start">
                                         <div>
-                                            <h4 class="font-medium text-cyan-900">{{ species.name }}</h4>
-                                            <p class="text-sm text-cyan-600 italic">{{ species.scientificName }}</p>
-                                            <p class="mt-1 text-sm text-cyan-700">
+                                            <h4 class="font-semibold text-slate-800">{{ species.name }}</h4>
+                                            <p class="text-sm font-medium text-slate-600 italic">{{ species.scientificName }}</p>
+                                            <!-- <p class="mt-1 text-sm font-medium text-slate-700">
                                                 Reports: {{ species.reportCount }}
-                                            </p>
+                                            </p> -->
                                         </div>
-                                        <span class="inline-block rounded-full px-2 py-1 text-xs"
+                                        <span class="inline-block rounded-full px-2 py-1 text-xs font-medium"
                                             :class="{
-                                                'bg-red-100 text-red-800': species.status === 'Endangered',
-                                                'bg-yellow-100 text-yellow-800': species.status === 'Vulnerable',
-                                                'bg-green-100 text-green-800': species.status === 'Least Concern'
+                                                'bg-red-200 text-red-900': species.status === 'Endangered',
+                                                'bg-yellow-200 text-yellow-900': species.status === 'Vulnerable',
+                                                'bg-green-200 text-green-900': species.status === 'Least Concern'
                                             }">
                                             {{ species.status }}
                                         </span>
@@ -371,35 +363,35 @@ const paginatedActivities = computed(() => {
 
                         <!-- Quick Actions and Recent Activity -->
                         <div class="space-y-4">
-                            <!-- Quick Access - Updated with oceanic blue -->
+                            <!-- Quick Access - Always shown -->
                             <div class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
                                 <h3 class="mb-4 text-lg font-semibold text-white">Quick Access</h3>
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <Link :href="route('guideline.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">📋</span>
-                                        <span class="font-medium text-cyan-900">Guidelines</span>
+                                        <span class="font-semibold text-slate-800">Guidelines</span>
                                     </Link>
                                     <Link :href="route('species.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">🔍</span>
-                                        <span class="font-medium text-cyan-900">Species</span>
+                                        <span class="font-semibold text-slate-800">Species</span>
                                     </Link>
                                     <Link :href="route('stranded.incident.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">🚨</span>
-                                        <span class="font-medium text-cyan-900">Stranded Reports</span>
+                                        <span class="font-semibold text-slate-800">Stranded Reports</span>
                                     </Link>
                                     <Link :href="route('sighting.index')"
-                                        class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-100">
+                                        class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.02] border border-cyan-200">
                                         <span class="mr-3 text-2xl">👁️</span>
-                                        <span class="font-medium text-cyan-900">Sighting Reports</span>
+                                        <span class="font-semibold text-slate-800">Sighting Reports</span>
                                     </Link>
                                 </div>
                             </div>
 
-                            <!-- Recent Activity - Updated with oceanic blue -->
-                            <div class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
+                            <!-- Recent Activity - Only shown when user is logged in -->
+                            <div v-if="user" class="rounded-lg oceanic-container p-4 shadow-lg sm:p-6">
                                 <div class="mb-3 flex flex-col space-y-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                                     <h3 class="text-lg font-semibold">Recent Activity</h3>
                                     <div class="flex space-x-1 sm:space-x-2">
@@ -435,40 +427,33 @@ const paginatedActivities = computed(() => {
                                         Loading...
                                     </div>
                                     <template v-else>
-                                        <div v-for="activity in paginatedActivities" :key="activity.id"
-                                            class="flex items-center rounded-lg bg-white/80 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.01] border border-cyan-100">
+                                        <Link v-for="activity in paginatedActivities" :key="activity.id"
+                                            :href="activity.viewUrl"
+                                            class="flex items-center rounded-lg bg-white/95 p-3 transition-all duration-200 hover:bg-white hover:shadow-lg hover:scale-[1.01] border border-cyan-200">
                                             <div class="mr-4 flex-shrink-0">
                                                 <span class="text-2xl">
                                                     {{ activity.type === 'stranded' ? '🚨' : '👁️' }}
                                                 </span>
                                             </div>
                                             <div class="flex-grow">
-                                                <div class="flex items-center gap-2 mb-1">
-                                                    <h4 class="font-medium">{{ activity.species }}</h4>
+                                                <div class="flex items-center gap-2 mb-1 justify-between">
+                                                    <h4 class="font-semibold text-slate-800">
+                                                        {{ activity.species }}
+                                                    </h4>
                                                     <span :class="[
-                                                        'text-xs px-2 py-0.5 rounded-full',
-                                                        activity.type === 'stranded'
-                                                            ? 'bg-red-100 text-red-800'
-                                                            : 'bg-purple-100 text-purple-800'
+                                                        'inline-block rounded-full px-2 py-1 text-xs font-medium',
+                                                        activity.status === 'pending' ? 'bg-yellow-200 text-yellow-900' :
+                                                        activity.status === 'verified' ? 'bg-green-200 text-green-900' :
+                                                        activity.status === 'resolved' ? 'bg-blue-200 text-blue-900' :
+                                                        'bg-slate-200 text-slate-900'
                                                     ]">
-                                                        {{ activity.type === 'stranded' ? 'Stranded' : 'Sighting' }}
+                                                        {{ activity.status }}
                                                     </span>
                                                 </div>
-                                                <p class="text-sm text-gray-600">{{ activity.location }}</p>
-                                                <p class="text-xs text-gray-500">{{ activity.date }}</p>
+                                                <p class="text-sm font-medium text-slate-700">{{ activity.location }}</p>
+                                                <p class="text-xs font-medium text-slate-600">{{ activity.date }}</p>
                                             </div>
-                                            <div class="ml-4">
-                                                <span :class="[
-                                                    'inline-block rounded-full px-2 py-1 text-xs',
-                                                    activity.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                    activity.status === 'verified' ? 'bg-green-100 text-green-800' :
-                                                    activity.status === 'resolved' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                                ]">
-                                                    {{ activity.status }}
-                                                </span>
-                                            </div>
-                                        </div>
+                                        </Link>
                                         <div v-if="filteredActivities.length === 0"
                                             class="text-center text-gray-200 py-4">
                                             No recent activities
@@ -510,7 +495,7 @@ const paginatedActivities = computed(() => {
             </div>
         </div>
 
-        <!-- Report Modal -->
+        <!-- Report Modal - Show different content based on auth state -->
         <Modal :show="showReportModal" @close="showReportModal = false">
             <div class="p-6 modal-content">
                 <h3 class="mb-6 text-center text-xl font-medium text-white">What would you like to report?</h3>
@@ -764,5 +749,51 @@ const paginatedActivities = computed(() => {
 .modal-sighting-button p {
     color: rgba(255, 255, 255, 0.85);
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Add new styles */
+.bg-white\/95 {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+/* Update icon styles */
+.text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    filter: none; /* Ensures emojis are displayed clearly */
+}
+
+/* Improved text contrast */
+.text-slate-800 {
+    color: #1e293b;
+}
+
+.text-slate-700 {
+    color: #334155;
+}
+
+.text-slate-600 {
+    color: #475569;
+}
+
+/* Enhanced status badges */
+.bg-red-200 {
+    background-color: #fecaca;
+}
+
+.bg-yellow-200 {
+    background-color: #fef08a;
+}
+
+.bg-green-200 {
+    background-color: #bbf7d0;
+}
+
+/* Update border styles */
+.border-cyan-200 {
+    border-color: rgba(103, 232, 249, 0.3);
 }
 </style>

@@ -1,11 +1,13 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
@@ -73,6 +75,13 @@ const initializeMap = () => {
             map.value.remove();
             map.value = null;
         }
+        // Fix for Leaflet default icon
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: markerIcon,
+            iconUrl: markerIcon,
+            shadowUrl: markerShadow,
+        });
 
         map.value = L.map('map').setView([form.latitude, form.longitude], 13);
 
@@ -149,25 +158,95 @@ const handleRemoveMap = () => {
     }
 };
 
-// Modified setLocationFromMap
-const setLocationFromMap = () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                form.latitude = latitude;
-                form.longitude = longitude;
-                showMap.value = true;
-                nextTick(() => {
-                    initializeMap();
-                });
-            },
-            () => {
-                alert('Failed to fetch current location. Please allow location access.');
-            }
-        );
-    } else {
+// // Add getFallbackLocation helper function
+// const getFallbackLocation = async () => {
+//     try {
+//         const response = await fetch('https://ipapi.co/json/');
+//         const data = await response.json();
+//         return {
+//             latitude: data.latitude,
+//             longitude: data.longitude
+//         };
+//     } catch (error) {
+//         console.error('Fallback location fetch failed:', error);
+//         throw new Error('Could not retrieve fallback location');
+//     }
+// };
+
+// Update setLocationFromMap function
+const setLocationFromMap = async () => {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    // Add detailed options for geolocation
+    const options = {
+        enableHighAccuracy: true, // Request most accurate location
+        timeout: 10000, // 10 seconds timeout
+        maximumAge: 0 // Don't use cached location
+    };
+
+    // Wrap geolocation in a promise for better async handling
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+
+        const { latitude, longitude } = position.coords;
+
+        // Update location source and form data
+        form.latitude = latitude;
+        form.longitude = longitude;
+
+        // Show map
+        showMap.value = true;
+
+        // Ensure DOM is updated before manipulating map
+        await nextTick();
+
+        // Initialize or update map
+        if (!map.value) {
+            await initializeMap();
+        } else {
+            map.value.setView([latitude, longitude], 13);
+            marker.value.setLatLng([latitude, longitude]);
+        }
+
+        // Success notification
+        alert(`Location found: ${latitude}, ${longitude}`);
+
+    } catch (error) {
+        // Detailed error handling
+        let errorMessage = 'Failed to fetch current location.';
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = 'Location access was denied. Please enable location permissions in your browser settings.';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information is currently unavailable. Please try again later.';
+                break;
+            case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+                break;
+        }
+
+        alert(errorMessage);
+
+        // // Fallback location method
+        // try {
+        //     const fallbackLocation = await getFallbackLocation();
+        //     // Use fallback location
+        //     form.latitude = fallbackLocation.latitude;
+        //     form.longitude = fallbackLocation.longitude;
+        //     showMap.value = true;
+        //     await nextTick();
+        //     await initializeMap();
+        //     alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
+        // } catch (fallbackError) {
+        //     console.error('Fallback location failed', fallbackError);
+        // }
     }
 };
 
@@ -260,7 +339,7 @@ onBeforeUnmount(() => {
             <!-- Species Selection Section -->
             <div class="form-section">
               <h3 class="section-title">
-                <span class="material-icons text-cyan-400 mr-2">pets</span>
+                <span class="material-icons text-cyan-400 mr-2">water_drop</span>
                 Species Identification
               </h3>
               <div class="sm:col-span-2">
@@ -366,7 +445,7 @@ onBeforeUnmount(() => {
                   class="location-button"
                 >
                   <span class="material-icons">my_location</span>
-                  <span>Current Location</span>
+                  <span class="hidden sm:block">Current Location</span>
                 </button>
                 <button
                   type="button"
@@ -374,7 +453,7 @@ onBeforeUnmount(() => {
                   class="location-button bg-amber-600 hover:bg-amber-700"
                 >
                   <span class="material-icons">restart_alt</span>
-                  <span>Reset Location</span>
+                  <span class="hidden sm:block">Reset Location</span>
                 </button>
               </div>
 
@@ -444,11 +523,21 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div class="flex justify-between items-center mt-6">
-              <Link :href="backRoute" class="cancel-button">Cancel</Link>
-              <PrimaryButton type="submit" class="create-button" :disabled="form.processing">
-                Submit
-              </PrimaryButton>
+            <div class="flex justify-end gap-4 items-center mt-6">
+              <CustomButton
+                :onClick="backRoute"
+                icon="cancel"
+                variant="secondary"
+                >
+                Cancel
+            </CustomButton>
+              <CustomButton
+                type="submit"
+                icon="send"
+                :disabled="form.processing"
+                >
+                Create
+              </CustomButton>
             </div>
           </form>
         </div>

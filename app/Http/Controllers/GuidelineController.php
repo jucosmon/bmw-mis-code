@@ -18,7 +18,7 @@ class GuidelineController extends Controller
     public function indexForBasicUser (){
         $user = Auth::user();
 
-        $guidelines = Guideline::where('user_role', $user->user_role)
+        $guidelines = Guideline::where('user_role', $user ? $user->user_role : 'public_user')
             ->where('is_active', true)
             ->get();
 
@@ -34,10 +34,16 @@ class GuidelineController extends Controller
     // Fetch the guideline with its items and media files
     $guideline = Guideline::with(['items'])->findOrFail($id);
 
-    // Check if the user has access to the guideline
-    if ($guideline->user_role !== $user->user_role) {
-        abort(403, 'You cannot access a guideline for this user type');
+    if($user){
+        if ($guideline->user_role !== $user->user_role) {
+            abort(403, 'You cannot access a guideline for this user type');
+        }
+    }else{
+        if($guideline->user_role !== 'public_user'){
+            abort(403, 'You cannot access a guideline for this user type');
+        }
     }
+
 
     foreach ($guideline->items as $item) {
         $item->mediaFiles = MediaFile::where('item_id', $item->id)->get();
@@ -106,11 +112,12 @@ class GuidelineController extends Controller
             'description' => 'string|required',
             'user_role' => 'required|in:lgu_responder,barangay_official,public_user',
             'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
+            'language' => 'required|in:english,filipino,bisaya',
             'items' => 'required|array|min:1',
             'items.*.count' => 'required|integer|min:1',
             'items.*.text' => 'required|string',
             'mediaFiles' => 'nullable|array',
-            'mediaFiles.*' => 'file|mimes:jpeg,png,jpg,svg,mp4,mov,avi,wmv,mkv,doc,docx,pdf,ppt,pptx,xls,xlsx|max:10240', // Expanded file types
+            'mediaFiles.*' => 'file|mimes:jpeg,png,jpg,svg,mp4,mov,avi,wmv,mkv,doc,docx,pdf,ppt,pptx,xls,xlsx|max:25024',
         ]);
 
         $guideline = Guideline::create([
@@ -118,6 +125,7 @@ class GuidelineController extends Controller
             'description' => $request->description,
             'user_role' => $request->user_role,
             'category' => $request->category,
+            'language' => $request->language,
             'is_active' => true
         ]);
 
@@ -179,6 +187,7 @@ class GuidelineController extends Controller
             'description' => 'string|required',
             'user_role' => 'required|in:lgu_responder,barangay_official,public_user',
             'category' => 'required|in:marine_turtles,marine_mammals,sharks_rays',
+            'language' => 'required|in:english,filipino,bisaya',
             'items' => 'required|array|min:1',
             'items.*.count' => 'required|integer|min:1',
             'items.*.text' => 'required|string',

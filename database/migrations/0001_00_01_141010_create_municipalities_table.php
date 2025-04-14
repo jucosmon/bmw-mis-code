@@ -14,7 +14,14 @@ return new class extends Migration
         Schema::create('municipalities', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
+            $table->unsignedInteger('province_id');
             $table->timestamps();
+
+             // Foreign key constraints
+            $table->foreign('province_id')
+                ->references('id')
+                ->on('provinces')
+                ->onDelete('cascade');
         });
     }
 

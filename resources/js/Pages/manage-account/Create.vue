@@ -1,9 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
 const page = usePage();
@@ -20,6 +21,8 @@ const props = defineProps({
         required: true
     },
 });
+
+const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0];
 
 onMounted(() => {
     if (page.props.auth?.user?.user_role === 'lgu_responder') {
@@ -48,6 +51,21 @@ const userRole = computed(() => {
     default:
       return 'Unknown User';
   }
+});
+
+const positions = computed(() => {
+    switch (props.type) {
+        case 'bpemo_admin':
+            return ['BPEMO CRM Division Head', 'BPEMO Head'];
+        case 'bpemo_staff':
+            return ['BPEMO CRM Staff', 'BPEMO CRM Coordinator'];
+        case 'lgu_responder':
+            return ['LGU Official', 'LGU Staff', 'LGU MAO Staff', 'LGU MAO Fisheries Technician'];
+        case 'barangay_official':
+            return ['Barangay Captain', 'Barangay Kagawad', 'Barangay Secretary', 'Barangay Treasurer'];
+        default:
+            return ['Not a Responder'];
+    }
 });
 
 // defined routes for different current user type
@@ -80,9 +98,8 @@ const form = useForm({
 
 const submit = () => {
     // Check if contact number is at least 11 characters
-    if (form.contact_number && form.contact_number.length < 11) {
-        // Optionally, set an error message or handle it as needed
-        alert("Contact number must be at least 11 digits long.");
+    if (form.contact_number && (form.contact_number.length !== 10 || form.contact_number[0] !== '9')) {
+        alert("Contact number must be 10 digits long and start with '9'.");
         return; // Prevent form submission
     }
 
@@ -139,14 +156,42 @@ const allowOnlyNumbers = (event) => {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <InputLabel for="first_name" value="First Name" />
-                                <TextInput id="first_name" type="text" v-model="form.first_name" required autocomplete="first_name" class="input-field" />
+                                <TextInput id="first_name"
+                                    type="text"
+                                    v-model="form.first_name" required
+                                    autocomplete="first_name"
+                                    class="input-field"
+                                    minlength="2"
+                                    @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                    }"
+                                    />
                                 <InputError class="mt-2" :message="form.errors.first_name" />
+                                <span v-if="form.first_name.length > 0 && form.first_name.length < 2" class="text-xs text-red-400">
+                                    First name must be at least 2 characters
+                                </span>
                             </div>
 
                             <div>
                                 <InputLabel for="last_name" value="Last Name" />
-                                <TextInput id="last_name" type="text" v-model="form.last_name" required autocomplete="last_name" class="input-field" />
+                                <TextInput id="last_name"
+                                    type="text"
+                                    v-model="form.last_name" required
+                                    autocomplete="last_name"
+                                    class="input-field"
+                                    minlength="2"
+                                    @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                    }"
+                                    />
                                 <InputError class="mt-2" :message="form.errors.last_name" />
+                                <span v-if="form.last_name.length > 0 && form.last_name.length < 2" class="text-xs text-red-400">
+                                    Last name must be at least 2 characters
+                                </span>
                             </div>
 
                             <div>
@@ -154,16 +199,26 @@ const allowOnlyNumbers = (event) => {
                                 <TextInput id="email" type="email" v-model="form.email" required autocomplete="email" class="input-field" />
                                 <InputError class="mt-2" :message="form.errors.email" />
                             </div>
-
                             <div>
                                 <InputLabel for="contact_number" value="Contact Number" />
-                                <TextInput id="contact_number" type="text" v-model="form.contact_number" @keydown="allowOnlyNumbers" class="input-field" />
+                                <div class="flex items-center w-full">
+                                    <span class="text-gray-100 pr-2 pt-2">+63</span>
+                                    <TextInput
+                                        id="contact_number"
+                                        type="text"
+                                        v-model="form.contact_number"
+                                        @keydown="allowOnlyNumbers"
+                                        maxlength="10"
+                                        class="input-field flex-1"
+                                        placeholder="9XXXXXXXXX"
+                                    />
+                                </div>
                                 <InputError class="mt-2" :message="form.errors.contact_number" />
                             </div>
 
                             <div>
                                 <InputLabel for="birthdate" value="Birth Date" />
-                                <TextInput id="birthdate" type="date" v-model="form.birthdate" required class="input-field" />
+                                <TextInput id="birthdate" type="date" :max="maxDate" v-model="form.birthdate" required class="input-field" />
                                 <InputError class="mt-2" :message="form.errors.birthdate" />
                             </div>
 
@@ -181,9 +236,19 @@ const allowOnlyNumbers = (event) => {
 
                         <!-- Position and Location -->
                         <div class="space-y-6">
-                            <div>
+                            <!-- <div>
                                 <InputLabel for="position" value="User's Position" />
                                 <TextInput id="position" type="text" v-model="form.position" required class="input-field" />
+                                <InputError class="mt-2" :message="form.errors.position" />
+                            </div> -->
+                            <div>
+                                <InputLabel for="position" value="User's Position" />
+                                <select id="position" v-model="form.position" required class="input-field">
+                                    <option value="" disabled>Select user's position</option>
+                                    <option v-for="position in positions" :key="position" :value="position">
+                                        {{ position }}
+                                    </option>
+                                </select>
                                 <InputError class="mt-2" :message="form.errors.position" />
                             </div>
 
@@ -214,16 +279,21 @@ const allowOnlyNumbers = (event) => {
                         </div>
 
                         <!-- Submit and Cancel Buttons -->
-                        <div class="flex items-center justify-between mt-6">
-                            <Link :href="backRoute" class="text-sm text-white hover:text-gray-200 underline">Cancel</Link>
-                            <button
+                        <div class="flex items-center sm:justify-between justify-end gap-4 mt-6">
+                            <CustomButton
+                                :onClick="backRoute"
+                                variant="secondary"
+                                icon="cancel"
+                                >Cancel
+                            </CustomButton>
+                            <CustomButton
                                 type="submit"
+                                icon="send"
                                 :disabled="form.processing"
-                                class="oceanic-button"
                                 :class="{ 'opacity-25': form.processing }"
                             >
-                                Create Account
-                            </button>
+                                Create
+                            </CustomButton>
                         </div>
                     </form>
                 </div>

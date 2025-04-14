@@ -4,6 +4,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineProps({
     canResetPassword: {
@@ -20,6 +21,8 @@ const form = useForm({
     remember: false,
 });
 
+const showPassword = ref(false);
+
 const submit = () => {
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
@@ -30,23 +33,23 @@ const submit = () => {
 <template>
     <Head title="Log in" />
 
-    <div class="relative min-h-screen">
+    <div class="relative min-h-screen overflow-hidden">
         <!-- Background -->
-        <div class="absolute inset-0">
+        <div class="fixed inset-0">
             <img src="/images/landing.jpg" alt="Ocean Background" class="object-cover w-full h-full">
             <div class="absolute inset-0 bg-gradient-overlay"></div>
         </div>
 
-        <!-- Logo -->
-        <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-            <Link href="/" class="logo-container">
-                <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image">
+        <!-- Logo container -->
+        <div class="absolute top-0 left-0 p-4 z-20">
+            <Link href="/" class="flex items-center">
+                <img src="/images/white_on_trans.png" style="height: 70px;" alt="Marine Wildlife Logo">
             </Link>
         </div>
 
         <!-- Login Form Container -->
-        <div class="relative min-h-screen flex flex-col items-center justify-center px-4">
-            <div class="login-container">
+        <div class="relative z-10 min-h-screen flex items-center justify-center py-12 px-4">
+            <div class="login-container mx-auto">
                 <h2 class="title-gradient mb-6">Sign In</h2>
 
                 <form @submit.prevent="submit">
@@ -68,13 +71,18 @@ const submit = () => {
                         <InputLabel for="password" value="Password" class="text-white" />
                         <TextInput
                             id="password"
-                            type="password"
+                            :type="showPassword ? 'text' : 'password'"
                             v-model="form.password"
                             required
                             autocomplete="current-password"
                             class="input-field"
                         />
                         <InputError :message="form.errors.password" />
+                    </div>
+
+                    <div class="flex my-4">
+                        <Checkbox name="showPassword" v-model:checked="showPassword" />
+                        <span class="ms-2 text-sm text-white">Show Password</span>
                     </div>
 
                     <div class="mt-4 flex items-center justify-between">
@@ -129,6 +137,7 @@ const submit = () => {
     max-width: 420px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 0 1rem;
 }
 
 .title-gradient {
@@ -186,21 +195,6 @@ const submit = () => {
     color: #00ccff;
     margin-left: 0.25rem;
     transition: all 0.3s ease;
-}
-
-.logo-container {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    margin-left: 1rem;
-}
-
-.logo-image {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
 }
 
 .title-gradient-small {
@@ -271,9 +265,9 @@ const submit = () => {
 
 @media (max-width: 480px) {
     .login-container {
-        padding: 1.5rem;
-        margin: 0.5rem;
-        margin-top: 2rem;
+        padding: 2rem;
+        margin: 0 0.75rem;
+        max-width: calc(100% - 1.5rem);
     }
 
     .title-gradient {
@@ -292,11 +286,6 @@ const submit = () => {
         font-size: 0.9rem;
     }
 
-    .logo-container {
-        height: 40px;
-        padding: 0.5rem;
-    }
-
     .title-gradient-medium {
         font-size: 1rem;
     }
@@ -308,9 +297,8 @@ const submit = () => {
 
 @media (max-height: 667px) {
     .login-container {
-        padding: 1.25rem;
-        margin: 1rem auto;
-        max-height: 90vh;
+        padding: 2rem;
+        margin: 1rem;
         overflow-y: auto;
     }
 
@@ -326,20 +314,11 @@ const submit = () => {
     .nav-button {
         padding: 0.6rem 1rem;
     }
-
-    .logo-container {
-        height: 35px;
-        padding: 0.25rem;
-    }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
     .login-container {
         margin: 4rem auto;
-    }
-
-    .logo-container {
-        display: none;
     }
 }
 

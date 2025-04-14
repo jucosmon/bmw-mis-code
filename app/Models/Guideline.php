@@ -15,6 +15,7 @@ class Guideline extends Model
         'description',
         'category',
         'user_role',
+        'language',
         'is_active'
     ];
 

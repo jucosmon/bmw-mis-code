@@ -1,10 +1,13 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
@@ -32,9 +35,12 @@ if (!page || !page.props) {
     console.error('Page object is null or undefined');
 }
 
+const maxDate = new Date().toISOString().split('T')[0];
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
 const existingImages = ref(props.strandedIncident.mediaFiles ? props.strandedIncident.mediaFiles : []);
+const videoMaxDuration = 60; // 3 minutes in seconds
+const errorMessage = ref('');
 
 const backRoute = computed(() => {
     return route('stranded.incident.view', { id: props.strandedIncident.id });
@@ -92,17 +98,49 @@ const hasChanges = computed(() => {
     return dataChanged || mediaFilesChanged || deletedImagesChanged;
 });
 
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
 
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute or less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
 
-const handleNewFileChange = (event) => {
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+const handleNewFileChange = async (event) => {
     const files = event.target.files;
-    // Append new files to the mediaFiles array without resetting the form
+    errorMessage.value = '';
+
+    // Validate each video file
+    for (const file of files) {
+        if (file.type.startsWith('video/')) {
+            const validation = await validateVideoDuration(file);
+            if (!validation.valid) {
+                errorMessage.value = validation.message;
+                return;
+            }
+        }
+    }
+
+    // Append new files to the mediaFiles array
     form.mediaFiles.push(...Array.from(files));
 
-    // Generate previews for each selected image
-    previewNewImages.value = Array.from(files).map(file => {
-        return URL.createObjectURL(file);
-    });
+    // Generate previews for each selected file
+    const newPreviews = Array.from(files).map(file => ({
+        url: URL.createObjectURL(file),
+        type: file.type.startsWith('video/') ? 'video' : 'image'
+    }));
+
+    previewNewImages.value.push(...newPreviews);
 };
 
 // Remove selected preview image
@@ -118,6 +156,11 @@ const removeExistingImage = (index) => {
     existingImages.value.splice(index, 1);
 };
 const submit = () => {
+    if (form.mediaFiles.length === 0) {
+        errorMessage.value = 'Please upload at least one photo or video';
+        return;
+    }
+
     if (hasChanges.value) {
         form.deletedImages = deletedImages.value;
 
@@ -158,33 +201,100 @@ const isSameLocation = (lat1, lng1, lat2, lng2, tolerance = 0.0001) => {
     return false;
 };
 
+// // Add getFallbackLocation helper function
+// const getFallbackLocation = async () => {
+//     try {
+//         const response = await fetch('https://ipapi.co/json/');
+//         const data = await response.json();
+//         return {
+//             latitude: data.latitude,
+//             longitude: data.longitude
+//         };
+//     } catch (error) {
+//         console.error('Fallback location fetch failed:', error);
+//         throw new Error('Could not retrieve fallback location');
+//     }
+// };
+
 // Update setLocationFromMap function
 const setLocationFromMap = async () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                locationSource.value = 'manual'; // Changed from 'gps' to 'manual'
-
-                form.latitude = latitude;
-                form.longitude = longitude;
-                showMap.value = true;
-
-                await nextTick();
-                if (!map.value) {
-                    await initializeMap();
-                } else {
-                    map.value.setView([latitude, longitude], 13);
-                    marker.value.setLatLng([latitude, longitude]);
-                }
-                await reverseGeocode(latitude, longitude);
-            },
-            () => {
-                alert('Failed to fetch current location. Please allow location access.');
-            }
-        );
-    } else {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    // Add detailed options for geolocation
+    const options = {
+        enableHighAccuracy: true, // Request most accurate location
+        timeout: 10000, // 10 seconds timeout
+        maximumAge: 0 // Don't use cached location
+    };
+
+    // Wrap geolocation in a promise for better async handling
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+
+        const { latitude, longitude } = position.coords;
+
+        // Update location source and form data
+        locationSource.value = 'manual';
+        form.latitude = latitude;
+        form.longitude = longitude;
+
+        // Show map
+        showMap.value = true;
+
+        // Ensure DOM is updated before manipulating map
+        await nextTick();
+
+        // Initialize or update map
+        if (!map.value) {
+            await initializeMap();
+        } else {
+            map.value.setView([latitude, longitude], 13);
+            marker.value.setLatLng([latitude, longitude]);
+        }
+
+        // Reverse geocode to get address details
+        await reverseGeocode(latitude, longitude);
+
+        // Success notification
+        alert(`Location found: ${latitude}, ${longitude}`);
+
+    } catch (error) {
+        // Detailed error handling
+        let errorMessage = 'Failed to fetch current location.';
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = 'Location access was denied. Please enable location permissions in your browser settings.';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information is currently unavailable. Please try again later.';
+                break;
+            case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+                break;
+        }
+
+        alert(errorMessage);
+
+        // // Fallback location method
+        // try {
+        //     const fallbackLocation = await getFallbackLocation();
+        //     // Use fallback location
+        //     form.latitude = fallbackLocation.latitude;
+        //     form.longitude = fallbackLocation.longitude;
+        //     showMap.value = true;
+        //     await nextTick();
+        //     await initializeMap();
+        //     await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
+        //     alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
+        // } catch (fallbackError) {
+        //     console.error('Fallback location failed', fallbackError);
+        // }
     }
 };
 
@@ -295,6 +405,13 @@ const initializeMap = () => {
         cleanupMap();
 
         try {
+            // Fix for Leaflet default icon
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: markerIcon,
+                iconUrl: markerIcon,
+                shadowUrl: markerShadow,
+            });
             map.value = L.map('map').setView([defaultLat, defaultLng], 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -485,7 +602,7 @@ watch(showMap, async (newValue) => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="date" value="Date of the Incident" />
-                                    <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                                    <TextInput required id="date" type="date" :max="maxDate" v-model="form.date" autocomplete="date" class="w-full" />
                                     <InputError class="mt-2" :message="form.errors.date" />
                                 </div>
                                 <div>
@@ -499,7 +616,7 @@ watch(showMap, async (newValue) => {
                         <!-- Species Information Section -->
                         <div class="form-section">
                             <h3 class="section-title">
-                                <span class="material-icons mr-2">pets</span>
+                                <span class="material-icons mr-2">water_drop</span>
                                 Species Information
                             </h3>
                             <div class="grid grid-cols-1 gap-6">
@@ -729,26 +846,56 @@ watch(showMap, async (newValue) => {
 
                             <!-- New Images -->
                             <div class="preview-section">
+                                <div v-if="errorMessage" class="error-container">
+                                    <p>{{ errorMessage }}</p>
+                                </div>
                                 <h4 class="preview-title">Upload New Images</h4>
-                                <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                                    <span class="material-icons mr-2">cloud_upload</span>
-                                    Browse Files
-                                </label>
+                                <div class="flex flex-wrap gap-4">
+                                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">cloud_upload</span>
+                                        Browse Files
+                                    </label>
+                                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">camera_alt</span>
+                                        Take Photo/Video
+                                    </label>
+                                </div>
                                 <input
                                     id="mediaFiles"
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,video/*"
                                     multiple
                                     @change="handleNewFileChange"
                                     class="hidden"
                                 />
+                                <input
+                                    id="cameraCapture"
+                                    type="file"
+                                    accept="image/*,video/*"
+                                    multiple
+                                    capture
+                                    @change="handleNewFileChange"
+                                    class="hidden"
+                                />
+                                <p class="text-sm text-blue-300 mt-2">
+                                    * You can upload images or videos (max 3 minutes)
+                                </p>
+                                <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block mt-1">
+                                    Required at least 1 media file
+                                </span>
                                 <InputError class="mt-2" :message="form.errors.mediaFiles" />
+                                <p v-if="errorMessage" class="text-red-400 text-sm mt-2">{{ errorMessage }}</p>
 
                                 <!-- Preview New Images -->
                                 <div v-if="previewNewImages.length" class="mt-4">
                                     <div class="preview-grid">
-                                        <div v-for="(image, index) in previewNewImages" :key="index" class="preview-item group">
-                                            <img :src="image" alt="Image Preview" class="preview-image"/>
+                                        <div v-for="(file, index) in previewNewImages" :key="index" class="preview-item group">
+                                            <template v-if="file.type === 'image'">
+                                                <img :src="file.url" alt="Image Preview" class="preview-image"/>
+                                            </template>
+                                            <template v-else-if="file.type === 'video'">
+                                                <video :src="file.url" controls class="preview-image"></video>
+                                            </template>
                                             <button
                                                 @click="removeNewImage(index)"
                                                 type="button"
@@ -763,16 +910,22 @@ watch(showMap, async (newValue) => {
                         </div>
 
                         <!-- Submit and Cancel Buttons -->
-                        <div class="flex justify-between items-center mt-6">
-                            <Link :href="backRoute" class="cancel-button">Cancel</Link>
-                            <button
+                        <div class="flex justify-end gap-4 items-center mt-6">
+                            <CustomButton
+                                icon="cancel"
+                                :onClick="backRoute"
+                                variant="secondary"
+                                >
+                                    Cancel
+                            </CustomButton>
+                            <CustomButton
+                                icon="save"
                                 type="submit"
                                 :disabled="form.processing"
-                                class="create-button"
                                 :class="{ 'opacity-50': form.processing }"
                             >
-                                Update Stranded Incident
-                            </button>
+                                Update
+                            </CustomButton>
                         </div>
                     </form>
                 </div>
@@ -948,7 +1101,7 @@ input[type="range"] {
     top: 4px;
     right: 4px;
     padding: 4px;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.75);
     border-radius: 50%;
     color: rgba(255, 255, 255, 0.9);
     transition: all 0.2s ease;
@@ -956,16 +1109,16 @@ input[type="range"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-}
-
-.preview-item:hover .remove-button {
     opacity: 1;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
 }
 
 .remove-button:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 0, 0, 0.75);
     transform: scale(1.1);
+    color: white;
 }
 
 /* Map Styles */
@@ -1078,49 +1231,13 @@ input[type="range"] {
     outline: none;
 }
 
-.create-button,
-.cancel-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 50px;
-    min-width: 140px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-}
-
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.create-button:active,
-.cancel-button:active {
-    transform: translateY(0);
-}
-
 /* Error Container */
 .error-container {
     background: rgba(255, 68, 68, 0.1);
     border: 1px solid rgba(255, 68, 68, 0.2);
     border-radius: 8px;
     padding: 1.25rem;
-    color: #ff4444;
+    color: #ff7b7b;
     margin-bottom: 1.5rem;
 }
 

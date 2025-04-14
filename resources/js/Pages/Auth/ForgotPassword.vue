@@ -29,15 +29,15 @@ const submit = () => {
             <div class="absolute inset-0 bg-gradient-overlay"></div>
         </div>
 
-        <!-- Logo -->
-        <div class="w-full fixed top-0 left-0 right-0 p-6 z-10">
-            <Link href="/" class="logo-container">
-                <img src="/images/white_on_trans.png" alt="Marine Wildlife Logo" class="logo-image">
+        <!-- Logo container -->
+        <div class="relative z-20 p-2">
+            <Link href="/" class="flex items-center">
+                <img src="/images/white_on_trans.png" style="height: 70px;" alt="Marine Wildlife Logo">
             </Link>
         </div>
 
         <!-- Forgot Password Form Container -->
-        <div class="relative min-h-screen flex flex-col items-center justify-center px-4">
+        <div class="relative z-20 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]">
             <div class="login-container">
                 <h2 class="title-gradient mb-6">Reset Password</h2>
 
@@ -103,6 +103,8 @@ const submit = () => {
     max-width: 420px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    z-index: 30;
 }
 
 .title-gradient {
@@ -176,21 +178,6 @@ const submit = () => {
     opacity: 0.8;
 }
 
-.logo-container {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    margin-left: 1rem;
-}
-
-.logo-image {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
-}
-
 @media (max-width: 640px) {
     .login-container {
         padding: 2rem;
@@ -234,7 +221,7 @@ const submit = () => {
     .login-container {
         padding: 1.5rem;
         margin: 0.5rem;
-        margin-top: 2rem;
+        margin-top: 0; /* Removed extra top margin */
     }
 
     .title-gradient {
@@ -253,11 +240,6 @@ const submit = () => {
         font-size: 0.9rem;
     }
 
-    .logo-container {
-        height: 40px;
-        padding: 0.5rem;
-    }
-
     .form-group {
         margin-bottom: 0.75rem;
     }
@@ -269,7 +251,7 @@ const submit = () => {
 
 @media (max-height: 600px) {
     .login-container {
-        margin: 3rem auto;
+        margin: 1rem auto; /* Reduced margin */
     }
 }
 
@@ -293,20 +275,11 @@ const submit = () => {
     .nav-button {
         padding: 0.6rem 1rem;
     }
-
-    .logo-container {
-        height: 35px;
-        padding: 0.25rem;
-    }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
     .login-container {
         margin: 4rem auto;
-    }
-
-    .logo-container {
-        display: none;
     }
 }
 </style>

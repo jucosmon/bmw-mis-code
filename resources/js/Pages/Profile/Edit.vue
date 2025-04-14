@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -20,6 +20,7 @@ const props = defineProps({
 
 const page = usePage();
 const barangaysList = ref(props.barangays);
+const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0];
 
 // Filter barangays based on selected municipality
 const fetchBarangays = (municipalityId) => {
@@ -46,6 +47,21 @@ const userRole = computed(() => {
     }
 });
 
+const positions = computed(() => {
+    switch (page.props.auth.user.user_role) {
+        case 'bpemo_admin':
+            return ['BPEMO CRM Division Head', 'BPEMO Head'];
+        case 'bpemo_staff':
+            return ['BPEMO CRM Staff', 'BPEMO CRM Coordinator'];
+        case 'lgu_responder':
+            return ['LGU Official', 'LGU Staff', 'LGU MAO Staff', 'LGU MAO Fisheries Technician'];
+        case 'barangay_official':
+            return ['Barangay Captain', 'Barangay Kagawad', 'Barangay Secretary', 'Barangay Treasurer'];
+        default:
+            return ['Invalid'];
+    }
+});
+
 // Initialize form with existing user data for updating
 const form = useForm({
     first_name: page.props.auth.user.first_name || '',
@@ -61,8 +77,8 @@ const form = useForm({
 
 const formErrors = ref(null);
 const submit = () => {
-    if (form.contact_number.length < 11) {
-        alert("Contact number must be at least 11 digits long.");
+    if (form.contact_number && (form.contact_number.length !== 10 || form.contact_number[0] !== '9')) {
+        alert("Contact number must be 10 digits long and start with '9'.");
         return; // Prevent form submission
     }
     const hasChanges = Object.keys(form.data())
@@ -138,8 +154,17 @@ const allowOnlyNumbers = (event) => {
                                     required
                                     autocomplete="first_name"
                                     class="w-full transition duration-150 ease-in-out"
+                                    minlength="2"
+                                    @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
                                 />
                                 <InputError class="mt-1" :message="form.errors.first_name" />
+                                <span v-if="form.first_name.length > 0 && form.first_name.length < 2" class="text-xs text-red-400">
+                                    First name must be at least 2 characters
+                                </span>
                             </div>
 
                             <div class="space-y-2">
@@ -151,33 +176,47 @@ const allowOnlyNumbers = (event) => {
                                     required
                                     autocomplete="last_name"
                                     class="w-full transition duration-150 ease-in-out"
+                                    minlength="2"
+                                    @keypress="(e) => {
+                                    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }"
                                 />
                                 <InputError class="mt-1" :message="form.errors.last_name" />
+                                <span v-if="form.last_name.length > 0 && form.last_name.length < 2" class="text-xs text-red-400">
+                                    Last name must be at least 2 characters
+                                </span>
                             </div>
 
                             <div class="space-y-2">
-                                <InputLabel for="email" value="Email" class="text-gray-700" />
+                                <InputLabel for="email" value="Email"/>
                                 <TextInput
                                     id="email"
                                     type="email"
                                     v-model="form.email"
                                     required
                                     autocomplete="email"
-                                    class="w-full transition duration-150 ease-in-out"
+                                    class="w-full disabled:opacity-75 disabled:bg-gray-700/50 disabled:border-gray-600 disabled:cursor-not-allowed"
+                                    disabled
                                 />
                                 <InputError class="mt-1" :message="form.errors.email" />
                             </div>
-
                             <div class="space-y-2">
-                                <InputLabel for="contact_number" value="Contact Number" class="text-gray-700" />
-                                <TextInput
-                                    id="contact_number"
-                                    type="text"
-                                    v-model="form.contact_number"
-                                    @keydown="allowOnlyNumbers"
-                                    class="w-full transition duration-150 ease-in-out"
-                                />
-                                <InputError class="mt-1" :message="form.errors.contact_number" />
+                                <InputLabel for="contact_number" value="Contact Number" class="text-gray-700"/>
+                                <div class="flex items-center w-full">
+                                    <span class="text-gray-100 pr-2 pt-2">+63</span>
+                                    <TextInput
+                                        id="contact_number"
+                                        type="text"
+                                        v-model="form.contact_number"
+                                        @keydown="allowOnlyNumbers"
+                                        maxlength="10"
+                                        class="w-full transition duration-150 ease-in-out flex-1"
+                                        placeholder="9XXXXXXXXX"
+                                    />
+                                </div>
+                                <InputError class="mt-2" :message="form.errors.contact_number" />
                             </div>
 
                             <div class="space-y-2">
@@ -185,6 +224,7 @@ const allowOnlyNumbers = (event) => {
                                 <TextInput
                                     id="birthdate"
                                     type="date"
+                                    :max="maxDate"
                                     v-model="form.birthdate"
                                     required
                                     class="w-full transition duration-150 ease-in-out"
@@ -210,15 +250,15 @@ const allowOnlyNumbers = (event) => {
 
                             <div v-if="page.props.auth.user.user_role!=='public_user'" class="md:col-span-2">
                                 <div class="space-y-2">
-                                    <InputLabel for="position" value="User's Position" class="text-gray-700" />
-                                    <TextInput
-                                        id="position"
-                                        type="text"
-                                        v-model="form.position"
-                                        required
-                                        class="w-full transition duration-150 ease-in-out"
-                                    />
-                                    <InputError class="mt-1" :message="form.errors.position" />
+                                    <InputLabel for="position" value="User's Position" class="text-gray-700"/>
+                                    <select id="position" v-model="form.position" required
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                                        <option value="" disabled>Select user's position</option>
+                                        <option v-for="position in positions" :key="position" :value="position">
+                                            {{ position }}
+                                        </option>
+                                    </select>
+                                    <InputError class="mt-2" :message="form.errors.position" />
                                 </div>
                             </div>
 
@@ -257,20 +297,22 @@ const allowOnlyNumbers = (event) => {
                         </div>
 
                         <!-- Submit and Cancel Buttons -->
-                        <div class="flex items-center justify-between mt-8">
-                            <Link
-                                :href="route('profile.view')"
-                                class="cancel-gradient-text font-medium text-base"
+                        <div class="flex items-center justify-end gap-4 sm:justify-between mt-8">
+                            <CustomButton
+                                :onClick="route('profile.view')"
+                                variant="secondary"
+                                icon="cancel"
                             >
                                 Cancel
-                            </Link>
-                            <PrimaryButton
+                            </CustomButton>
+                            <CustomButton
+                                icon="save"
+                                type="submit"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="oceanic-button"
                             >
                                 Save
-                            </PrimaryButton>
+                            </CustomButton>
                         </div>
                     </form>
                 </div>
@@ -303,10 +345,16 @@ const allowOnlyNumbers = (event) => {
 /* Form element styles */
 :deep(.form-input),
 :deep(.form-select),
-:deep(input),
+:deep(input:not([disabled])),
 :deep(select) {
     @apply bg-white/10 border-white/20 text-white placeholder-white/60;
     @apply focus:border-[#003366] focus:ring-[#003366];
+}
+
+/* Add specific styles for disabled inputs */
+:deep(input:disabled) {
+    @apply bg-gray-700/50 border-gray-600 text-gray-400;
+    @apply cursor-not-allowed;
 }
 
 :deep(label) {
@@ -318,7 +366,6 @@ const allowOnlyNumbers = (event) => {
     @apply focus:ring-2 focus:ring-offset-2 focus:ring-[#003366];
 }
 
-/* Update text colors for better visibility */
 :deep(input),
 :deep(select),
 :deep(option) {

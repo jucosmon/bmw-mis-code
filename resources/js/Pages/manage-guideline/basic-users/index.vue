@@ -22,7 +22,7 @@ const guidelinesCategory = (category) => {
 };
 
 const guidelinesRole = computed(() => {
-    switch (page.props.auth.user.user_role) {
+    switch (page.props.auth?.user?.user_role) {
         case 'lgu_responder':
             return 'LGU Responder';
         case 'barangay_official':
@@ -30,24 +30,30 @@ const guidelinesRole = computed(() => {
         case 'public_user':
             return 'Public User';
         default:
-            return 'Invalid Role';
+            return 'Public User';
     }
 });
 const title = computed(() => `Guidelines (${guidelinesRole.value})`);
 
 const filterStatus = ref('all'); // Default filter
+const filterLanguage = ref('english'); // Default filter to 'english'
+const toggleLanguage = () => {
+    filterLanguage.value = filterLanguage.value === 'english' ? 'bisaya' : 'english';
+};
 
 // Filter guideline based on the selected status
 const filteredGuidelines = computed(() => {
-    if (filterStatus.value === 'marine_turtles') {
-        return props.guidelines.filter((guideline) => guideline.category === 'marine_turtles');
-    } else if (filterStatus.value === 'marine_mammals') {
-        return props.guidelines.filter((guideline) => guideline.category === 'marine_mammals');
-    } else if (filterStatus.value === 'sharks_rays') {
-        return props.guidelines.filter((guideline) => guideline.category === 'sharks_rays');
-    } else {
-        return props.guidelines; // 'all'
+    let filtered = props.guidelines;
+
+    // Filter by category
+    if (filterStatus.value !== 'all') {
+        filtered = filtered.filter((guideline) => guideline.category === filterStatus.value);
     }
+
+    // Filter by language
+    filtered = filtered.filter((guideline) => guideline.language === filterLanguage.value);
+
+    return filtered;
 });
 
 // Button routes
@@ -72,7 +78,7 @@ const viewGuideline = (id) => {
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Header section -->
                     <div class="mb-6">
-                        <h3 class="profile-title-gradient mb-4">
+                        <h3 class="profile-title-gradient text-center mb-4">
                             {{ title }}
                         </h3>
                         <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
@@ -114,23 +120,40 @@ const viewGuideline = (id) => {
                                     Sharks and Rays
                                 </button>
                             </div>
+                            <div class="flex items-center">
+                                    <span class="text-white mr-2">{{ filterLanguage === 'english' ? 'English' : 'Bisaya' }}</span>
+                                    <div
+                                        @click="toggleLanguage"
+                                        class="w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors duration-300"
+                                        :class="{ 'bg-green-400/50': filterLanguage === 'english', 'bg-gray-300/30': filterLanguage !== 'english' }"
+                                    >
+                                        <div
+                                            class="bg-white w-4 h-4 rounded-full shadow-md transition-transform duration-300 ease-in-out"
+                                            :class="{ 'translate-x-4': filterLanguage === 'english' }"
+                                        ></div>
+                                    </div>
+                                </div>
                         </div>
 
                         <!-- Guidelines List -->
-                        <div class="space-y-3">
-                            <div v-for="guideline in filteredGuidelines" :key="guideline.id" class="incident-card">
+                        <div class="space-y-3 mx-4">
+                            <div v-for="guideline in filteredGuidelines" :key="guideline.id" class="incident-card ">
                                 <div class="p-3 sm:p-4">
                                     <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center justify-between">
                                         <!-- Title and Category -->
-                                        <div>
-                                            <h4 class="text-sm sm:text-base font-semibold text-white truncate">{{ guideline.title }}</h4>
-                                            <span class="text-xs sm:text-sm font-medium text-white/60 mt-1">{{ guidelinesCategory(guideline.category) }}</span>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="text-sm sm:text-base font-semibold text-white truncate max-w-[300px]">
+                                                {{ guideline.title }}
+                                            </h4>
+                                            <span class="text-xs sm:text-sm font-medium text-white/60 mt-1 block">
+                                                {{ guidelinesCategory(guideline.category) }}
+                                            </span>
                                         </div>
 
-                                        <!-- View Button (hidden on mobile, visible on sm+) -->
+                                        <!-- View Button (hidden on mobile) -->
                                         <button
                                             @click="viewGuideline(guideline.id)"
-                                            class="view-button hidden sm:flex sm:items-center sm:gap-1"
+                                            class="view-button hidden sm:flex sm:items-center sm:gap-1 flex-shrink-0"
                                         >
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -184,7 +207,7 @@ const viewGuideline = (id) => {
 }
 
 .profile-title-gradient {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 1px;
@@ -271,13 +294,19 @@ const viewGuideline = (id) => {
 
     .profile-title-gradient {
         font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .incident-card {
+        margin: 0.5rem 0;
     }
 }
 
 @media (max-width: 480px) {
     .incident-card {
-        margin-left: 0;
-        margin-right: 0;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-radius: 0;
     }
 }
 </style>

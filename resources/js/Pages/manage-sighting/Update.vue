@@ -1,12 +1,14 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue'; // Add this import
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -32,6 +34,7 @@ const props = defineProps({
 });
 
 // Define variables outside of onMounted
+const maxDate = new Date().toISOString().split('T')[0];
 const currentUser = ref(null);
 const deletedImages = ref([]);
 const previewNewImages = ref([]);
@@ -40,6 +43,9 @@ const filteredBarangays = computed(() => {
     if (!form.municipality_id) return [];
     return props.barangays.filter(barangay => barangay.municipality_id === form.municipality_id);
 });
+
+const videoMaxDuration = 60;
+const errorMessage = ref('');
 
 onMounted(async () => {
     // Add defensive check
@@ -213,10 +219,48 @@ const hasChanges = computed(() => {
     );
 });
 
-const handleNewFileChange = (event) => {
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+const handleNewFileChange = async (event) => {
     const files = event.target.files;
+    errorMessage.value = '';
+
+    // Validate each video file
+    for (const file of files) {
+        if (file.type.startsWith('video/')) {
+            const validation = await validateVideoDuration(file);
+            if (!validation.valid) {
+                errorMessage.value = validation.message;
+                return;
+            }
+        }
+    }
+
     form.mediaFiles.push(...Array.from(files));
-    previewNewImages.value = Array.from(files).map(file => URL.createObjectURL(file));
+
+    // Generate previews for each selected file
+    const newPreviews = Array.from(files).map(file => ({
+        url: URL.createObjectURL(file),
+        type: file.type.startsWith('video/') ? 'video' : 'image'
+    }));
+
+    previewNewImages.value.push(...newPreviews);
 };
 
 const removeNewImage = (index) => {
@@ -269,6 +313,13 @@ const initializeMap = async () => {
             showMap.value = false;
             return;
         }
+          // Fix for Leaflet default icon
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: markerIcon,
+            iconUrl: markerIcon,
+            shadowUrl: markerShadow,
+        });
 
         await nextTick();
         const mapElement = document.getElementById('map');
@@ -533,8 +584,12 @@ watch(showMap, async (newValue) => {
 });
 
 const buttonStatus = computed(() => {
+    // Return false if no user is logged in
+    if (!currentUser.value) return false;
+
+    // Check report status and user role conditions
     return (props.sighting.report_status === 'pending' || props.sighting.report_status === 'false') &&
-    (currentUser.value !== 'lgu_responder'  && currentUser.value !== 'barangay_official' && currentUser.value !== 'public_user');
+        (currentUser.value !== 'lgu_responder' && currentUser.value !== 'barangay_official' && currentUser.value !== 'public_user');
 });
 const showVerifyModal = ref(false);
 const showFalseModal = ref(false);
@@ -626,6 +681,10 @@ const confirmFalse = () => {
 };
 
 const verifyIncident = () => {
+    if (form.mediaFiles.length === 0) {
+        errorMessage.value = 'Please upload at least one photo or video';
+        return;
+    }
     if (!validateForm()) {
         alert('Please fill in all required fields before verifying the incident.');
         return;
@@ -761,7 +820,7 @@ const handleDropdownClick = (index) => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="date" value="Date of the Incident" />
-                                    <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                                    <TextInput required id="date" type="date" :max="maxDate" v-model="form.date" autocomplete="date" class="w-full" />
                                     <InputError class="mt-2" :message="form.errors.date" />
                                 </div>
                                 <div>
@@ -795,7 +854,7 @@ const handleDropdownClick = (index) => {
                                             class="location-button"
                                         >
                                             <span class="material-icons">my_location</span>
-                                            <span>Use Current Location</span>
+                                            <span class="hidden md:block">Use Current Location</span>
                                         </button>
                                         <button
                                             type="button"
@@ -804,7 +863,7 @@ const handleDropdownClick = (index) => {
                                             class="location-button bg-amber-600 hover:bg-amber-700"
                                         >
                                             <span class="material-icons">restart_alt</span>
-                                            <span>Reset Location</span>
+                                            <span class="hidden md:block">Reset Location</span>
                                         </button>
                                     </div>
                                 </div>
@@ -889,7 +948,7 @@ const handleDropdownClick = (index) => {
                         <!-- Sighted Species Section -->
                         <div class="form-section">
                             <h3 class="section-title">
-                                <span class="material-icons text-cyan-400 mr-2">pets</span>
+                                <span class="material-icons text-cyan-400 mr-2">water_drop</span>
                                 Species Information
                             </h3>
 
@@ -989,38 +1048,27 @@ const handleDropdownClick = (index) => {
                         </div>
 
                         <!-- Media Files Section -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <span class="material-icons text-cyan-400 mr-2">image</span>
-                                Media Files
-                            </h3>
-
-                            <!-- Existing Image Previews -->
-                            <div class="mt-4">
-                                <InputLabel value="Existing Images" />
-                                <div v-if="existingImages.length === 0" class="text-white opacity-80 my-2">No existing images</div>
-                                <div v-if="existingImages.length" class="preview-grid">
-                                    <div v-for="(image, index) in existingImages" :key="index" class="preview-item">
-                                        <img :src="image.url" alt="Image Preview" class="preview-image"/>
-                                        <button
-                                            type="button"
-                                            @click.prevent="removeExistingImage(index)"
-                                            class="remove-button"
-                                            title="Remove"
-                                        >
-                                            <span class="material-icons">close</span>
-                                        </button>
-                                    </div>
-                                </div>
+                        <div class="item-card">
+                            <div class="item-header mb-4">
+                                <h3 class="text-xl font-bold text-white">Media Files</h3>
                             </div>
 
-                            <!-- Upload New Media -->
-                            <div class="mt-6">
+                            <div class="media-section">
+                                <div v-if="errorMessage" class="error-container mb-3">
+                                    <p>{{ errorMessage }}</p>
+                                </div>
                                 <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-                                <label :for="'mediaFiles'" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                                    <span class="material-icons mr-2">cloud_upload</span>
-                                    Choose Files
-                                </label>
+                                <div class="flex flex-wrap gap-4">
+                                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">cloud_upload</span>
+                                        Browse Files
+                                    </label>
+                                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                        <span class="material-icons sm:mr-2">camera_alt</span>
+                                        Take Photo/Video
+                                    </label>
+                                </div>
+
                                 <input
                                     type="file"
                                     accept="image/*,video/*"
@@ -1029,56 +1077,94 @@ const handleDropdownClick = (index) => {
                                     multiple
                                     class="hidden"
                                 />
-                                <div v-if="previewNewImages.length" class="preview-grid mt-4">
-                                    <div v-for="(img, index) in previewNewImages" :key="index" class="preview-item">
-                                        <img :src="img" alt="Preview" class="preview-image" />
-                                        <button
-                                            type="button"
-                                            @click="removeNewImage(index)"
-                                            class="remove-button"
-                                            title="Remove"
-                                        >
-                                            <span class="material-icons">close</span>
-                                        </button>
+                                <input
+                                    type="file"
+                                    accept="image/*,video/*"
+                                    id="cameraCapture"
+                                    @change="handleNewFileChange"
+                                    multiple
+                                    capture
+                                    class="hidden"
+                                />
+                                <p class="text-sm text-blue-300 mt-2">
+                                    * You can upload images or videos (max 1 minute)
+                                </p>
+                                <span v-if="errorMessage" class="text-sm text-red-400 block mt-1">{{ errorMessage }}</span>
+                                <InputError class="mt-2" :message="form.errors.mediaFiles" />
+
+                                <!-- Existing Images -->
+                                <div class="preview-section mt-4">
+                                    <h4 class="text-gray-200">Existing Images</h4>
+                                    <div class="mt-3">
+                                        <div v-if="existingImages.length === 0" class="text-gray-100 italic text-sm">No existing images</div>
+                                        <div v-else class="preview-grid">
+                                            <div v-for="(image, index) in existingImages" :key="index" class="preview-item">
+                                                <img :src="image.url" alt="Preview" class="preview-image"/>
+                                                <button @click.prevent="removeExistingImage(index)" type="button" class="remove-button">
+                                                    <span class="material-icons">close</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <InputError class="mt-2" :message="form.errors.mediaFiles" />
+
+                                <!-- Preview New Images -->
+                                <div v-if="previewNewImages.length" class="preview-section mt-4">
+                                    <h4 class="text-gray-200">New Media</h4>
+                                    <div class="preview-grid">
+                                        <div v-for="(media, index) in previewNewImages" :key="index" class="preview-item">
+                                            <template v-if="media.type === 'image'">
+                                                <img :src="media.url" alt="Preview" class="preview-image"/>
+                                            </template>
+                                            <template v-else-if="media.type === 'video'">
+                                                <video :src="media.url" controls class="preview-image"></video>
+                                            </template>
+                                            <button @click="removeNewImage(index)" type="button" class="remove-button" title="Remove">
+                                                <span class="material-icons">close</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Submit and Cancel Buttons for regular update -->
-                        <div v-if="!buttonStatus" class="flex items-center justify-between mt-6">
-                            <Link :href="backRoute" class="cancel-button">Cancel</Link>
-                            <PrimaryButton
+                        <div v-if="!buttonStatus" class="flex items-center justify-end gap-4 mt-6">
+                            <CustomButton :onClick="backRoute" icon="cancel" variant="secondary">Cancel</CustomButton>
+                            <CustomButton
+                                icon="save"
+                                type="submit"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="create-button"
                             >
-                                Update Sighting
-                            </PrimaryButton>
+                                Save
+                            </CustomButton>
                         </div>
 
                         <!-- False and Verify button for pending cases-->
-                        <div v-else class="flex items-center justify-end gap-5 mt-6">
-                            <button
+                        <div v-else class="flex items-center justify-end gap-4 mt-6">
+                            <CustomButton :onClick="backRoute" icon="arrow_back" variant="secondary">Cancel</CustomButton>
+
+                            <CustomButton
                                 type="button"
+                                variant="danger"
+                                icon="dangerous"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="modal-cancel-button false-button"
-                                @click="falseIncident"
+                                :onClick="falseIncident"
                                 formnovalidate
                             >
                                 Mark as False
-                            </button>
-                            <button
+                            </CustomButton>
+                            <CustomButton
                                 type="button"
+                                icon="check_circle"
                                 :disabled="form.processing"
                                 :class="{ 'opacity-25': form.processing }"
-                                class="modal-confirm-button verify-button"
-                                @click="verifyIncident"
+                                :onClick="verifyIncident"
                             >
                                 Verify as True
-                            </button>
+                            </CustomButton>
                         </div>
                     </form>
                 </div>
@@ -1485,37 +1571,6 @@ select option {
     background: rgba(0, 204, 255, 0.1);
 }
 
-.create-button,
-.cancel-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 50px;
-    min-width: 140px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.create-button {
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-}
-
-.create-button:hover,
-.cancel-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
 /* Modal styling */
 /* Modal Styling */
 .verify-modal {
@@ -1661,7 +1716,7 @@ select option {
     border: 1px solid rgba(255, 68, 68, 0.2);
     border-radius: 8px;
     padding: 1.25rem;
-    color: #ff4444;
+    color: #ff9393;
     margin-bottom: 1.5rem;
 }
 

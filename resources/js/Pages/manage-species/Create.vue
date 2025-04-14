@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
@@ -15,6 +15,7 @@ const previewImages = ref([]);
 const props = defineProps({
     colors: Array,
 });
+const maxDate = new Date().toISOString().split('T')[0];
 
 const speciesCatagory = (category) => {
     switch (category) {
@@ -129,23 +130,43 @@ const submit = () => {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="name" value="Name" />
-                                    <TextInput id="name" type="text" v-model="form.name" required autocomplete="name" class="w-full" />
+                                    <TextInput id="name" type="text" v-model="form.name" required autocomplete="name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }" />
                                     <InputError class="mt-2" :message="form.errors.name" />
                                 </div>
 
                                 <div>
                                     <InputLabel for="scientific_name" value="Scientific Name" />
-                                    <TextInput id="scientific_name" type="text" v-model="form.scientific_name" autocomplete="scientific_name" class="w-full" />
+                                    <TextInput id="scientific_name" type="text" v-model="form.scientific_name" autocomplete="scientific_name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"/>
                                     <InputError class="mt-2" :message="form.errors.scientific_name" />
                                 </div>
                                 <div>
                                     <InputLabel for="common_name" value="Common Name" />
-                                    <TextInput id="common_name" type="text" v-model="form.common_name" autocomplete="common_name" class="w-full" />
+                                    <TextInput id="common_name" type="text" v-model="form.common_name" autocomplete="common_name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"/>
                                     <InputError class="mt-2" :message="form.errors.common_name" />
                                 </div>
                                 <div>
                                     <InputLabel for="local_name" value="Local Name" />
-                                    <TextInput id="local_name" type="text" v-model="form.local_name" autocomplete="local_name" class="w-full" />
+                                    <TextInput id="local_name" type="text" v-model="form.local_name" autocomplete="local_name" class="w-full"
+                                        @keypress="(e) => {
+                                        if (!/^[a-zA-Z\s]$/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }"/>
                                     <InputError class="mt-2" :message="form.errors.local_name" />
                                 </div>
                                 <div class="sm:col-span-2 col-span-1">
@@ -225,19 +246,14 @@ const submit = () => {
                                 </div>
                                 <!-- Image Upload Field -->
                                 <div class="sm:col-span-2 col-span-1">
-                                    <InputLabel for="mediaFiles" value="Upload Images" />
-                                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                                        Choose Files
-                                    </label>
-                                    <input
-                                        id="mediaFiles"
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        @change="handleFileChange"
-                                        class="hidden"
-                                    />
-                                    <InputError class="mt-2" :message="form.errors.mediaFiles" />
+                                    <div>
+                                        <InputLabel for="mediaFiles" value="Upload Images" />
+                                        <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                                            Browse Files
+                                        </label>
+                                        <input type="file" accept="image/*" id="mediaFiles" @change="handleFileChange" multiple class="hidden" />
+                                        <InputError class="mt-2" :message="form.errors.mediaFiles" />
+                                    </div>
                                 </div>
 
                                 <!-- Image Previews -->
@@ -257,11 +273,18 @@ const submit = () => {
                             </div>
 
                             <!-- Submit and Cancel Buttons -->
-                            <div class="flex items-center justify-between mt-6">
-                                <Link :href="backRoute" class="cancel-button">Cancel</Link>
-                                <PrimaryButton :disabled="form.processing" :class="{ 'opacity-25': form.processing }" class="update-button">
-                                    Create Species
-                                </PrimaryButton>
+                            <div class="flex items-center justify-end gap-4 mt-6">
+                                <CustomButton
+                                    :onClick="backRoute"
+                                    variant="secondary"
+                                    icon="cancel">Cancel</CustomButton>
+                                <CustomButton
+                                    :disabled="form.processing"
+                                    :class="{ 'opacity-25': form.processing }"
+                                    type="submit"
+                                    icon="send">
+                                    Create
+                                </CustomButton>
                             </div>
                         </form>
                     </div>
@@ -325,6 +348,31 @@ const submit = () => {
     flex-wrap: wrap;
     gap: 0.5rem;
 }
+/* Browse button styles */
+.browse-button {
+    display: inline-block;
+    background: linear-gradient(135deg, #00a3cc, #00ccff);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
+}
+
+.browse-button:hover,
+.browse-button:focus {
+    background: linear-gradient(135deg, #00b3cc, #00d9ff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
+    outline: none;
+}
+
 
 /* Form Input Styles */
 input[type="text"],
@@ -460,29 +508,6 @@ select option {
     transform: scaleX(1);
 }
 
-/* Browse button styling */
-.browse-button {
-    display: block;
-    background: #0056b3;
-    color: white;
-    padding: 1rem;
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: center;
-    transition: all 0.3s ease;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.browse-button:hover {
-    background: #0366d6;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
 
 /* Label styling */
 label {

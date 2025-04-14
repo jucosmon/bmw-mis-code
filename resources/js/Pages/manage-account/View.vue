@@ -1,4 +1,6 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
+import CustomButton from '@/Components/CustomButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -16,6 +18,8 @@ const props = defineProps({
     barangays: Array,
     success: String,
 });
+
+const showPassword = ref(false);
 
 // Defined routes based on the current user's role
 const backRoute = computed(() => {
@@ -205,7 +209,7 @@ const disableUser = ()=> {
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">phone</span>
-                                    <span class="ml-3">{{ props.user.contact_number }}</span>
+                                    <span class="ml-3">+63 {{ props.user.contact_number }}</span>
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">{{ props.user.sex.toLowerCase() === 'male' ? 'male' : 'female' }}</span>
@@ -246,30 +250,29 @@ const disableUser = ()=> {
                     </div>
 
                     <!-- Actions -->
-                    <div v-if="props.user.user_role!=='bpemo_admin'" class="px-6 py-4 bg-gray-50 flex justify-end space-x-4">
-                        <button
+                    <div v-if="props.user.user_role!=='bpemo_admin'" class="px-6 py-4 flex justify-end space-x-4">
+                        <CustomButton
                             v-if="props.user.is_active===true"
-                            class="px-4 py-2 bg-red-gradient text-white rounded-lg hover:bg-red-700 transition duration-200 flex items-center group"
-                            @click="confirmDisableUser"
+                            :onClick="confirmDisableUser"
+                            icon="block"
+                            variant="danger"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">block</span>
                             Disable
-                        </button>
-                        <button
+                        </CustomButton>
+                        <CustomButton
                             v-if="props.user.is_active===false"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center group"
-                            @click="confirmDisableUser"
+                            :onClick="confirmDisableUser"
+                            icon="check_circle"
+                            variant="secondary"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">check_circle</span>
                             Activate
-                        </button>
-                        <button
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center group"
-                            @click="updateUser()"
+                        </CustomButton>
+                        <CustomButton
+                            :onClick="updateUser"
+                            icon="edit"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 transition-transform">edit</span>
                             Update
-                        </button>
+                        </CustomButton>
                     </div>
                 </div>
 
@@ -285,7 +288,7 @@ const disableUser = ()=> {
                                 Please confirm by entering your password
                             </label>
                             <input
-                                type="password"
+                                :type="showPassword ? 'text' : 'password'"
                                 id="admin-password"
                                 v-model="form.password"
                                 class="text-black mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -294,6 +297,10 @@ const disableUser = ()=> {
                             <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
                                 {{ form.errors.password }}
                             </p>
+                        </div>
+                        <div class="flex my-4">
+                            <Checkbox name="showPassword" v-model:checked="showPassword" />
+                            <span class="ms-2 text-sm text-white">Show Password</span>
                         </div>
 
                         <div class="mt-6 space-x-4 flex justify-end">
@@ -373,13 +380,6 @@ const disableUser = ()=> {
     transform: translateX(4px);
 }
 
-.action-section {
-    @apply px-6 py-4 flex justify-end space-x-4;
-    background: rgba(0, 51, 102, 0.2);
-    backdrop-filter: blur(8px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
 .success-alert {
     @apply bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 rounded-lg flex items-center;
     background: rgba(220, 252, 231, 0.1) !important;
@@ -395,24 +395,6 @@ const disableUser = ()=> {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Button Styling */
-button {
-    @apply px-4 py-2 rounded-lg flex items-center transition duration-200;
-    background: linear-gradient(
-        135deg,
-        rgba(0, 51, 102, 0.9) 0%,
-        rgba(0, 64, 128, 0.8) 100%
-    ) !important;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
 }
 
 .material-icons-round {
@@ -456,36 +438,6 @@ button:hover {
     color: #00ccff !important;
 }
 
-/* Button Gradients */
-.action-button-gradient {
-    @apply px-4 py-2 rounded-lg flex items-center transition-all duration-300;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    font-weight: 500;
-}
-
-.action-button-gradient.primary {
-    background: linear-gradient(135deg, #4f46e5, #3730a3) !important;
-}
-
-.action-button-gradient.danger {
-    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
-}
-
-.action-button-gradient.success {
-    background: linear-gradient(135deg, #059669, #065f46) !important;
-}
-
-.action-button-gradient:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
-    filter: brightness(110%);
-}
-
-.action-button-gradient:active {
-    transform: translateY(0);
-}
-
 /* Group hover effects */
 .group:hover .group-hover\:rotate-12 {
     transform: rotate(12deg);
@@ -499,45 +451,10 @@ button:hover {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-button {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 51, 102, 0.9) 0%,
-        rgba(0, 64, 128, 0.8) 100%
-    ) !important;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    padding: 0.5rem 1.5rem;
-}
-
-button:hover {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 64, 128, 0.95) 0%,
-        rgba(0, 51, 102, 0.85) 100%
-    ) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.2);
-}
-
 /* Icon Animation */
 .group:hover .group-hover\:rotate-12 {
     transform: rotate(12deg);
     color: #00ccff !important;
-}
-
-button .material-icons-round {
-    color: #00ccff !important;
-    transition: all 0.3s ease;
 }
 
 /* Red gradient button */

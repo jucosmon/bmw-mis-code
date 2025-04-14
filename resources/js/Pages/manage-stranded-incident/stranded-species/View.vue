@@ -1,14 +1,18 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
+import CustomButton from '@/Components/CustomButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
-
 
 
 const page = usePage();
@@ -40,6 +44,7 @@ const form = useForm({
     stranded_incident_id: props.strandedIncident.id,
 });
 
+const showPassword = ref(false);
 // Routes
 const backRoute = computed(() => {
     return route('stranded.incident.view', { id: props.strandedIncident.id });
@@ -129,6 +134,13 @@ const hasValidCoordinates = computed(() => {
 onMounted(() => {
     if (hasValidCoordinates.value) {
         nextTick(() => {
+            // Fix for Leaflet default icon
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: markerIcon,
+                iconUrl: markerIcon,
+                shadowUrl: markerShadow,
+            });
             map.value = L.map('map', {
                 dragging: false,
                 scrollWheelZoom: false,
@@ -158,38 +170,213 @@ const closeDownloadModal = () => {
 };
 
 const downloadReport = () => {
-    const element = document.querySelector(".exportable-content");
+    // Create a clean PDF document container
+    const pdfContainer = document.createElement('div');
+    pdfContainer.className = 'pdf-export';
+    pdfContainer.style.width = '210mm';
+    pdfContainer.style.padding = '10mm';
+    pdfContainer.style.backgroundColor = 'white';
+    pdfContainer.style.color = '#333';
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
 
-    // Add PDF-specific class before generating
-    element.classList.add('pdf-mode');
+    // ===== HEADER =====
+    const header = document.createElement('div');
+    header.style.textAlign = 'center';
+    header.style.marginBottom = '5mm';
 
-    const options = {
-        filename: `Stranded_Incident_Report_${props.strandedIncident.id}.pdf`,
-        margin: [10, 15, 10, 15], // Adjusted margins for better balance
-        jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-            compress: true
-        },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            letterRendering: true
-        },
-        image: {
-            type: 'jpeg',
-            quality: 1
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    const title = document.createElement('h1');
+    title.textContent = 'Stranded Species Report';
+    title.style.fontSize = '20px';
+    title.style.color = '#003366';
+    title.style.marginBottom = '2mm';
+    title.style.fontWeight = 'bold';
+
+    const subtitle = document.createElement('p');
+    subtitle.textContent = `Generated on ${new Date().toLocaleDateString()}`;
+    subtitle.style.fontSize = '12px';
+    subtitle.style.color = '#666';
+
+    header.appendChild(title);
+    header.appendChild(subtitle);
+    pdfContainer.appendChild(header);
+
+    // Function to add section with minimal spacing
+    const addSection = (title, content) => {
+        const section = document.createElement('div');
+        section.style.marginBottom = '6mm';
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.textContent = title;
+        sectionTitle.style.fontSize = '14px';
+        sectionTitle.style.fontWeight = 'bold';
+        sectionTitle.style.color = '#003366';
+        sectionTitle.style.marginBottom = '2mm';
+        sectionTitle.style.paddingBottom = '1mm';
+        sectionTitle.style.borderBottom = '1px solid #e5e7eb';
+
+        section.appendChild(sectionTitle);
+
+        if (typeof content === 'string') {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = content;
+            paragraph.style.lineHeight = '1.4';
+            paragraph.style.fontSize = '12px';
+            section.appendChild(paragraph);
+        } else {
+            section.appendChild(content);
+        }
+
+        return section;
     };
 
-    html2pdf().from(element).set(options).save().then(() => {
-        element.classList.remove('pdf-mode');
-        closeDownloadModal();
-    });
+    // Incident details with minimal spacing
+    const incidentDetails = document.createElement('p');
+    incidentDetails.style.fontSize = '12px';
+    incidentDetails.style.lineHeight = '1.4';
+    incidentDetails.innerHTML =
+        `<strong>Date:</strong> ${props.strandedIncident.date || 'Not specified'}<br>` +
+        `<strong>Time:</strong> ${props.strandedIncident.time || 'Not specified'}<br>` +
+        `<strong>Location:</strong> ${barangayName.value}, ${municipalityName.value}<br>` +
+        `<strong>Status:</strong> ${props.strandedSpecies.is_active ? 'Active' : 'Inactive'}`;
+
+    pdfContainer.appendChild(addSection('Incident Details', incidentDetails));
+
+    // Species details with minimal spacing
+    const speciesDetails = document.createElement('p');
+    speciesDetails.style.fontSize = '12px';
+    speciesDetails.style.lineHeight = '1.4';
+    speciesDetails.innerHTML =
+        `<strong>Species:</strong> ${props.strandedSpecies.species_name || 'Not specified'}<br>` +
+        `<strong>Sex:</strong> ${props.strandedSpecies.sex || 'Not specified'}<br>` +
+        `<strong>Length:</strong> ${props.strandedSpecies.length || 'Not specified'}<br>` +
+        `<strong>Weight:</strong> ${props.strandedSpecies.weight || 'Not specified'}<br>` +
+        `<strong>Girth:</strong> ${props.strandedSpecies.girth || 'Not specified'}<br>` +
+        `<strong>Condition:</strong> ${getConditionDescription(props.strandedSpecies.condition_code) || 'Not specified'}<br>` +
+        `<strong>Released:</strong> ${props.strandedSpecies.is_released ? 'Yes' : 'No'}<br>` +
+        `<strong>Disposition:</strong> ${props.strandedSpecies.disposition || 'Not specified'}`;
+
+    // Add more information if available with minimal spacing
+    if (props.strandedSpecies.more_information) {
+        speciesDetails.innerHTML += `<br><br><strong>Additional Information:</strong> ${props.strandedSpecies.more_information}`;
+    }
+
+    pdfContainer.appendChild(addSection('Species Information', speciesDetails));
+
+    // Environmental conditions with minimal spacing
+    const envDetails = document.createElement('p');
+    envDetails.style.fontSize = '12px';
+    envDetails.style.lineHeight = '1.4';
+    envDetails.innerHTML =
+        `<strong>Sea State:</strong> ${props.strandedIncident.sea_state || 'Not specified'}<br>` +
+        `<strong>Weather:</strong> ${props.strandedIncident.weather || 'Not specified'}<br>` +
+        `<strong>Beach Type:</strong> ${props.strandedIncident.beach_type || 'Not specified'}`;
+
+    pdfContainer.appendChild(addSection('Environmental Conditions', envDetails));
+
+    // Location and map with minimal spacing
+    const locationSection = document.createElement('div');
+    locationSection.style.marginBottom = '6mm';
+
+    const locationTitle = document.createElement('div');
+    locationTitle.textContent = 'Location Information';
+    locationTitle.style.fontSize = '14px';
+    locationTitle.style.fontWeight = 'bold';
+    locationTitle.style.color = '#003366';
+    locationTitle.style.marginBottom = '2mm';
+    locationTitle.style.paddingBottom = '1mm';
+    locationTitle.style.borderBottom = '1px solid #e5e7eb';
+    locationSection.appendChild(locationTitle);
+
+    // Location text
+    const locationText = document.createElement('p');
+    locationText.style.fontSize = '12px';
+    locationText.style.lineHeight = '1.4';
+    locationText.style.marginBottom = '2mm';
+
+    if (hasValidCoordinates.value) {
+        locationText.innerHTML =
+            `<strong>Coordinates:</strong> ${props.strandedSpecies.latitude} lat. | ${props.strandedSpecies.longitude} long.`;
+    } else {
+        locationText.innerHTML = '<strong>Coordinates:</strong> No GPS coordinates available';
+    }
+
+    locationSection.appendChild(locationText);
+
+    // Add map only if coordinates are valid
+    if (hasValidCoordinates.value) {
+        // Function to capture map and add to PDF
+        const captureMap = async () => {
+            try {
+                const mapElement = document.getElementById('map');
+                if (mapElement) {
+                    // Ensure the map has fully loaded before capturing
+                    // Increased delay for map tiles to load properly
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // Force a map repaint to ensure visibility
+                    if (map.value) {
+                        map.value.invalidateSize();
+                    }
+
+                    // Use a higher scale for better quality
+                    const canvas = await html2canvas(mapElement, {
+                        useCORS: true,
+                        scale: 2,
+                        logging: true, // Enable logging to debug issues
+                        backgroundColor: '#ffffff',
+                        allowTaint: true,
+                        foreignObjectRendering: false
+                    });
+
+                    const mapImage = document.createElement('img');
+                    mapImage.src = canvas.toDataURL('image/png');
+                    mapImage.style.width = '100%';
+                    mapImage.style.maxHeight = '120mm';
+                    mapImage.style.border = '1px solid #e5e7eb';
+
+                    locationSection.appendChild(mapImage);
+                }
+            } catch (error) {
+                console.error('Error capturing map:', error);
+                const errorText = document.createElement('p');
+                errorText.textContent = 'Unable to display map. Error: ' + error.message;
+                errorText.style.color = '#dc2626';
+                errorText.style.fontSize = '12px';
+                locationSection.appendChild(errorText);
+            }
+        };
+
+        // Call the map capture function
+        captureMap();
+    }
+
+    pdfContainer.appendChild(locationSection);
+
+    // Add the container to document temporarily
+    document.body.appendChild(pdfContainer);
+
+    // Wait longer to ensure map renders completely before generating PDF
+    setTimeout(() => {
+        // PDF generation options
+        const options = {
+            filename: `Stranded_Species_Report_${props.strandedSpecies.id}.pdf`,
+            margin: [5, 5, 5, 5],
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Generate PDF
+        html2pdf().from(pdfContainer).set(options).save().then(() => {
+            // Clean up
+            document.body.removeChild(pdfContainer);
+            closeDownloadModal();
+        });
+    }, 1500);
 };
 
 const getConditionDescription = (code) => {
@@ -217,6 +404,10 @@ const getConditionDescription = (code) => {
 
             <!-- Main Content -->
             <div class="relative z-10 container mx-auto px-6 py-16 max-w-5xl">
+                <Link class=" ml-5 md:ml-0 mb-3 flex items-center w-fit" :href="backRoute">
+                    <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 text-sm text-white">arrow_back</span>
+                    <span class="text-lg font-semibold text-white">Back</span>
+                </Link>
                 <div class="exportable-content">
                     <!-- Main Title Header -->
                     <div class="text-center mb-10">
@@ -370,46 +561,38 @@ const getConditionDescription = (code) => {
                 </div>
 
                 <!-- Action Buttons Section -->
-                <div class="flex justify-end space-x-4 mb-8 action-buttons">
-                    <button
-                        class="bg-red-600/80 hover:bg-red-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-red-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="confirmArchiveSpeciesForm"
-                        v-if="props.strandedSpecies.is_active"
+                <div class="flex justify-end space-x-4 mb-8">
+                    <CustomButton
+                        :onClick="confirmDownload"
+                        icon="download"
+                        variant="secondary"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                        </svg>
-                        Archive
-                    </button>
-                    <button
-                        class="bg-green-600/80 hover:bg-green-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-green-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="confirmArchiveSpeciesForm"
-                        v-if="props.strandedSpecies.is_active === false"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                        Unarchive
-                    </button>
-
-                    <button
-                        class="bg-blue-600/80 hover:bg-blue-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-blue-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="updateSpeciesForm"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Update
-                    </button>
-                    <button
-                        class="bg-teal-600/80 hover:bg-teal-700/80 text-white px-6 py-2 rounded-lg backdrop-blur-sm border border-teal-500/30 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 flex items-center"
-                        @click="confirmDownload"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
                         Download
-                    </button>
+                    </CustomButton>
+                    <CustomButton
+                        :onClick="confirmArchiveSpeciesForm"
+                        v-if="props.strandedSpecies.is_active"
+                        icon="archive"
+                        variant="danger"
+                    >
+                        Archive
+                    </CustomButton>
+                    <CustomButton
+                        :onClick="confirmArchiveSpeciesForm"
+                        v-if="props.strandedSpecies.is_active === false"
+                        icon="unarchive"
+                        variant="danger"
+                    >
+                        Unarchive
+                    </CustomButton>
+
+                    <CustomButton
+                        :onClick="updateSpeciesForm"
+                        icon="edit"
+                    >
+                        Update
+                    </CustomButton>
+
                 </div>
             </div>
         </div>
@@ -442,7 +625,7 @@ const getConditionDescription = (code) => {
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <input
-                            type="password"
+                            :type="showPassword ? 'text' : 'password'"
                             id="admin-password"
                             v-model="form.password"
                             class="bg-blue-950/50 border border-blue-800/40 text-white mt-1 block w-full px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -453,7 +636,10 @@ const getConditionDescription = (code) => {
                         {{ form.errors.password }}
                     </p>
                 </div>
-
+                <div class="flex my-4">
+                    <Checkbox name="showPassword" v-model:checked="showPassword" />
+                    <span class="ms-2 text-sm text-white">Show Password</span>
+                </div>
                 <div class="mt-6 flex justify-end space-x-3">
                     <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
                     <DangerButton @click="archiveIncident">
@@ -613,9 +799,6 @@ const getConditionDescription = (code) => {
 
 /* Print Styles */
 @media print {
-    .action-buttons, button {
-        display: none !important;
-    }
 
     .bg-gradient-overlay {
         background: none !important;

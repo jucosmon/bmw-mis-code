@@ -1,11 +1,13 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -27,6 +29,7 @@ const props = defineProps({
         required: true,
     }
 });
+const maxDate = new Date().toISOString().split('T')[0];
 
 const filteredBarangays = computed(() => {
     console.log('Municipality ID:', form.municipality_id);
@@ -61,12 +64,51 @@ const form = useForm({
   ],
 });
 
-const handleFileChange = (event) => {
+const videoMaxDuration = 60;
+const errorMessage = ref('');
+
+// Add video duration validation function
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute or less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+// Update handleFileChange function
+const handleFileChange = async (event) => {
   const files = event.target.files;
-  form.mediaFiles = Array.from(files); // Store the selected files in form.mediaFiles
+  errorMessage.value = '';
+
+  // Validate each video file
+  for (const file of files) {
+    if (file.type.startsWith('video/')) {
+      const validation = await validateVideoDuration(file);
+      if (!validation.valid) {
+        errorMessage.value = validation.message;
+        return;
+      }
+    }
+  }
+
+  form.mediaFiles = Array.from(files);
 
   previewImages.value = Array.from(files).map((file) => {
-    return URL.createObjectURL(file);
+    return {
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image'
+    };
   });
 };
 
@@ -76,6 +118,10 @@ const removeImage = (index) => {
 };
 
 const submit = () => {
+    if (form.mediaFiles.length === 0) {
+    errorMessage.value = 'Please upload at least one photo or video';
+    return;
+    }
   if (!form.sightedSpecies.length) {
     alert("Please add at least one species.");
     return;
@@ -225,6 +271,14 @@ watch(showMap, async (newValue) => {
 // Update map initialization
 const initializeMap = () => {
   nextTick(() => {
+    // Fix for Leaflet default icon
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: markerIcon,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+    });
+
     map.value = L.map('map').setView([form.latitude, form.longitude], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -256,33 +310,91 @@ const initializeMap = () => {
   });
 };
 
+// // Add getFallbackLocation helper function
+// const getFallbackLocation = async () => {
+//     try {
+//         const response = await fetch('https://ipapi.co/json/');
+//         const data = await response.json();
+//         return {
+//             latitude: data.latitude,
+//             longitude: data.longitude
+//         };
+//     } catch (error) {
+//         console.error('Fallback location fetch failed:', error);
+//         throw new Error('Could not retrieve fallback location');
+//     }
+// };
+
 // Update setLocationFromMap function
 const setLocationFromMap = async () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                locationSource.value = 'manual'; // Changed from 'gps' to 'manual'
-
-                form.latitude = latitude;
-                form.longitude = longitude;
-                showMap.value = true;
-
-                await nextTick();
-                if (!map.value) {
-                    await initializeMap();
-                } else {
-                    map.value.setView([latitude, longitude], 13);
-                    marker.value.setLatLng([latitude, longitude]);
-                }
-                await reverseGeocode(latitude, longitude);
-            },
-            () => {
-                alert('Failed to fetch current location. Please allow location access.');
-            }
-        );
-    } else {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser.');
+        // Use fallback immediately since GPS is not available
+        return;
+    }
+
+    // Add detailed options for geolocation
+    const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    };
+
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+
+        const { latitude, longitude } = position.coords;
+
+        locationSource.value = 'manual';
+        form.latitude = latitude;
+        form.longitude = longitude;
+        showMap.value = true;
+
+        await nextTick();
+
+        if (!map.value) {
+            await initializeMap();
+        } else {
+            map.value.setView([latitude, longitude], 13);
+            marker.value.setLatLng([latitude, longitude]);
+        }
+
+        await reverseGeocode(latitude, longitude);
+        alert(`Location found: ${latitude}, ${longitude}`);
+
+    } catch (error) {
+        let errorMessage = 'Failed to fetch current location.';
+
+        // Only use fallback for POSITION_UNAVAILABLE
+        if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMessage = 'Location information is currently unavailable. Trying alternative method...';
+            alert(errorMessage);
+
+            // try {
+            //     const fallbackLocation = await getFallbackLocation();
+            //     form.latitude = fallbackLocation.latitude;
+            //     form.longitude = fallbackLocation.longitude;
+            //     showMap.value = true;
+            //     await nextTick();
+            //     await initializeMap();
+            //     await reverseGeocode(fallbackLocation.latitude, fallbackLocation.longitude);
+            //     alert(`Using approximate location: ${fallbackLocation.latitude}, ${fallbackLocation.longitude}`);
+            // } catch (fallbackError) {
+            //     console.error('Fallback location failed', fallbackError);
+            //     alert('Could not determine your location through any available method.');
+            // }
+        } else if (error.code === error.PERMISSION_DENIED) {
+            errorMessage = 'Location access was denied. Please enable location permissions in your browser settings.';
+            alert(errorMessage);
+        } else if (error.code === error.TIMEOUT) {
+            errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+            alert(errorMessage);
+        } else {
+            alert(errorMessage);
+        }
     }
 };
 
@@ -460,7 +572,7 @@ const sizeOptions = [
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <InputLabel for="date" value="Date of the Incident" />
-                  <TextInput required id="date" type="date" v-model="form.date" autocomplete="date" class="w-full" />
+                  <TextInput required id="date" type="date" :max="maxDate" v-model="form.date" autocomplete="date" class="w-full" />
                   <InputError class="mt-2" :message="form.errors.date" />
                 </div>
                 <div>
@@ -545,6 +657,7 @@ const sizeOptions = [
                       autocomplete="detailed_location"
                       class="form-textarea"
                       placeholder="Please add more details of the exact location"
+                      required
                     ></textarea>
                     <InputError class="mt-2" :message="form.errors.detailed_location" />
                   </div>
@@ -685,6 +798,9 @@ const sizeOptions = [
 
             <!-- Media Upload Section -->
             <div class="item-card">
+                <div v-if="errorMessage" class="error-container mb-3">
+                    <p>{{ errorMessage }}</p>
+                </div>
               <div class="item-header mb-4">
                 <h3 class="text-xl font-bold text-white">Media Files</h3>
                 <p class="text-sm text-white">Upload images or videos related to the sighting</p>
@@ -692,17 +808,50 @@ const sizeOptions = [
 
               <div class="media-section">
                 <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-                <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                  Browse Files
-                </label>
-                <input type="file" accept="image/*,video/*" id="mediaFiles" @change="handleFileChange" multiple class="hidden" />
+                <div class="flex gap-4">
+                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                        Upload Files
+                    </label>
+                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                        Take Photo/Video
+                    </label>
+                </div>
+                <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="mediaFiles"
+                    @change="handleFileChange"
+                    multiple
+                    class="hidden"
+                    capture="environment"
+                     />
+                     <input
+                    id="cameraCapture"
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    capture
+                    @change="handleFileChange"
+                    class="hidden"
+                />
 
+                    <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block">
+                        Required at least 1 media
+                    </span>
+                    <span v-if="errorMessage" class="text-sm text-red-400 block">
+                        {{ errorMessage }}
+                    </span>
                 <!-- Preview Section -->
                 <div v-if="previewImages.length" class="preview-section mt-4">
                   <h4 class="preview-title">Media Preview</h4>
                   <div class="preview-grid">
-                    <div v-for="(img, index) in previewImages" :key="index" class="preview-item">
-                      <img :src="img" alt="Preview" class="preview-image" />
+                    <div v-for="(media, index) in previewImages" :key="index" class="preview-item">
+                      <template v-if="media.type === 'image'">
+                        <img :src="media.url" alt="Preview" class="preview-image" />
+                      </template>
+                      <template v-else-if="media.type === 'video'">
+                        <video :src="media.url" controls class="preview-image"></video>
+                      </template>
                       <button @click="removeImage(index)" type="button" class="remove-button" title="Remove">
                         <span class="material-icons">close</span>
                       </button>
@@ -714,17 +863,19 @@ const sizeOptions = [
             </div>
 
             <!-- Form buttons -->
-            <div class="flex justify-between items-center mt-6 m-3">
-              <Link :href="backRoute"
-                    class="cancel-button">
+            <div class="flex justify-end gap-4 items-center mt-6 m-3">
+              <CustomButton :onClick="backRoute"
+                icon="cancel"
+                variant="secondary"
+            >
                 Back
-              </Link>
-              <PrimaryButton type="submit"
-                           :disabled="form.processing"
-                           class="create-button"
-                           :class="{ 'opacity-25': form.processing }">
-                Submit Report
-              </PrimaryButton>
+              </CustomButton>
+              <CustomButton type="submit"
+                icon="send"
+                :disabled="form.processing"
+                :class="{ 'opacity-25': form.processing }">
+                Create
+              </CustomButton>
             </div>
           </form>
         </div>
@@ -862,42 +1013,6 @@ const sizeOptions = [
     color: #00ccff;
     background: rgba(0, 204, 255, 0.08);
     border: 1px solid rgba(0, 204, 255, 0.2);
-}
-
-.create-button {
-    @apply px-6 py-2.5 text-sm font-medium;
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border-radius: 50px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.create-button:hover {
-    background: linear-gradient(135deg, #00b3e6, #00d9ff);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.cancel-button {
-    @apply px-6 py-2.5 text-sm font-medium inline-flex items-center justify-center;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.cancel-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Size options */

@@ -57,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function ($schedule) {
-        $schedule->command('app:unrestrict-users')->daily();
+        $schedule->command('app:unrestrict-users')->everyMinute();
         $schedule->command('app:check-inactive-incidents')->everyMinute();
     })
     ->withExceptions(function (Exceptions $exceptions) {

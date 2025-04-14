@@ -19,11 +19,11 @@ const viewSighting = (id) => {
 };
 
 // Filter status
-const filterStatus = ref('pending'); // Default filter is "Pending"
+const filterStatus = ref('pending');
 
 // Filter Sightings based on the selected status
 const filteredSightings = computed(() => {
-    return props.sightings.filter(sighting => sighting.report_status === filterStatus.value);
+    return (props.sightings || []).filter(sighting => sighting.report_status === filterStatus.value);
 });
 
 // Determine button classes based on filter status
@@ -72,7 +72,7 @@ const getSpeciesNames = (sighting) => {
                             Marine Wildlife Sightings
                         </h3>
                         <div class="flex flex-wrap justify-between items-center gap-3">
-                            <div class="flex flex-wrap gap-2">
+                            <div v-if="page.props.auth?.user" class="flex flex-wrap gap-2">
                                 <button @click="() => filterStatus = 'pending'" :class="getButtonClasses('pending')">
                                     Pending
                                 </button>
@@ -183,7 +183,17 @@ const getSpeciesNames = (sighting) => {
                     </div>
 
                     <!-- Show No Sightings Message -->
-                    <div v-if="filteredSightings.length === 0"
+
+                    <div v-if="!page.props.auth?.user"
+                         class="glass-panel text-center py-10 px-4">
+                        <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="mt-4 text-lg sm:text-xl font-medium text-white">Register / Log in Now</h3>
+                        <p class="mt-2 text-sm text-white/60">Please register your account and login to view report history.</p>
+                    </div>
+
+                    <div v-if="page.props.auth?.user && filteredSightings.length === 0"
                          class="glass-panel text-center py-10 px-4">
                         <svg class="mx-auto h-10 w-10 sm:h-16 sm:w-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

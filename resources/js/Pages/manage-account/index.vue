@@ -108,7 +108,7 @@ const viewUser = (user_id)=> {
                         <h3 class="profile-title-gradient mb-2 text-center">
                             {{ userRole }}s List
                         </h3>
-                        <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex flex-wrap justify-between gap-3">
                             <select
                                 v-model="activeFilter"
                                 class="filter-select"
@@ -313,6 +313,7 @@ const viewUser = (user_id)=> {
     background-repeat: no-repeat;
     background-size: 1.5em 1.5em;
     padding-right: 2.5rem;
+    width: auto;
 }
 
 .view-button {

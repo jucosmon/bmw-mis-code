@@ -1,10 +1,10 @@
 <script setup>
+import CustomButton from '@/Components/CustomButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import 'leaflet/dist/leaflet.css';
 import { computed, ref } from 'vue';
 
@@ -27,6 +27,7 @@ const form = useForm({
     description: '',
     category: '',
     user_role: props.user_role,
+    language:'',
     items: [
         {
             count: 1, // Initialize count for the first item
@@ -136,7 +137,14 @@ const getFileName = (file) => {
 
   <Sidebar>
 
-    <div class="min-h-screen bg-cover bg-center bg-gradient-overlay" style="background-image: url('/images/landing.jpg')">
+    <div class="min-h-screen bg-cover bg-center bg-gradient-overlay">
+          <!-- Background image with overlay -->
+      <div class="absolute inset-0 z-0">
+        <img src="/images/landing.jpg" class="w-full h-full object-cover" alt="Background" />
+        <div class="absolute inset-0 bg-gradient-to-br from-[rgba(0,40,80,0.85)] to-[rgba(0,96,128,0.8)]"></div>
+        <!-- Grid pattern overlay -->
+        <div class="absolute inset-0 grid-pattern"></div>
+      </div>
       <div class="container mx-auto px-4 py-16">
         <h2 class="title-gradient mb-6">Create New Guideline</h2>
 
@@ -150,8 +158,8 @@ const getFileName = (file) => {
 
           <!-- Guidelines Information Section -->
           <div class="guideline-info-container">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div class="sm:col-span-2">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div class="sm:col-span-3">
                 <InputLabel for="title" value="Title" />
                 <TextInput
                   id="title"
@@ -163,7 +171,7 @@ const getFileName = (file) => {
                 <InputError :message="formErrors?.title" class="mt-2" />
               </div>
 
-              <div class="sm:col-span-2">
+              <div class="sm:col-span-3">
                 <InputLabel for="description" value="Description" />
                 <TextInput
                   id="description"
@@ -187,6 +195,15 @@ const getFileName = (file) => {
                 <InputError class="mt-2" :message="form.errors.category" />
               </div>
               <div>
+                <InputLabel for="language" value="Language" />
+                <select v-model="form.language" class="w-full" required>
+                    <option value="" disabled>Select an option</option>
+                    <option value="english">English</option>
+                    <option value="bisaya">Bisaya</option>
+                </select>
+                <InputError class="mt-2" :message="form.errors.language" />
+              </div>
+              <div>
                 <InputLabel for="user_role" value="User Role" />
                 <select v-model="form.user_role" class="w-full" required disabled>
                     <option value="" disabled>Select an option</option>
@@ -196,6 +213,7 @@ const getFileName = (file) => {
                 </select>
                 <InputError class="mt-2" :message="form.errors.user_role" />
               </div>
+
             </div>
           </div>
 
@@ -295,17 +313,21 @@ const getFileName = (file) => {
           </div>
 
           <!-- Form buttons -->
-          <div class="flex justify-between items-center mt-6 m-3">
-            <Link :href="backRoute"
-                  class="cancel-button">
+          <div class="flex justify-end gap-4 items-center mt-6 m-3">
+            <CustomButton variant="secondary"
+                type="button"
+                icon="cancel"
+                :onClick="backRoute">
               Cancel
-            </Link>
-            <PrimaryButton type="submit"
-                          :disabled="form.processing"
-                          class="create-button"
-                          :class="{ 'opacity-25': form.processing }">
-              Create Guideline
-            </PrimaryButton>
+            </CustomButton>
+            <CustomButton
+                variant="primary"
+                icon="send"
+                type="submit"
+                :disabled="form.processing"
+                :class="{ 'opacity-25': form.processing }">
+              Create
+            </CustomButton>
           </div>
         </form>
       </div>
@@ -702,42 +724,6 @@ select:focus {
 .add-button {
     color: #00ccff;
     background: rgba(0, 204, 255, 0.08);
-}
-
-.create-button {
-    @apply px-6 py-2.5 text-sm font-medium;
-    background: linear-gradient(135deg, #00a3cc, #00ccff);
-    color: white;
-    border-radius: 50px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 204, 255, 0.3);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.create-button:hover {
-    background: linear-gradient(135deg, #00b3e6, #00d9ff);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 204, 255, 0.4);
-}
-
-.cancel-button {
-    @apply px-6 py-2.5 text-sm font-medium inline-flex items-center justify-center;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
-    min-width: 140px;
-    text-align: center;
-}
-
-.cancel-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 select,

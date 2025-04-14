@@ -16,10 +16,12 @@ class CommentController extends Controller
             'stranded_incident_id' => 'required|exists:stranded_incidents,id',
         ]);
 
+        $user = Auth::user();
+
         $comment = Comment::create([
             'text' => $request->text,
             'stranded_incident_id' => $request->stranded_incident_id,
-            'user_id' => Auth::id(),
+            'user_id' => $user?->id,
             'is_active' => true,
         ]);
 
@@ -34,28 +36,32 @@ class CommentController extends Controller
         // Get the authenticated user
         $user = Auth::user();
 
-        // Determine the user role
-        $userRole = '';
-        switch ($user->user_role) {
-            case "bpemo_admin":
-                $userRole = "BPEMO Administrator";
-                break;
-            case "bpemo_staff":
-                $userRole = "BPEMO Staff";
-                break;
-            case "lgu_responder":
-                $userRole = "LGU Responder";
-                break;
-            case "barangay_official":
-                $userRole = "Barangay Official";
-                break;
-            default:
-                $userRole = 'Public User';
+        if($user){
+            switch ($user->user_role) {
+                case "bpemo_admin":
+                    $userRole = "BPEMO Administrator";
+                    break;
+                case "bpemo_staff":
+                    $userRole = "BPEMO Staff";
+                    break;
+                case "lgu_responder":
+                    $userRole = "LGU Responder";
+                    break;
+                case "barangay_official":
+                    $userRole = "Barangay Official";
+                    break;
+                default:
+                    $userRole = 'Public User';
+            }
+        }else{
+            $userRole = 'Public User';
         }
+
+        $userName = $user ? "{$user->first_name} {$user->last_name}" : 'Anonymous';
 
         // Create the notification
         Notification::create([
-            'content' => "[{$userRole}] {$user->first_name} {$user->last_name} added a new comment in a stranded incident.",
+            'content' => "[{$userRole}] {$userName} added a new comment in a stranded incident.",
             'category' => 'general',
             'notif_for' => 'all',
             'type' => 'stranding',

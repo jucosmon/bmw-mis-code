@@ -1,10 +1,13 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 
@@ -38,6 +41,7 @@ const props = defineProps({
         default: () => [],
     },
 });
+const showPassword = ref(false);
 const comments = ref(props.strandedIncident.comments || []);
 const editingCommentId = ref(null);
 const newCommentText = ref('');
@@ -78,7 +82,7 @@ const updateRoute = computed(() => {
             || props.strandedIncident.report_status === 'false'
         );
 
-    if (isPublicUser.value) {
+    if (isPublicUser.value || !page.props?.auth?.user) {
         return route('stranded.incident.update.page', { id: props.strandedIncident.id });
     } else if (isResponderEligible) {
         return route('stranded.incident.responder.update.page', { id: props.strandedIncident.id });
@@ -103,6 +107,7 @@ const unarchiveRoute = computed(() => {
 
 // main methods with consecutive modals
 const updateIncident = () => {
+
     router.visit(updateRoute.value);
 };
 
@@ -118,7 +123,7 @@ const closeModal = () => {
 
 // Archiving For public users only
 const archiveButtonStatus = computed(() => {
-    return (isPublicUser.value && props.strandedIncident.report_status === 'pending');
+    return (isPublicUser.value && props.strandedIncident.report_status === 'pending' || !page.props.auth.user);
 });
 
 const archiveIncident = () => {
@@ -148,13 +153,12 @@ const archiveIncident = () => {
 
 // Update button validation for Public users only
 const updateButtonStatusPublic = computed(() => {
-    return isPublicUser.value && props.strandedIncident.report_status === 'pending';
-});
+    return isPublicUser.value && props.strandedIncident.report_status === 'pending' || !page.props.auth.user});
 
 
 // Update button validation for responders
 const updateButtonStatusResponder = computed(() => {
-    if (isPublicUser.value) {
+    if (isPublicUser.value || !page.props.auth.user) {
         return false;
     }
 
@@ -523,6 +527,14 @@ onMounted(() => {
 });
 
 const initializeMap = () => {
+    // Fix for Leaflet default icon
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: markerIcon,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+    });
+
     map.value = L.map('map', {
       dragging: false,
       scrollWheelZoom: false,
@@ -613,10 +625,12 @@ onUnmounted(() => {
                         <p class="notification-text">{{ props?.success }}</p>
                     </div>
                 </div>
-
+                <Link class="mt-10 ml-5 md:mt-0 md:ml-0 mb-3 flex items-center w-fit" :href="backRoute">
+                    <span class="material-icons material-icons-round mr-2 group-hover:rotate-12 text-sm text-white">arrow_back</span>
+                    <span class="text-lg font-semibold text-white">Back</span>
+                </Link>
                 <!-- Stranded Incident Header Card -->
                 <div class="profile-card mb-6">
-
                     <div class="profile-header">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex flex-col">
@@ -648,12 +662,12 @@ onUnmounted(() => {
                                     v-if="props.strandedIncident.is_active && archiveButtonStatus"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">cancel</span>
-                                    Cancel Report
+                                    Cancel
                                 </button>
                                 <button
                                     class="action-button-gradient success text-sm mb-2"
                                     @click="confirmArchiveIncident"
-                                    v-if="props.strandedIncident.is_active===false && isPublicUser"
+                                    v-if="props.strandedIncident.is_active===false && archiveButtonStatus"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restore</span>
                                     Unarchive
@@ -665,7 +679,7 @@ onUnmounted(() => {
                                     @click="updateIncident"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">edit</span>
-                                    Update Report
+                                    Update
                                 </button>
                                 <button
                                     v-if="updateButtonStatusResponder"
@@ -711,7 +725,7 @@ onUnmounted(() => {
                                     @click="showUnresolveModal"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1 group-hover:rotate-12">restart_alt</span>
-                                    Unresolve Incident
+                                    Unresolve
                                 </button>
                             </div>
                         </div>
@@ -769,7 +783,7 @@ onUnmounted(() => {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">account_circle</span>
-                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user ? `${props.strandedIncident.user.first_name} ${props.strandedIncident.user.last_name}` : 'Unknown Reporter' }}</span>
+                                    <span class="ml-3 text-sm">{{ props.strandedIncident.user ? `${props.strandedIncident.user.first_name} ${props.strandedIncident.user.last_name}` : 'Anonymous' }}</span>
                                 </div>
                                 <div class="info-row group">
                                     <span class="material-icons material-icons-round">phone</span>
@@ -799,7 +813,7 @@ onUnmounted(() => {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="info-card">
                                     <div class="flex items-start">
-                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">pets</span>
+                                        <span class="material-icons material-icons-round text-xl mr-3 mt-1">water_drop</span>
                                         <div>
                                             <h3 class="info-card-title">Species Involved</h3>
                                             <p class="info-card-content">{{ formatValue(props.strandedIncident.species_involved) }}</p>
@@ -941,15 +955,15 @@ onUnmounted(() => {
                         <div class="section-header py-5">
                             <h2 class="section-title flex justify-between items-center w-full">
                                 <div class="flex items-center">
-                                    <span class="material-icons material-icons-round mr-3">pets</span>
-                                    Detailed Species Forms
+                                    <span class="material-icons material-icons-round mr-3">water_drop</span>
+                                    Species Forms
                                 </div>
                                 <button
                                     class="action-button-gradient primary text-sm"
                                     @click="createSpeciesForm"
                                 >
                                     <span class="material-icons material-icons-round text-sm mr-1">add</span>
-                                    Add Form
+                                    <span class="hidden sm:block">Add Form</span>
                                 </button>
                             </h2>
                         </div>
@@ -1016,8 +1030,8 @@ onUnmounted(() => {
                                         class="action-button-gradient primary"
                                         @click="submitComment"
                                     >
-                                        <span class="material-icons material-icons-round text-sm mr-1">send</span>
-                                        Submit
+                                        <span class="material-icons material-icons-round text-sm sm:mr-1">send</span>
+                                        <span class="hidden sm:block">Submit</span>
                                     </button>
                                 </div>
                                 <p v-if="form.errors.text" class="text-sm text-red-300 mt-1">{{ form.errors.text }}</p>
@@ -1028,12 +1042,13 @@ onUnmounted(() => {
                                     <div class="flex justify-between items-start">
                                         <div class="flex-1">
                                             <div class="flex items-center mb-1">
-                                                <span class="material-icons material-icons-round text-sm mr-1">account_circle</span>
-                                                <p class="text-sm font-medium text-white">{{ comment.user.first_name }} {{ comment.user.last_name }}</p>
-                                                <span class="mx-2 text-white/40">•</span>
-                                                <span class="text-xs text-white/60">{{ comment.created_at }}</span>
+                                                <span class="material-icons material-icons-round text-md mr-3">account_circle</span>
+                                                <div>
+                                                    <p class="text-md font-large text-white">{{ comment.user ? `${comment.user.first_name} ${comment.user.last_name}` : 'Anonymous' }}</p>
+                                                    <span class="text-xs text-white/60">{{ new Date(comment.created_at).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) }}</span>
+                                                </div>
                                             </div>
-                                            <p v-if="editingCommentId !== comment.id" class="text-white/90 ml-6">{{ comment.text }}</p>
+                                            <p v-if="editingCommentId !== comment.id" class="text-white/90 ml-8">{{ comment.text }}</p>
                                             <div v-else class="ml-6 mt-2">
                                                 <input
                                                     type="text"
@@ -1043,7 +1058,7 @@ onUnmounted(() => {
                                                 />
                                             </div>
                                         </div>
-                                        <div v-if="comment.user_id === page.props.auth.user.id" class="relative">
+                                        <div v-if="comment.user_id === page.props.auth?.user?.id" class="relative">
                                             <button
                                                 class="text-white/50 hover:text-white"
                                                 @click.stop="comment.showOptions = !comment.showOptions; $event.stopPropagation();"
@@ -1094,20 +1109,26 @@ onUnmounted(() => {
                             <h2 class="text-lg font-semibold text-gray-100">
                                {{ props.strandedIncident.is_active ? 'Are you sure you want to archive this stranded incident report?' : 'Are you sure you want to unarchive this stranded incident report?'}}
                             </h2>
-                            <div class="mt-4">
-                                <label for="admin-password" class="text-sm text-gray-250">
-                                    Confirm by entering your password
-                                </label>
-                                <input
-                                    type="password"
-                                    id="admin-password"
-                                    v-model="form.password"
-                                    class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                    placeholder="Enter your password"
-                                />
-                                <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
-                                    {{ form.errors.password }}
-                                </p>
+                            <div v-if="page.props.auth.user">
+                                <div class="mt-4">
+                                    <label for="admin-password" class="text-sm text-gray-250">
+                                        Confirm by entering your password
+                                    </label>
+                                    <input
+                                        :type="showPassword ? 'text' : 'password'"
+                                        id="admin-password"
+                                        v-model="form.password"
+                                        class="text-black mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                        placeholder="Enter your password"
+                                    />
+                                    <p v-if="form.errors.password" class="text-sm text-red-500 mt-1">
+                                        {{ form.errors.password }}
+                                    </p>
+                                </div>
+                                <div class="flex my-4">
+                                    <Checkbox name="showPassword" v-model:checked="showPassword" />
+                                    <span class="ms-2 text-sm text-white">Show Password</span>
+                                </div>
                             </div>
                             <div class="mt-6 flex justify-end space-x-4">
                                 <SecondaryButton class="text-white" @click="closeModal">Cancel</SecondaryButton>

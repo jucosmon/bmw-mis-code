@@ -1,4 +1,6 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
+import CustomButton from '@/Components/CustomButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -15,6 +17,8 @@ const form = useForm({
     is_active: true,
     password: '',
 });
+
+const showPassword = ref(false);
 // Sort items by count when the component is initialized
 const sortedItems = computed(() => {
     return [...props.guideline.items].sort((a, b) => a.count - b.count);
@@ -109,6 +113,7 @@ const updateButton = () => {
                     </div>
                 </div>
 
+
                 <!-- Error Message -->
                 <div v-if="form.errors.password"
                      class="notification error-notification"
@@ -119,15 +124,28 @@ const updateButton = () => {
                     </div>
                 </div>
 
+                <button class="mt-10 ml-5 md:mt-0 md:ml-0 md:mb-3"  @click="backRoute">
+                    <span class="material-icons material-icons-round ml-0 mr-2 group-hover:rotate-12 text-sm">arrow_back </span>
+                    <span class="text-lg font-semibold text-white border-opacity-20">Back</span>
+                </button>
                 <!-- Guideline Card -->
-                <div class="profile-card">
+                <div class="profile-card mb-6">
                     <div class="guideline-header">
                         <div class="flex flex-col">
-                            <h1 class="guideline-title-gradient">{{ props.guideline.title }}</h1>
-                            <div class="category-badge">
-                                <span class="material-icons material-icons-round text-sm mr-2">category</span>
-                                <p>{{ props.guideline.category }}</p>
+                            <h1 class="guideline-title-gradient">
+                                {{ props.guideline.title }}
+                            </h1>
+                            <div class="flex gap-4">
+                                <div class="category-badge">
+                                    <span class="material-icons material-icons-round text-sm mr-2">category</span>
+                                    <p>{{ props.guideline.category }}</p>
+                                </div>
+                                <div class="category-badge">
+                                    <span class="material-icons material-icons-round text-sm mr-2">language</span>
+                                    <p>{{ props.guideline.language }}</p>
+                                </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -190,30 +208,28 @@ const updateButton = () => {
 
                     <!-- Actions -->
                     <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-4">
-                        <button
+                        <CustomButton
                             v-if="props.guideline.is_active"
-                            class="action-button-gradient danger"
-                            @click="showArchiveModal"
+                            variant="danger"
+                            :onClick="showArchiveModal"
+                            icon="archive"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">archive</span>
                             Archive
-                        </button>
-                        <button
+                        </CustomButton>
+                        <CustomButton
                             v-else
-                            class="action-button-gradient success"
-                            @click="showArchiveModal"
+                            :onClick="showArchiveModal"
+                            icon="unarchive"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">unarchive</span>
                             Unarchive
-                        </button>
-                        <button
+                        </CustomButton>
+                        <CustomButton
                             v-if="props.guideline.is_active"
-                            class="action-button-gradient primary"
-                            @click="updateButton"
+                            icon="edit"
+                            :onClick="updateButton"
                         >
-                            <span class="material-icons material-icons-round mr-2 group-hover:rotate-12">edit</span>
                             Update
-                        </button>
+                        </CustomButton>
                     </div>
                 </div>
 
@@ -263,7 +279,7 @@ const updateButton = () => {
                                 Please confirm by entering your password
                             </label>
                             <input
-                                type="password"
+                                :type="showPassword ? 'text' : 'password'"
                                 id="admin-password"
                                 v-model="form.password"
                                 class="text-black mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -273,6 +289,11 @@ const updateButton = () => {
                                 {{ form.errors.password }}
                             </p>
                         </div>
+                        <div class="flex my-4">
+                            <Checkbox name="showPassword" v-model:checked="showPassword" />
+                            <span class="ms-2 text-sm text-white">Show Password</span>
+                        </div>
+
 
                         <div class="mt-6 space-x-4 flex justify-end">
                             <SecondaryButton @click="closeArchiveModal">Cancel</SecondaryButton>
@@ -360,37 +381,6 @@ const updateButton = () => {
 .media-item:hover {
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-}
-
-/* Button Gradients */
-.action-button-gradient {
-    @apply px-6 py-2.5 rounded-xl flex items-center transition-all duration-300;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-}
-
-.action-button-gradient.primary {
-    background: linear-gradient(135deg, #4f46e5, #3730a3) !important;
-}
-
-.action-button-gradient.danger {
-    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
-}
-
-.action-button-gradient.success {
-    background: linear-gradient(135deg, #059669, #065f46) !important;
-}
-
-.action-button-gradient:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
-    filter: brightness(110%);
-}
-
-.action-button-gradient:active {
-    transform: translateY(0);
 }
 
 /* Background Styles */

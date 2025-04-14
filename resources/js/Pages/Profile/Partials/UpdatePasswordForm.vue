@@ -1,10 +1,11 @@
 <script setup>
+import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 // Props
 const props = defineProps({
@@ -20,6 +21,7 @@ const props = defineProps({
 
 const passwordInput = ref(null);
 const currentPasswordInput = ref(null);
+const showPassword = ref(false);
 
 const form = useForm({
     current_password: '',
@@ -27,7 +29,45 @@ const form = useForm({
     password_confirmation: '',
 });
 
+// Password validation indicators
+const passwordLength = computed(() => form.password.length >= 8);
+const passwordHasUppercase = computed(() => /[A-Z]/.test(form.password));
+const passwordHasLowercase = computed(() => /[a-z]/.test(form.password));
+const passwordHasNumber = computed(() => /[0-9]/.test(form.password));
+const passwordHasSpecial = computed(() => /[^A-Za-z0-9]/.test(form.password));
+
+// Overall password strength
+const passwordStrength = computed(() => {
+    const criteria = [
+        passwordLength.value,
+        passwordHasUppercase.value,
+        passwordHasLowercase.value,
+        passwordHasNumber.value,
+        passwordHasSpecial.value
+    ];
+
+    const metCriteria = criteria.filter(c => c).length;
+
+    if (metCriteria === 0) return { text: "Very Weak", color: "red" };
+    if (metCriteria === 1) return { text: "Weak", color: "red" };
+    if (metCriteria === 2) return { text: "Fair", color: "orange" };
+    if (metCriteria === 3) return { text: "Good", color: "yellow" };
+    if (metCriteria === 4) return { text: "Strong", color: "lightgreen" };
+    return { text: "Very Strong", color: "green" };
+});
+
 const updatePassword = () => {
+    // First validate the password complexity
+    if (!passwordLength.value) {
+        alert("Password must be at least 8 characters long.");
+        return;
+    }
+
+    if (!passwordHasUppercase.value || !passwordHasLowercase.value || !passwordHasNumber.value) {
+        alert("Password must contain at least one uppercase letter, one lowercase letter, and one number.");
+        return;
+    }
+
     form.put(route('password.update'), {
         preserveScroll: true,
         onSuccess: () => {
@@ -68,7 +108,7 @@ const updatePassword = () => {
                         id="current_password"
                         ref="currentPasswordInput"
                         v-model="form.current_password"
-                        type="password"
+                        :type="showPassword ? 'text' : 'password'"
                         class="input-field"
                         autocomplete="current-password"
                     />
@@ -81,11 +121,26 @@ const updatePassword = () => {
                         id="password"
                         ref="passwordInput"
                         v-model="form.password"
-                        type="password"
+                        :type="showPassword ? 'text' : 'password'"
                         class="input-field"
                         autocomplete="new-password"
                     />
                     <InputError :message="form.errors.password" class="mt-2" />
+
+                    <!-- Password strength indicators -->
+                    <div class="password-requirements mt-2" v-if="form.password">
+                        <div class="password-strength">
+                            <span class="text-sm text-white">Strength: </span>
+                            <span class="text-sm" :style="{color: passwordStrength.color}">{{ passwordStrength.text }}</span>
+                        </div>
+                        <ul class="text-xs space-y-1 mt-1">
+                            <li :class="passwordLength ? 'text-green-400' : 'text-white'">✓ At least 8 characters</li>
+                            <li :class="passwordHasUppercase ? 'text-green-400' : 'text-white'">✓ At least one uppercase letter</li>
+                            <li :class="passwordHasLowercase ? 'text-green-400' : 'text-white'">✓ At least one lowercase letter</li>
+                            <li :class="passwordHasNumber ? 'text-green-400' : 'text-white'">✓ At least one number</li>
+                            <li :class="passwordHasSpecial ? 'text-green-400' : 'text-white'">✓ Special character (recommended)</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -93,11 +148,15 @@ const updatePassword = () => {
                     <TextInput
                         id="password_confirmation"
                         v-model="form.password_confirmation"
-                        type="password"
+                        :type="showPassword ? 'text' : 'password'"
                         class="input-field"
                         autocomplete="new-password"
                     />
                     <InputError :message="form.errors.password_confirmation" class="mt-2" />
+                </div>
+                <div class="flex my-4">
+                    <Checkbox name="showPassword" v-model:checked="showPassword" />
+                    <span class="ms-2 text-sm text-white">Show Password</span>
                 </div>
 
                 <div class="flex items-center justify-between gap-4">
@@ -196,5 +255,18 @@ const updatePassword = () => {
 .login-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 119, 190, 0.4);
+}
+
+/* Password strength indicator styles */
+.password-requirements {
+    color: white;
+    opacity: 0.9;
+}
+
+.password-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 </style>

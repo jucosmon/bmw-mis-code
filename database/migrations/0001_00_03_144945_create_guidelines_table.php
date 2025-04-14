@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('description');
             $table->enum('category',['marine_mammals', 'marine_turtles', 'sharks_rays']);
             $table->enum('user_role', ['public_user', 'barangay_official', 'lgu_responder', 'bpemo_staff', 'bpemo_admin']);
+            $table->enum('language', ['english', 'bisaya', 'tagalog'])->default('english');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
