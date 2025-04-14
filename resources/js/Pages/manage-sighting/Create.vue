@@ -64,12 +64,51 @@ const form = useForm({
   ],
 });
 
-const handleFileChange = (event) => {
+const videoMaxDuration = 60;
+const errorMessage = ref('');
+
+// Add video duration validation function
+const validateVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (this.duration > videoMaxDuration) {
+        resolve({ valid: false, message: 'Video must be 1 minute or less' });
+      } else {
+        resolve({ valid: true });
+      }
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+// Update handleFileChange function
+const handleFileChange = async (event) => {
   const files = event.target.files;
-  form.mediaFiles = Array.from(files); // Store the selected files in form.mediaFiles
+  errorMessage.value = '';
+
+  // Validate each video file
+  for (const file of files) {
+    if (file.type.startsWith('video/')) {
+      const validation = await validateVideoDuration(file);
+      if (!validation.valid) {
+        errorMessage.value = validation.message;
+        return;
+      }
+    }
+  }
+
+  form.mediaFiles = Array.from(files);
 
   previewImages.value = Array.from(files).map((file) => {
-    return URL.createObjectURL(file);
+    return {
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image'
+    };
   });
 };
 
@@ -79,6 +118,10 @@ const removeImage = (index) => {
 };
 
 const submit = () => {
+    if (form.mediaFiles.length === 0) {
+    errorMessage.value = 'Please upload at least one photo or video';
+    return;
+    }
   if (!form.sightedSpecies.length) {
     alert("Please add at least one species.");
     return;
@@ -755,6 +798,9 @@ const sizeOptions = [
 
             <!-- Media Upload Section -->
             <div class="item-card">
+                <div v-if="errorMessage" class="error-container mb-3">
+                    <p>{{ errorMessage }}</p>
+                </div>
               <div class="item-header mb-4">
                 <h3 class="text-xl font-bold text-white">Media Files</h3>
                 <p class="text-sm text-white">Upload images or videos related to the sighting</p>
@@ -762,10 +808,14 @@ const sizeOptions = [
 
               <div class="media-section">
                 <InputLabel for="mediaFiles" value="Upload Media Files (Images/Videos)" />
-                <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
-                    Browse Files
-                </label>
-
+                <div class="flex gap-4">
+                    <label for="mediaFiles" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                        Upload Files
+                    </label>
+                    <label for="cameraCapture" class="browse-button" tabindex="0" role="button" @keypress.enter="$event.target.click()">
+                        Take Photo/Video
+                    </label>
+                </div>
                 <input
                     type="file"
                     accept="image/*,video/*"
@@ -774,16 +824,34 @@ const sizeOptions = [
                     multiple
                     class="hidden"
                     capture="environment"
-                    required />
+                     />
+                     <input
+                    id="cameraCapture"
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    capture
+                    @change="handleFileChange"
+                    class="hidden"
+                />
+
                     <span v-if="form.mediaFiles.length == 0" class="text-sm text-red-400 block">
                         Required at least 1 media
+                    </span>
+                    <span v-if="errorMessage" class="text-sm text-red-400 block">
+                        {{ errorMessage }}
                     </span>
                 <!-- Preview Section -->
                 <div v-if="previewImages.length" class="preview-section mt-4">
                   <h4 class="preview-title">Media Preview</h4>
                   <div class="preview-grid">
-                    <div v-for="(img, index) in previewImages" :key="index" class="preview-item">
-                      <img :src="img" alt="Preview" class="preview-image" />
+                    <div v-for="(media, index) in previewImages" :key="index" class="preview-item">
+                      <template v-if="media.type === 'image'">
+                        <img :src="media.url" alt="Preview" class="preview-image" />
+                      </template>
+                      <template v-else-if="media.type === 'video'">
+                        <video :src="media.url" controls class="preview-image"></video>
+                      </template>
                       <button @click="removeImage(index)" type="button" class="remove-button" title="Remove">
                         <span class="material-icons">close</span>
                       </button>
