@@ -87,7 +87,7 @@ const backRoute = () => {
                         <div class="space-y-4">
                             <h2 class="text-lg font-semibold border-b pb-2 flex items-center text-white border-opacity-20">
                                 <span class="material-icons material-icons-round mr-2">description</span>
-                                {{ props.guideline.language === 'English' ? 'Description' : 'Deskripsyon' }}
+                                {{ props.guideline.language === 'english' ? 'Description' : 'Deskripsyon' }}
                             </h2>
                             <p class="text-white/90">{{ props.guideline.description }}</p>
                         </div>
@@ -96,14 +96,14 @@ const backRoute = () => {
                         <div class="space-y-4">
                             <h2 class="text-lg font-semibold border-b pb-2 flex items-center text-white border-opacity-20">
                                 <span class="material-icons material-icons-round mr-2">list</span>
-                                {{ props.guideline.language === 'English' ? 'Guidelines' : 'Mga Giya' }}
+                                {{ props.guideline.language === 'english' ? 'Guidelines' : 'Mga Giya' }}
                             </h2>
                             <div class="space-y-4">
                                 <div v-for="(item, index) in sortedItems" :key="item.id"
                                      class="info-row group p-4 rounded-lg">
                                     <h3 class="step-title">
                                         <span class="material-icons material-icons-round mr-2">article</span>
-                                        {{ props.guideline.language === 'English' ? 'Steps' : 'Ika' }} {{ index + 1 }}
+                                        {{ props.guideline.language === 'english' ? 'Steps' : 'Ika' }} {{ index + 1 }}
                                     </h3>
                                     <p class="text-white/90 ml-8">{{ item.text }}</p>
 
