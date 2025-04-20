@@ -113,7 +113,7 @@ const closeModal = () => {
 // Archiving For public users only
 const archiveButtonStatus = computed(() => {
     return ((isPublicUser.value || isBarangayOfficial.value || isLguResponder.value)
-    && props.sighting.report_status === 'pending' || !page.props?.auth?.user);
+    && props.sighting.report_status === 'pending');
 });
 
 const archiveSighting = () => {
@@ -143,10 +143,10 @@ const archiveSighting = () => {
 
 // Update button validation for regular sighting reports
 const updateButton = computed(() => {
-    return (isPublicUser.value || isBarangayOfficial.value || isLguResponder.value || !page.props?.auth?.user) &&
+    return (isPublicUser.value || isBarangayOfficial.value || isLguResponder.value) &&
            (props.sighting.report_status === 'pending' &&
            props.sighting.is_active === true) &&
-           (page.props?.auth?.user?.id === props.sighting?.user_id || !page.props?.auth?.user);
+           (page.props?.auth?.user?.id === props.sighting?.user_id);
 });
 
 // Update button validation for verifiers
