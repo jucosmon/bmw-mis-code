@@ -1,23 +1,13 @@
 {
-<<<<<<< Updated upstream
-  "_Checkbox-Cke_l8xS.js": {
-    "file": "assets/Checkbox-Cke_l8xS.js",
-=======
-  "_Checkbox-CrsR5zth.js": {
-    "file": "assets/Checkbox-CrsR5zth.js",
->>>>>>> Stashed changes
+  "_Checkbox-MtCm4irQ.js": {
+    "file": "assets/Checkbox-MtCm4irQ.js",
     "name": "Checkbox",
     "imports": [
       "resources/js/app.js"
     ]
   },
-<<<<<<< Updated upstream
-  "_CustomButton-CZh04Kf_.js": {
-    "file": "assets/CustomButton-CZh04Kf_.js",
-=======
-  "_CustomButton-BNgk5pYV.js": {
-    "file": "assets/CustomButton-BNgk5pYV.js",
->>>>>>> Stashed changes
+  "_CustomButton-Byf5R2qy.js": {
+    "file": "assets/CustomButton-Byf5R2qy.js",
     "name": "CustomButton",
     "imports": [
       "resources/js/app.js"
@@ -30,25 +20,19 @@
     "file": "assets/CustomButton-DpyjgOCm.css",
     "src": "_CustomButton-DpyjgOCm.css"
   },
-<<<<<<< Updated upstream
-  "_GuestLayout-D-v_vrgz.js": {
-    "file": "assets/GuestLayout-D-v_vrgz.js",
-=======
-  "_GuestLayout-DGtrQaJH.js": {
-    "file": "assets/GuestLayout-DGtrQaJH.js",
->>>>>>> Stashed changes
+  "_GuestLayout-cvbgWTVS.js": {
+    "file": "assets/GuestLayout-cvbgWTVS.js",
     "name": "GuestLayout",
     "imports": [
       "resources/js/app.js"
     ]
   },
-<<<<<<< Updated upstream
-  "_Modal-B1thg4_E.js": {
-    "file": "assets/Modal-B1thg4_E.js",
-=======
-  "_Modal-5F9MtS2C.js": {
-    "file": "assets/Modal-5F9MtS2C.js",
->>>>>>> Stashed changes
+  "_Modal-CQEj1dSk.css": {
+    "file": "assets/Modal-CQEj1dSk.css",
+    "src": "_Modal-CQEj1dSk.css"
+  },
+  "_Modal-CvmAAwey.js": {
+    "file": "assets/Modal-CvmAAwey.js",
     "name": "Modal",
     "imports": [
       "resources/js/app.js",
@@ -58,81 +42,44 @@
       "assets/Modal-CQEj1dSk.css"
     ]
   },
-  "_Modal-CQEj1dSk.css": {
-    "file": "assets/Modal-CQEj1dSk.css",
-    "src": "_Modal-CQEj1dSk.css"
-  },
-<<<<<<< Updated upstream
-  "_PrimaryButton-DcSdr4ni.js": {
-    "file": "assets/PrimaryButton-DcSdr4ni.js",
-=======
-  "_PrimaryButton-DMrvcqaG.js": {
-    "file": "assets/PrimaryButton-DMrvcqaG.js",
->>>>>>> Stashed changes
+  "_PrimaryButton-BgUiV_31.js": {
+    "file": "assets/PrimaryButton-BgUiV_31.js",
     "name": "PrimaryButton",
     "imports": [
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "resources/js/app.js"
     ]
   },
-<<<<<<< Updated upstream
-  "_SecondaryButton-D5JR-UUv.js": {
-    "file": "assets/SecondaryButton-D5JR-UUv.js",
-=======
-  "_SecondaryButton-BLDA1FkC.js": {
-    "file": "assets/SecondaryButton-BLDA1FkC.js",
->>>>>>> Stashed changes
+  "_SecondaryButton-dQ0YPrKE.js": {
+    "file": "assets/SecondaryButton-dQ0YPrKE.js",
     "name": "SecondaryButton",
     "imports": [
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "resources/js/app.js"
     ]
   },
-<<<<<<< Updated upstream
   "_Sidebar-B8LOqnsb.css": {
     "file": "assets/Sidebar-B8LOqnsb.css",
     "src": "_Sidebar-B8LOqnsb.css"
   },
-  "_Sidebar-CeQQ-TMf.js": {
-    "file": "assets/Sidebar-CeQQ-TMf.js",
+  "_Sidebar-C1d2pCg4.js": {
+    "file": "assets/Sidebar-C1d2pCg4.js",
     "name": "Sidebar",
     "imports": [
       "resources/js/app.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js",
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "dynamicImports": [
-      "_browser-wQ0rS0wO.js"
-=======
-  "_Sidebar-DiuV1i77.js": {
-    "file": "assets/Sidebar-DiuV1i77.js",
-    "name": "Sidebar",
-    "imports": [
-      "resources/js/app.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js"
-    ],
-    "dynamicImports": [
-      "_browser-Drv0v9NZ.js"
->>>>>>> Stashed changes
+      "_browser-DnM-LrLn.js"
     ],
     "css": [
       "assets/Sidebar-B8LOqnsb.css"
     ]
   },
-<<<<<<< Updated upstream
-  "_TextInput-Bjvrwxm-.js": {
-    "file": "assets/TextInput-Bjvrwxm-.js",
-=======
-  "_Sidebar-fxSY5gTs.css": {
-    "file": "assets/Sidebar-fxSY5gTs.css",
-    "src": "_Sidebar-fxSY5gTs.css"
-  },
-  "_TextInput-DHIv6Bco.js": {
-    "file": "assets/TextInput-DHIv6Bco.js",
->>>>>>> Stashed changes
+  "_TextInput-DtWEZqad.js": {
+    "file": "assets/TextInput-DtWEZqad.js",
     "name": "TextInput",
     "imports": [
       "resources/js/app.js"
@@ -142,42 +89,24 @@
     "file": "assets/_plugin-vue_export-helper-DlAUqK2U.js",
     "name": "_plugin-vue_export-helper"
   },
-<<<<<<< Updated upstream
-  "_browser-wQ0rS0wO.js": {
-    "file": "assets/browser-wQ0rS0wO.js",
-=======
-  "_browser-Drv0v9NZ.js": {
-    "file": "assets/browser-Drv0v9NZ.js",
->>>>>>> Stashed changes
+  "_browser-DnM-LrLn.js": {
+    "file": "assets/browser-DnM-LrLn.js",
     "name": "browser",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js"
     ]
   },
-<<<<<<< Updated upstream
-  "_html2pdf-DbqvuPqx.js": {
-    "file": "assets/html2pdf-DbqvuPqx.js",
+  "_html2pdf-5iuYsopj.js": {
+    "file": "assets/html2pdf-5iuYsopj.js",
     "name": "html2pdf",
     "imports": [
       "resources/js/app.js",
-      "_jspdf.es.min-uOQFgHja.js"
+      "_jspdf.es.min-BjdmECdD.js"
     ]
   },
-  "_jspdf.es.min-uOQFgHja.js": {
-    "file": "assets/jspdf.es.min-uOQFgHja.js",
-=======
-  "_html2pdf-B1LvjJBD.js": {
-    "file": "assets/html2pdf-B1LvjJBD.js",
-    "name": "html2pdf",
-    "imports": [
-      "resources/js/app.js",
-      "_jspdf.es.min-Cx4lb0wV.js"
-    ]
-  },
-  "_jspdf.es.min-Cx4lb0wV.js": {
-    "file": "assets/jspdf.es.min-Cx4lb0wV.js",
->>>>>>> Stashed changes
+  "_jspdf.es.min-BjdmECdD.js": {
+    "file": "assets/jspdf.es.min-BjdmECdD.js",
     "name": "jspdf.es.min",
     "imports": [
       "resources/js/app.js"
@@ -192,13 +121,8 @@
     "file": "assets/leaflet-CG6DamIu.css",
     "src": "_leaflet-CG6DamIu.css"
   },
-<<<<<<< Updated upstream
-  "_leaflet-src-csUDUITE.js": {
-    "file": "assets/leaflet-src-csUDUITE.js",
-=======
-  "_leaflet-src-BQgJspOK.js": {
-    "file": "assets/leaflet-src-BQgJspOK.js",
->>>>>>> Stashed changes
+  "_leaflet-src-BZl8fKTh.js": {
+    "file": "assets/leaflet-src-BZl8fKTh.js",
     "name": "leaflet-src",
     "imports": [
       "resources/js/app.js"
@@ -213,21 +137,13 @@
     ]
   },
   "node_modules/canvg/lib/index.es.js": {
-<<<<<<< Updated upstream
-    "file": "assets/index.es-D9mg7vou.js",
-=======
-    "file": "assets/index.es-BsgtABk_.js",
->>>>>>> Stashed changes
+    "file": "assets/index.es-BNyCwZKm.js",
     "name": "index.es",
     "src": "node_modules/canvg/lib/index.es.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_jspdf.es.min-uOQFgHja.js"
-=======
-      "_jspdf.es.min-Cx4lb0wV.js"
->>>>>>> Stashed changes
+      "_jspdf.es.min-BjdmECdD.js"
     ]
   },
   "node_modules/dompurify/dist/purify.es.mjs": {
@@ -259,44 +175,26 @@
     "src": "node_modules/leaflet/dist/images/marker-shadow.png"
   },
   "resources/js/Pages/Auth/ConfirmPassword.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/ConfirmPassword-CbhQrVG9.js",
-=======
-    "file": "assets/ConfirmPassword-CvXoILdC.js",
->>>>>>> Stashed changes
+    "file": "assets/ConfirmPassword-RxKT6QLS.js",
     "name": "ConfirmPassword",
     "src": "resources/js/Pages/Auth/ConfirmPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_TextInput-Bjvrwxm-.js",
-      "_PrimaryButton-DcSdr4ni.js",
-      "_GuestLayout-D-v_vrgz.js",
-=======
-      "_TextInput-DHIv6Bco.js",
-      "_PrimaryButton-DMrvcqaG.js",
-      "_GuestLayout-DGtrQaJH.js",
->>>>>>> Stashed changes
+      "_TextInput-DtWEZqad.js",
+      "_PrimaryButton-BgUiV_31.js",
+      "_GuestLayout-cvbgWTVS.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/ForgotPassword.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/ForgotPassword-BjKEsNQ6.js",
-=======
-    "file": "assets/ForgotPassword--_iAa5Ad.js",
->>>>>>> Stashed changes
+    "file": "assets/ForgotPassword-BrJ4V8zJ.js",
     "name": "ForgotPassword",
     "src": "resources/js/Pages/Auth/ForgotPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_TextInput-Bjvrwxm-.js",
-=======
-      "_TextInput-DHIv6Bco.js",
->>>>>>> Stashed changes
+      "_TextInput-DtWEZqad.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -304,23 +202,14 @@
     ]
   },
   "resources/js/Pages/Auth/Login.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Login-DnF5GKRk.js",
-=======
-    "file": "assets/Login-D3V2p12i.js",
->>>>>>> Stashed changes
+    "file": "assets/Login-eVZ_PM9A.js",
     "name": "Login",
     "src": "resources/js/Pages/Auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_TextInput-Bjvrwxm-.js",
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_TextInput-DHIv6Bco.js",
->>>>>>> Stashed changes
+      "_Checkbox-MtCm4irQ.js",
+      "_TextInput-DtWEZqad.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -328,23 +217,14 @@
     ]
   },
   "resources/js/Pages/Auth/Register.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Register-CA4sx8-I.js",
-=======
-    "file": "assets/Register-Bv6eNi4t.js",
->>>>>>> Stashed changes
+    "file": "assets/Register-DaDgOo5V.js",
     "name": "Register",
     "src": "resources/js/Pages/Auth/Register.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_TextInput-Bjvrwxm-.js",
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_TextInput-DHIv6Bco.js",
->>>>>>> Stashed changes
+      "_Checkbox-MtCm4irQ.js",
+      "_TextInput-DtWEZqad.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -352,23 +232,14 @@
     ]
   },
   "resources/js/Pages/Auth/ResetPassword.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/ResetPassword-CVenftIn.js",
-=======
-    "file": "assets/ResetPassword-B_1eRQ1w.js",
->>>>>>> Stashed changes
+    "file": "assets/ResetPassword-S4OUnnss.js",
     "name": "ResetPassword",
     "src": "resources/js/Pages/Auth/ResetPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_TextInput-Bjvrwxm-.js",
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_TextInput-DHIv6Bco.js",
->>>>>>> Stashed changes
+      "_Checkbox-MtCm4irQ.js",
+      "_TextInput-DtWEZqad.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -376,57 +247,32 @@
     ]
   },
   "resources/js/Pages/Auth/VerifyEmail.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/VerifyEmail-CAgnRLmc.js",
-=======
-    "file": "assets/VerifyEmail-CLPdN5pi.js",
->>>>>>> Stashed changes
+    "file": "assets/VerifyEmail-CS5tgrFr.js",
     "name": "VerifyEmail",
     "src": "resources/js/Pages/Auth/VerifyEmail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_GuestLayout-D-v_vrgz.js",
-      "_PrimaryButton-DcSdr4ni.js",
-=======
-      "_GuestLayout-DGtrQaJH.js",
-      "_PrimaryButton-DMrvcqaG.js",
->>>>>>> Stashed changes
+      "_GuestLayout-cvbgWTVS.js",
+      "_PrimaryButton-BgUiV_31.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Dashboard.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Dashboard-BWEbKyzW.js",
-=======
-    "file": "assets/Dashboard-CoZoZLF2.js",
->>>>>>> Stashed changes
+    "file": "assets/Dashboard-Bbc9jOxI.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Dashboard.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
-      "_Modal-B1thg4_E.js",
+      "_Modal-CvmAAwey.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
+      "_PrimaryButton-BgUiV_31.js"
     ]
   },
   "resources/js/Pages/Errors/Unauthorized.vue": {
-    "file": "assets/Unauthorized-BHgsM4QR.js",
-=======
-      "_Sidebar-DiuV1i77.js",
-      "resources/js/app.js",
-      "_Modal-5F9MtS2C.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
-    ]
-  },
-  "resources/js/Pages/Errors/Unauthorized.vue": {
-    "file": "assets/Unauthorized-3cF8-2SW.js",
->>>>>>> Stashed changes
+    "file": "assets/Unauthorized-DEETd5Z1.js",
     "name": "Unauthorized",
     "src": "resources/js/Pages/Errors/Unauthorized.vue",
     "isDynamicEntry": true,
@@ -435,79 +281,46 @@
     ]
   },
   "resources/js/Pages/Profile/Edit.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Edit-BpJScBdA.js",
-=======
-    "file": "assets/Edit-xagJFhX_.js",
->>>>>>> Stashed changes
+    "file": "assets/Edit-schSpcsL.js",
     "name": "Edit",
     "src": "resources/js/Pages/Profile/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Edit-BrOebIyz.css"
     ]
   },
   "resources/js/Pages/Profile/Partials/DeleteUserForm.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/DeleteUserForm-B2QTg86U.js",
-=======
-    "file": "assets/DeleteUserForm-BO5OGmBr.js",
->>>>>>> Stashed changes
+    "file": "assets/DeleteUserForm-b-HLnI3N.js",
     "name": "DeleteUserForm",
     "src": "resources/js/Pages/Profile/Partials/DeleteUserForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_SecondaryButton-D5JR-UUv.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Modal-B1thg4_E.js",
-=======
-      "_SecondaryButton-BLDA1FkC.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Modal-5F9MtS2C.js",
->>>>>>> Stashed changes
+      "_SecondaryButton-dQ0YPrKE.js",
+      "_TextInput-DtWEZqad.js",
+      "_Modal-CvmAAwey.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/UpdatePasswordForm-Dq5N4_Xc.js",
-=======
-    "file": "assets/UpdatePasswordForm-DvpSWJth.js",
->>>>>>> Stashed changes
+    "file": "assets/UpdatePasswordForm-5IxPUFwe.js",
     "name": "UpdatePasswordForm",
     "src": "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_PrimaryButton-DcSdr4ni.js",
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_TextInput-DHIv6Bco.js",
-      "_PrimaryButton-DMrvcqaG.js",
->>>>>>> Stashed changes
+      "_Checkbox-MtCm4irQ.js",
+      "_TextInput-DtWEZqad.js",
+      "_PrimaryButton-BgUiV_31.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -515,66 +328,38 @@
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/UpdateProfileInformationForm-BAFOETHR.js",
-=======
-    "file": "assets/UpdateProfileInformationForm-D6w3zOsS.js",
->>>>>>> Stashed changes
+    "file": "assets/UpdateProfileInformationForm-U7VB-Hdl.js",
     "name": "UpdateProfileInformationForm",
     "src": "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_TextInput-Bjvrwxm-.js",
-      "_PrimaryButton-DcSdr4ni.js",
-=======
-      "_TextInput-DHIv6Bco.js",
-      "_PrimaryButton-DMrvcqaG.js",
->>>>>>> Stashed changes
+      "_TextInput-DtWEZqad.js",
+      "_PrimaryButton-BgUiV_31.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Profile/View.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/View-DJkKddXy.js",
-=======
-    "file": "assets/View-CWkbuVFx.js",
->>>>>>> Stashed changes
+    "file": "assets/View-Cra5tJgf.js",
     "name": "View",
     "src": "resources/js/Pages/Profile/View.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
       "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js",
-      "_Checkbox-Cke_l8xS.js",
-      "_TextInput-Bjvrwxm-.js"
-=======
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "resources/js/app.js",
-      "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js",
-      "_Checkbox-CrsR5zth.js",
-      "_TextInput-DHIv6Bco.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js",
+      "_Checkbox-MtCm4irQ.js",
+      "_TextInput-DtWEZqad.js"
     ],
     "css": [
       "assets/View-DlrDtUEh.css"
     ]
   },
   "resources/js/Pages/Welcome.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Welcome-CawkK_4Q.js",
-=======
-    "file": "assets/Welcome-BdPWd3vp.js",
->>>>>>> Stashed changes
+    "file": "assets/Welcome-Cj4PbG27.js",
     "name": "Welcome",
     "src": "resources/js/Pages/Welcome.vue",
     "isDynamicEntry": true,
@@ -587,66 +372,36 @@
     ]
   },
   "resources/js/Pages/dashboard/PublicUserDashboard.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/PublicUserDashboard-DDnxQ4Cy.js",
-=======
-    "file": "assets/PublicUserDashboard-DOzYADrD.js",
->>>>>>> Stashed changes
+    "file": "assets/PublicUserDashboard-CWa9e__p.js",
     "name": "PublicUserDashboard",
     "src": "resources/js/Pages/dashboard/PublicUserDashboard.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js",
-      "_Sidebar-CeQQ-TMf.js",
-=======
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js",
-      "_Sidebar-DiuV1i77.js",
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
-<<<<<<< Updated upstream
       "assets/PublicUserDashboard--KwPMUQS.css"
     ]
   },
   "resources/js/Pages/dashboard/ResponderDashboard.vue": {
-    "file": "assets/ResponderDashboard-CdsCAWUr.js",
-=======
-      "assets/PublicUserDashboard-DeKBtfwu.css"
-    ]
-  },
-  "resources/js/Pages/dashboard/ResponderDashboard.vue": {
-    "file": "assets/ResponderDashboard-CPJYyiJV.js",
->>>>>>> Stashed changes
+    "file": "assets/ResponderDashboard-yRpvkzaA.js",
     "name": "ResponderDashboard",
     "src": "resources/js/Pages/dashboard/ResponderDashboard.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
-      "_leaflet-src-csUDUITE.js",
+      "_leaflet-src-BZl8fKTh.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/ResponderDashboard-xp2kTUWy.css",
-=======
-      "_Sidebar-DiuV1i77.js",
-      "resources/js/app.js",
-      "_leaflet-src-BQgJspOK.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
-    ],
-    "css": [
-      "assets/ResponderDashboard--T_dAh8f.css",
->>>>>>> Stashed changes
       "assets/leaflet-CG6DamIu.css"
     ],
     "assets": [
@@ -656,35 +411,20 @@
     ]
   },
   "resources/js/Pages/generate-report/cluster-map/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-DwGE0Ujg.js",
-=======
-    "file": "assets/index-BtRHDVQO.js",
->>>>>>> Stashed changes
+    "file": "assets/index-D_Q9Qwvn.js",
     "name": "index",
     "src": "resources/js/Pages/generate-report/cluster-map/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_Sidebar-C1d2pCg4.js",
       "node_modules/html2canvas/dist/html2canvas.esm.js",
-      "_jspdf.es.min-uOQFgHja.js",
-      "_leaflet-src-csUDUITE.js",
+      "_jspdf.es.min-BjdmECdD.js",
+      "_leaflet-src-BZl8fKTh.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_Sidebar-DiuV1i77.js",
-      "node_modules/html2canvas/dist/html2canvas.esm.js",
-      "_jspdf.es.min-Cx4lb0wV.js",
-      "_leaflet-src-BQgJspOK.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-tyF5H6Oa.css",
@@ -697,184 +437,107 @@
     ]
   },
   "resources/js/Pages/generate-report/summary-report/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-DnvvzF0v.js",
-=======
-    "file": "assets/index-Dpe8tm05.js",
->>>>>>> Stashed changes
+    "file": "assets/index-DHb_kRDL.js",
     "name": "index",
     "src": "resources/js/Pages/generate-report/summary-report/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
-      "_html2pdf-DbqvuPqx.js",
-      "_Modal-B1thg4_E.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_html2pdf-5iuYsopj.js",
+      "_Modal-CvmAAwey.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js",
-      "_jspdf.es.min-uOQFgHja.js"
-=======
-      "_Sidebar-DiuV1i77.js",
-      "_html2pdf-B1LvjJBD.js",
-      "_Modal-5F9MtS2C.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js",
-      "_jspdf.es.min-Cx4lb0wV.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js",
+      "_jspdf.es.min-BjdmECdD.js"
     ],
     "css": [
       "assets/index-D2jH2KAC.css"
     ]
   },
   "resources/js/Pages/manage-account/Create.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Create-DQShHJpV.js",
-=======
-    "file": "assets/Create-Bu4dLbHa.js",
->>>>>>> Stashed changes
+    "file": "assets/Create-IM5gfzGw.js",
     "name": "Create",
     "src": "resources/js/Pages/manage-account/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Create-i4msloaO.css"
     ]
   },
   "resources/js/Pages/manage-account/Update.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Update-BoAwB3iX.js",
-=======
-    "file": "assets/Update-Cs-_jEGk.js",
->>>>>>> Stashed changes
+    "file": "assets/Update-DIFNdOX9.js",
     "name": "Update",
     "src": "resources/js/Pages/manage-account/Update.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Update-qAymIC6_.css"
     ]
   },
   "resources/js/Pages/manage-account/View.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/View-BnqjkzvM.js",
-=======
-    "file": "assets/View-DTWo36gN.js",
->>>>>>> Stashed changes
+    "file": "assets/View-BC7yR4If.js",
     "name": "View",
     "src": "resources/js/Pages/manage-account/View.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_CustomButton-CZh04Kf_.js",
-      "_SecondaryButton-D5JR-UUv.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Checkbox-MtCm4irQ.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_SecondaryButton-dQ0YPrKE.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_CustomButton-BNgk5pYV.js",
-      "_SecondaryButton-BLDA1FkC.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/View-DZLBb3dm.css"
     ]
   },
   "resources/js/Pages/manage-account/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-DFAqTKl5.js",
-=======
-    "file": "assets/index-DVfP9enX.js",
->>>>>>> Stashed changes
+    "file": "assets/index-BvH2UvfX.js",
     "name": "index",
     "src": "resources/js/Pages/manage-account/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-CFDVx3Qf.css"
     ]
   },
   "resources/js/Pages/manage-guideline/Create.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Create-z9sTQfEP.js",
-=======
-    "file": "assets/Create-DH-8lvAZ.js",
->>>>>>> Stashed changes
+    "file": "assets/Create-CElr5xE3.js",
     "name": "Create",
     "src": "resources/js/Pages/manage-guideline/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Create-B0SH5aT2.css",
@@ -887,183 +550,105 @@
     ]
   },
   "resources/js/Pages/manage-guideline/Update.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Update-DHO8iTiF.js",
-=======
-    "file": "assets/Update-AR167_Yx.js",
->>>>>>> Stashed changes
+    "file": "assets/Update-BquZpKQe.js",
     "name": "Update",
     "src": "resources/js/Pages/manage-guideline/Update.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Update-e5wsu2Gs.css"
     ]
   },
   "resources/js/Pages/manage-guideline/View.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/View-BGZGDTdp.js",
-=======
-    "file": "assets/View-Z7zXvElb.js",
->>>>>>> Stashed changes
+    "file": "assets/View-Cz94X4Ii.js",
     "name": "View",
     "src": "resources/js/Pages/manage-guideline/View.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_CustomButton-CZh04Kf_.js",
-      "_SecondaryButton-D5JR-UUv.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Checkbox-MtCm4irQ.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_SecondaryButton-dQ0YPrKE.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_CustomButton-BNgk5pYV.js",
-      "_SecondaryButton-BLDA1FkC.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/View-CF9-W-Ul.css"
     ]
   },
   "resources/js/Pages/manage-guideline/basic-users/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-ycQT3dNS.js",
-=======
-    "file": "assets/index-5c3ww72O.js",
->>>>>>> Stashed changes
+    "file": "assets/index-D1wFWZ40.js",
     "name": "index",
     "src": "resources/js/Pages/manage-guideline/basic-users/index.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Sidebar-DiuV1i77.js",
-      "resources/js/app.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-CytD0v8b.css"
     ]
   },
   "resources/js/Pages/manage-guideline/basic-users/view.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/view-CEbWRQ5V.js",
-=======
-    "file": "assets/view-xSje1fFV.js",
->>>>>>> Stashed changes
+    "file": "assets/view-BVLEAchU.js",
     "name": "view",
     "src": "resources/js/Pages/manage-guideline/basic-users/view.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "resources/js/app.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
-      "assets/view-Yx7MMkPP.css"
+      "assets/view-BvRTpuTJ.css"
     ]
   },
   "resources/js/Pages/manage-guideline/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-TxMbEMdT.js",
-=======
-    "file": "assets/index-DzUKj8e8.js",
->>>>>>> Stashed changes
+    "file": "assets/index-DLUMsjXh.js",
     "name": "index",
     "src": "resources/js/Pages/manage-guideline/index.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Sidebar-DiuV1i77.js",
-      "resources/js/app.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-D0KZxHom.css"
     ]
   },
   "resources/js/Pages/manage-sighting/Create.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Create-y4AvI7Do.js",
-=======
-    "file": "assets/Create-DeFC-bfb.js",
->>>>>>> Stashed changes
+    "file": "assets/Create-DoTu34jz.js",
     "name": "Create",
     "src": "resources/js/Pages/manage-sighting/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Create-DbH9ZluN.css",
@@ -1076,35 +661,20 @@
     ]
   },
   "resources/js/Pages/manage-sighting/Update.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Update-D4zzyj0v.js",
-=======
-    "file": "assets/Update-CkIPvyLD.js",
->>>>>>> Stashed changes
+    "file": "assets/Update-BpJ6XLcJ.js",
     "name": "Update",
     "src": "resources/js/Pages/manage-sighting/Update.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Update-DVbKrWHD.css",
@@ -1117,44 +687,26 @@
     ]
   },
   "resources/js/Pages/manage-sighting/View.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/View-BzcMSqkP.js",
-=======
-    "file": "assets/View-DBzyKg8o.js",
->>>>>>> Stashed changes
+    "file": "assets/View-BmMd1CQq.js",
     "name": "View",
     "src": "resources/js/Pages/manage-sighting/View.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_SecondaryButton-D5JR-UUv.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Checkbox-MtCm4irQ.js",
+      "_SecondaryButton-dQ0YPrKE.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "node_modules/html2canvas/dist/html2canvas.esm.js",
-      "_html2pdf-DbqvuPqx.js",
-      "_leaflet-src-csUDUITE.js",
+      "_html2pdf-5iuYsopj.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js",
-      "_jspdf.es.min-uOQFgHja.js"
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_SecondaryButton-BLDA1FkC.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "node_modules/html2canvas/dist/html2canvas.esm.js",
-      "_html2pdf-B1LvjJBD.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js",
-      "_jspdf.es.min-Cx4lb0wV.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js",
+      "_jspdf.es.min-BjdmECdD.js"
     ],
     "css": [
-      "assets/View-CxZUZ13g.css",
+      "assets/View--TD_XHS_.css",
       "assets/leaflet-CG6DamIu.css"
     ],
     "assets": [
@@ -1164,191 +716,110 @@
     ]
   },
   "resources/js/Pages/manage-sighting/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-CmhRgoAa.js",
-=======
-    "file": "assets/index-DxrQiSRg.js",
->>>>>>> Stashed changes
+    "file": "assets/index-CEM0CRob.js",
     "name": "index",
     "src": "resources/js/Pages/manage-sighting/index.vue",
     "isDynamicEntry": true,
     "imports": [
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Sidebar-DiuV1i77.js",
-      "resources/js/app.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-d8epLAB_.css"
     ]
   },
   "resources/js/Pages/manage-species/Create.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Create-CqO3k8To.js",
-=======
-    "file": "assets/Create-DDhfqOhA.js",
->>>>>>> Stashed changes
+    "file": "assets/Create-KXnXq48F.js",
     "name": "Create",
     "src": "resources/js/Pages/manage-species/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Create-C-sFLKxt.css"
     ]
   },
   "resources/js/Pages/manage-species/Update.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Update-Cwt8DHfY.js",
-=======
-    "file": "assets/Update-BIbA0qz6.js",
->>>>>>> Stashed changes
+    "file": "assets/Update-dFh5ZYV0.js",
     "name": "Update",
     "src": "resources/js/Pages/manage-species/Update.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Update-D6Oz-Ruy.css"
     ]
   },
   "resources/js/Pages/manage-species/View.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/View-Bz3RSXdR.js",
-=======
-    "file": "assets/View-DicGrmq5.js",
->>>>>>> Stashed changes
+    "file": "assets/View-C0kXMJea.js",
     "name": "View",
     "src": "resources/js/Pages/manage-species/View.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_CustomButton-CZh04Kf_.js",
-      "_SecondaryButton-D5JR-UUv.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Checkbox-MtCm4irQ.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_SecondaryButton-dQ0YPrKE.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_CustomButton-BNgk5pYV.js",
-      "_SecondaryButton-BLDA1FkC.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/View-CTRLhMca.css"
     ]
   },
   "resources/js/Pages/manage-species/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-MemLZ_Ba.js",
-=======
-    "file": "assets/index-CiLtrzMT.js",
->>>>>>> Stashed changes
+    "file": "assets/index-BrHoHu7v.js",
     "name": "index",
     "src": "resources/js/Pages/manage-species/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-DrNXF4ee.css"
     ]
   },
   "resources/js/Pages/manage-stranded-incident/Create.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Create-C2_PEomy.js",
-=======
-    "file": "assets/Create-mGnE-hcB.js",
->>>>>>> Stashed changes
+    "file": "assets/Create-DquC6Ko2.js",
     "name": "Create",
     "src": "resources/js/Pages/manage-stranded-incident/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Create-Dgne9gXA.css",
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
-    ],
-    "css": [
-      "assets/Create-DArZx5o8.css",
->>>>>>> Stashed changes
       "assets/leaflet-CG6DamIu.css"
     ],
     "assets": [
@@ -1358,35 +829,20 @@
     ]
   },
   "resources/js/Pages/manage-stranded-incident/Update.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Update-DZLosyG3.js",
-=======
-    "file": "assets/Update-BKdgyR1A.js",
->>>>>>> Stashed changes
+    "file": "assets/Update-BBZ4BaVJ.js",
     "name": "Update",
     "src": "resources/js/Pages/manage-stranded-incident/Update.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Update-qVbPfEEW.css",
@@ -1399,35 +855,20 @@
     ]
   },
   "resources/js/Pages/manage-stranded-incident/UpdateResponder.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/UpdateResponder-XaxkJrWq.js",
-=======
-    "file": "assets/UpdateResponder-Cj2DFbac.js",
->>>>>>> Stashed changes
+    "file": "assets/UpdateResponder-CMBIb5dt.js",
     "name": "UpdateResponder",
     "src": "resources/js/Pages/manage-stranded-incident/UpdateResponder.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/UpdateResponder-kB4BYfSW.css",
@@ -1440,38 +881,23 @@
     ]
   },
   "resources/js/Pages/manage-stranded-incident/View.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/View-CFE2ViXX.js",
-=======
-    "file": "assets/View-BFqz6ZUx.js",
->>>>>>> Stashed changes
+    "file": "assets/View-D_In9l39.js",
     "name": "View",
     "src": "resources/js/Pages/manage-stranded-incident/View.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_SecondaryButton-D5JR-UUv.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_Checkbox-MtCm4irQ.js",
+      "_SecondaryButton-dQ0YPrKE.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_SecondaryButton-BLDA1FkC.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
-      "assets/View-DFu68HxH.css",
+      "assets/View-C5PMWkfU.css",
       "assets/leaflet-CG6DamIu.css"
     ],
     "assets": [
@@ -1481,92 +907,52 @@
     ]
   },
   "resources/js/Pages/manage-stranded-incident/index.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/index-B_H2IqdM.js",
-=======
-    "file": "assets/index-BHayPbfF.js",
->>>>>>> Stashed changes
+    "file": "assets/index-CT_Ssa0t.js",
     "name": "index",
     "src": "resources/js/Pages/manage-stranded-incident/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-WZzFb5K7.css"
     ]
   },
   "resources/js/Pages/manage-stranded-incident/resolved-incidents/index.vue": {
-    "file": "assets/index-riGcwfhA.js",
-=======
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
-    ],
-    "css": [
-      "assets/index-HThHXJj3.css"
-    ]
-  },
-  "resources/js/Pages/manage-stranded-incident/resolved-incidents/index.vue": {
-    "file": "assets/index-me1ICssd.js",
->>>>>>> Stashed changes
+    "file": "assets/index-DPxGSNvy.js",
     "name": "index",
     "src": "resources/js/Pages/manage-stranded-incident/resolved-incidents/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Sidebar-CeQQ-TMf.js",
+      "_Sidebar-C1d2pCg4.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_Sidebar-DiuV1i77.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/index-BKu--3nw.css"
     ]
   },
   "resources/js/Pages/manage-stranded-incident/stranded-species/Create.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Create-Daf5Dhga.js",
-=======
-    "file": "assets/Create-CiVly_dA.js",
->>>>>>> Stashed changes
+    "file": "assets/Create-ztpfBtNF.js",
     "name": "Create",
     "src": "resources/js/Pages/manage-stranded-incident/stranded-species/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Create-CAlVs0SQ.css",
@@ -1579,35 +965,20 @@
     ]
   },
   "resources/js/Pages/manage-stranded-incident/stranded-species/Update.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/Update-xqg_9iH1.js",
-=======
-    "file": "assets/Update-eSeHsHDY.js",
->>>>>>> Stashed changes
+    "file": "assets/Update-DijaDA4a.js",
     "name": "Update",
     "src": "resources/js/Pages/manage-stranded-incident/stranded-species/Update.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_CustomButton-CZh04Kf_.js",
-      "_TextInput-Bjvrwxm-.js",
-      "_Sidebar-CeQQ-TMf.js",
-      "_leaflet-src-csUDUITE.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_TextInput-DtWEZqad.js",
+      "_Sidebar-C1d2pCg4.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-B1thg4_E.js",
-      "_PrimaryButton-DcSdr4ni.js"
-=======
-      "_CustomButton-BNgk5pYV.js",
-      "_TextInput-DHIv6Bco.js",
-      "_Sidebar-DiuV1i77.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-5F9MtS2C.js",
-      "_PrimaryButton-DMrvcqaG.js"
->>>>>>> Stashed changes
+      "_Modal-CvmAAwey.js",
+      "_PrimaryButton-BgUiV_31.js"
     ],
     "css": [
       "assets/Update-CTpo9n7L.css",
@@ -1620,43 +991,24 @@
     ]
   },
   "resources/js/Pages/manage-stranded-incident/stranded-species/View.vue": {
-<<<<<<< Updated upstream
-    "file": "assets/View-Bk0Rgq_A.js",
-=======
-    "file": "assets/View-DEqp3YUN.js",
->>>>>>> Stashed changes
+    "file": "assets/View-DJqUewlt.js",
     "name": "View",
     "src": "resources/js/Pages/manage-stranded-incident/stranded-species/View.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-<<<<<<< Updated upstream
-      "_Checkbox-Cke_l8xS.js",
-      "_CustomButton-CZh04Kf_.js",
-      "_SecondaryButton-D5JR-UUv.js",
-      "_Modal-B1thg4_E.js",
-      "_Sidebar-CeQQ-TMf.js",
+      "_Checkbox-MtCm4irQ.js",
+      "_CustomButton-Byf5R2qy.js",
+      "_SecondaryButton-dQ0YPrKE.js",
+      "_Modal-CvmAAwey.js",
+      "_Sidebar-C1d2pCg4.js",
       "node_modules/html2canvas/dist/html2canvas.esm.js",
-      "_html2pdf-DbqvuPqx.js",
-      "_leaflet-src-csUDUITE.js",
+      "_html2pdf-5iuYsopj.js",
+      "_leaflet-src-BZl8fKTh.js",
       "_marker-shadow-mEQPoonu.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DcSdr4ni.js",
-      "_jspdf.es.min-uOQFgHja.js"
-=======
-      "_Checkbox-CrsR5zth.js",
-      "_CustomButton-BNgk5pYV.js",
-      "_SecondaryButton-BLDA1FkC.js",
-      "_Modal-5F9MtS2C.js",
-      "_Sidebar-DiuV1i77.js",
-      "node_modules/html2canvas/dist/html2canvas.esm.js",
-      "_html2pdf-B1LvjJBD.js",
-      "_leaflet-src-BQgJspOK.js",
-      "_marker-shadow-mEQPoonu.js",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_PrimaryButton-DMrvcqaG.js",
-      "_jspdf.es.min-Cx4lb0wV.js"
->>>>>>> Stashed changes
+      "_PrimaryButton-BgUiV_31.js",
+      "_jspdf.es.min-BjdmECdD.js"
     ],
     "css": [
       "assets/View-X5h_rx8X.css",
@@ -1669,11 +1021,7 @@
     ]
   },
   "resources/js/app.js": {
-<<<<<<< Updated upstream
-    "file": "assets/app-C0-lMBZt.js",
-=======
-    "file": "assets/app-BDYgRFeU.js",
->>>>>>> Stashed changes
+    "file": "assets/app-BT2B--Lf.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -1725,11 +1073,7 @@
       "resources/js/Pages/manage-stranded-incident/stranded-species/View.vue"
     ],
     "css": [
-<<<<<<< Updated upstream
       "assets/app-BJljSO0u.css"
-=======
-      "assets/app-Ca-lM5Ac.css"
->>>>>>> Stashed changes
     ]
   }
 }
