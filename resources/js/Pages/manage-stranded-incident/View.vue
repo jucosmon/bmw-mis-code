@@ -123,7 +123,7 @@ const closeModal = () => {
 
 // Archiving For public users only
 const archiveButtonStatus = computed(() => {
-    return (isPublicUser.value && props.strandedIncident.report_status === 'pending' || !page.props.auth.user);
+    return (isPublicUser.value && props.strandedIncident.report_status === 'pending');
 });
 
 const archiveIncident = () => {
@@ -153,7 +153,7 @@ const archiveIncident = () => {
 
 // Update button validation for Public users only
 const updateButtonStatusPublic = computed(() => {
-    return isPublicUser.value && props.strandedIncident.report_status === 'pending' || !page.props.auth.user});
+    return isPublicUser.value && props.strandedIncident.report_status === 'pending'});
 
 
 // Update button validation for responders
