@@ -1,7 +1,7 @@
 <script setup>
 import Modal from '@/Components/Modal.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 
@@ -33,6 +33,42 @@ const closeFileModal = () => {
 const backRoute = () => {
     router.get(route('guideline.index'));
 };
+
+const bookMessage = computed(() => {
+    switch (props.guideline.category) {
+        case 'marine_turtles':
+            return 'Philippine Aquatic Wildlife Rescue and Response Manual Series: Marine Turtles'
+            break;
+        case 'marine_mammals':
+            return 'Philippine Aquatic Wildlife Rescue and Response Manual Series: Marine Mammals'
+            break;
+        case 'sharks_rays':
+            return 'Philippine Aquatic Wildlife Rescue and Response Manual Series: Shark and Rays'
+            break;
+
+        default:
+            return 'None'
+            break;
+    }
+});
+
+const bookUrl = computed(() => {
+    switch (props.guideline.category) {
+        case 'marine_turtles':
+            return 'https://mwwphilippines.org/wp-content/themes/marine-wildlife-watch/assets/images/pdf/marine-turtles/Marine turtle rescue and response manual.pdf'
+            break;
+        case 'marine_mammals':
+            return 'https://mwwphilippines.org/wp-content/themes/marine-wildlife-watch/assets/images/pdf/cetaceans/Rescue and Response Manual for Marine Mammals.pdf'
+            break;
+        case 'sharks_rays':
+            return 'https://mwwphilippines.org/wp-content/themes/marine-wildlife-watch/assets/images/pdf/shark-and-rays/Shark Conservation Legislation Toolkit.pdf'
+            break;
+        default:
+            return 'None'
+            break;
+    }
+});
+
 </script>
 
 <template>
@@ -90,6 +126,10 @@ const backRoute = () => {
                                 {{ props.guideline.language === 'english' ? 'Description' : 'Deskripsyon' }}
                             </h2>
                             <p class="text-white/90">{{ props.guideline.description }}</p>
+                            <div class="category-badge">
+                                <span class="material-icons material-icons-round text-sm mr-2">book</span>
+                                <i><a :href="bookUrl" target="_blank" download="">{{ bookMessage }}</a></i>
+                            </div>
                         </div>
 
                         <!-- Guidelines Section -->
